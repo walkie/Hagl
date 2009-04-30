@@ -18,6 +18,8 @@ runGame :: Game mv -> [Player mv] -> GameExec mv a -> IO (ExecState mv)
 runGame g ps (GameExec f) = execStateT f $ initState g ps
 
 runStrategy :: Player mv -> GameExec mv (mv, Player mv)
+runStrategy p@(n ::: m)    = do mv <- evalStateT (unS m) ()
+                                return (mv, p)
 runStrategy (Player n s m) = do (mv, s') <- runStateT (unS m) s
                                 return (mv, Player n s' m)
 

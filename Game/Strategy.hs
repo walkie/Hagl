@@ -43,6 +43,24 @@ mixed = randomlyFrom . expandDist
 periodic :: [mv] -> Strategy mv s
 periodic ms = numMoves >>= \n -> return $ ms !! mod n (length ms)
 
+{-
+-- Begin a list of strategies.
+initially :: Strategy mv s -> [Strategy mv s]
+initially = (:[])
+
+-- Continue a list of strategies.
+next :: [Strategy mv s] -> Strategy mv s -> [Strategy mv s]
+next ss s = ss ++ [s]
+-}
+
+-- Play a list of initial strategies, then a primary strategy thereafter.
+thereafter :: [Strategy mv s] -> Strategy mv s -> Strategy mv s
+thereafter ss s = numGames >>= \n -> if n < length ss then ss !! n else s
+
+atFirstThen :: Strategy mv s -> Strategy mv s -> Strategy mv s
+atFirstThen s = thereafter [s]
+
+{-
 -- Begin a list of strategies.
 atFirst :: Strategy mv s -> [Strategy mv s] -> Strategy mv s
 atFirst s ss = numMoves >>= \n -> (s:ss) !!! n
@@ -52,16 +70,17 @@ next :: Strategy mv s -> [Strategy mv s] -> [Strategy mv s]
 next = (:)
 
 -- End a list of strategies.
-finally :: Strategy mv s -> [Strategy mv s]
-finally = (:[])
+thereafter :: Strategy mv s -> [Strategy mv s]
+thereafter = (:[])
 
 -- Play a strategy for the first move, then another strategy thereafter.
 atFirstThen :: Strategy mv s -> Strategy mv s -> Strategy mv s
-atFirstThen a b = atFirst a (finally b)
+atFirstThen a b = atFirst a (thereafter b)
 
 -- Play an initial move, then another strategy thereafter.
 initiallyThen :: mv -> Strategy mv s -> Strategy mv s
-initiallyThen a b = atFirst (return a) (finally b)
+initiallyThen a b = atFirst (return a) (thereafter b)
+-}
 
 -- Minimax algorithm with alpha-beta pruning. Only defined for games with
 -- perfect information and no Chance nodes.

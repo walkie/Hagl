@@ -56,12 +56,12 @@ normal np mss vs = Game np group (head (level 1))
         group t = Perfect t
 
 -- Construct a two-player game.
-matrix :: [mv] -> [mv] -> [[Float]] -> Game mv
-matrix as bs = normal 2 [as, bs]
+matrix :: [mv] -> [[Float]] -> Game mv
+matrix ms = normal 2 [ms, ms]
 
 -- Construct a two-player, zero-sum game.
-zerosum :: [mv] -> [mv] -> [Float] -> Game mv
-zerosum ms vs = bimatrix ms [[v,-v] | v <- vs]
+zerosum :: [mv] -> [Float] -> Game mv
+zerosum ms vs = matrix ms [[v,-v] | v <- vs]
 
 -------------------------------
 -- Extensive Form Definition --

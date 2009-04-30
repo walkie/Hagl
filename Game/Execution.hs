@@ -44,15 +44,14 @@ asList2 = map asList . asList
 -- Player
 type Name = String
 
-data Player mv = forall s.
-  Player {
-    name     :: Name,
-    state    :: s,
-    strategy :: Strategy mv s
-  }
+data Player mv = forall s. Player Name s (Strategy mv s)
+               | Name ::: Strategy mv ()
 
-plays :: Name -> Strategy mv () -> Player mv
-plays n s = Player n () s
+infix 0 :::
+
+name :: Player mv -> Name
+name (Player n _ _) = n
+name (n ::: _) = n
 
 instance Show (Player mv) where
   show = name

@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fno-monomorphism-restriction #-}
+{-# OPTIONS_GHC -XNoMonomorphismRestriction #-}
 
 import Data.List
 import Hagl
@@ -13,19 +13,22 @@ import Prelude hiding (print)
 -- Game definition
 data Dilemma = Cooperate | Defect deriving (Show, Eq)
 
-pd = matrix [Cooperate, Defect] [[2, 2], [0, 3], [3, 0], [1, 1]]
+pd = matrix [Cooperate, Defect] [[2,2],[0,3],[3,0],[1,1]]
 
 -- Some simple players.
-fink = "Fink" `plays` pure Defect
-mum = "Mum" `plays` pure Cooperate
-alt = "Alternator" `plays` periodic [Cooperate, Defect]
-dc = "(DC)*" `plays` periodic [Cooperate, Defect]
-ccd = "(CCD)*" `plays` periodic [Cooperate, Cooperate, Defect]
-randy = "Randy" `plays` randomly
-rr = "Russian Roulette" `plays` mixed [(5, Cooperate), (1, Defect)]
+fink = "Fink" ::: pure Defect
+mum = "Mum" ::: pure Cooperate
+alt = "Alternator" ::: periodic [Cooperate, Defect]
+dc = "(DC)*" ::: periodic [Cooperate, Defect]
+ccd = "(CCD)*" ::: periodic [Cooperate, Cooperate, Defect]
+randy = "Randy" ::: randomly
+rr = "Russian Roulette" ::: mixed [(5, Cooperate), (1, Defect)]
 
 -- The famous Tit-for-Tat.
-titForTat = "Tit for Tat" `plays` (Cooperate `initiallyThen` his (prev move))
+titForTat = "Tit for Tat" ::: play Cooperate `atFirstThen` his (prev move)
+--titForTat = "Tit for Tat" ::: [play Cooperate] `thereafter` his (prev move)
+--titForTat = "Tit for Tat" `plays` (initially (play Cooperate) `thereafter` his (prev move))
+--titForTat = "Tit for Tat" `plays` (Cooperate `initiallyThen` his (prev move))
 
 stately = Player "Stately Alternator" Cooperate $
   do m <- get
@@ -38,15 +41,15 @@ mod3 = Player "Mod3 Cooperator" 0 $
      return $ if i `mod` 3 == 0 then Cooperate else Defect
      
 -- Suspicious Tit-for-Tat (like Tit-for-Tat but defect on first move)
-suspicious = "Suspicious Tit-for-Tat" `plays` (Defect `initiallyThen` his (prev move))
+suspicious = "Suspicious Tit-for-Tat" ::: play Defect `atFirstThen` his (prev move)
 
 -- Tit-for-Tat that only defects after two defects in a row.
-titForTwoTats = "Tit-for-Two-Tats" `plays`
+titForTwoTats = "Tit-for-Two-Tats" :::
     do ms <- his `each` prevn 2 move
        return $ if ms == [Defect, Defect] then Defect else Cooperate
 
 -- The Grim Trigger: Cooperates until opponent defects, then defects forever.
-grim = "Grim Trigger" `plays`
+grim = "Grim Trigger" :::
     do ms <- his `each` every move
        return $ if Defect `elem` ms then Defect else Cooperate
 
@@ -65,7 +68,7 @@ statelyGrim = Player "Grim Trigger" False $ get >>= trig
 -}
 
 grim' = Player "Stately Grim" False $ 
-  Cooperate `initiallyThen`
+  play Cooperate `atFirstThen`
   do m <- his (prev move)
      triggered <- update (|| m == Defect)
      if triggered then play Defect else play Cooperate
@@ -82,11 +85,11 @@ pavlov = "Pavlov" `plays`
 
 -- Made-up strategy: Pick randomlyly until we have a lead, then
 -- preserve it by repeatedly choosing Defect.
-preserver = "Preserver" `plays`
-    (randomly `atFirstThen`
-     do me <- my score
-        he <- his score
-        if me > he then return Defect else randomly)
+preserver = "Preserver" :::
+    randomly `atFirstThen`
+    do me <- my score
+       he <- his score
+       if me > he then return Defect else randomly
 
 a -! f = (liftM2 f) a
 (!-) = ($)
@@ -94,9 +97,9 @@ a -! f = (liftM2 f) a
 (?) :: Monad m => m Bool -> (m a, m a) -> m a
 mb ? (t,f) = mb >>= \b -> if b then t else f
 
-preserver2 = "Preserver" `plays`
-    (randomly `atFirstThen`
-      (my score -! (>) !- his score ? (return Defect, randomly)))
+preserver2 = "Preserver" :::
+    randomly `atFirstThen`
+    (my score -! (>) !- his score ? (return Defect, randomly))
 
 -- Running from GHCi:
 -- > runGame pd [titForTat, pavlov] (times 10 >> printTranscript >> printScores)
@@ -113,19 +116,20 @@ rps = zerosum [Rock .. Scissors] [0,-1, 1,
                                  -1, 1, 0]
 
 -- Some simple players
-rocky = "Stalone" `plays` pure Rock
-rotate = "RPS" `plays` periodic [Rock, Paper, Scissors]
+rocky = "Stalone" ::: pure Rock
+rotate = "RPS" ::: periodic [Rock, Paper, Scissors]
+tricky = "Tricky" ::: [play Rock, play Paper] `thereafter` play Scissors
 -- can reuse randy from above!
 
 -- If last move resulted in a "big" payoff, do it again, otherwise switch.
-pavlov = "Pavlov" `plays`
-    (randomly `atFirstThen`
-     do p <- my (prev payoff)
-        m <- my (prev move)
-        if p > 0 then return m else randomly)
+pavlov = "Pavlov" :::
+    randomly `atFirstThen`
+    do p <- my (prev payoff)
+       m <- my (prev move)
+       if p > 0 then return m else randomly
 
 -- Play the move that will beat the move the opponent has played most.
-frequency = "Huckleberry" `plays`
+frequency = "Huckleberry" :::
     do ms <- his `each` every move
        let r = length $ filter (Rock ==) ms
            p = length $ filter (Paper ==) ms
@@ -156,14 +160,14 @@ crisis = extensive start
         ussrStrikeCounter = ussr ("Pull Out", nukesInTurkey)
                              <|> ("Escalate", nuclearWar)
 
-khrushchev = "Khrushchev" `plays` 
-  ("Send Missiles to Cuba" `initiallyThen`
+khrushchev = "Khrushchev" :::
+    play "Send Missiles to Cuba" `atFirstThen`
     do m <- his (prev move)
        play $ case m of "Blockade" -> "Agree to Terms"
-                        "Air Strike" -> "Pull Out")
+                        "Air Strike" -> "Pull Out"
 
 
-kennedy = "Kennedy" `plays` mixed [(2, "Blockade"), (1, "Air Strike")]
+kennedy = "Kennedy" ::: mixed [(2, "Blockade"), (1, "Air Strike")]
 
 {-
 nuclearWar    = Payoff [-100,-100]
@@ -204,7 +208,7 @@ auction v = Game 2 Perfect $ bid 1 0
 ------------------
 
 die = Game 1 Perfect $ Chance [(1, Payoff [a]) | a <- [1..6]]
-roll n = runGame die ["Total" `plays` return ()] (times n >> printScore)
+roll n = runGame die ["Total" ::: return ()] (times n >> printScore)
 
 -----------------
 -- Tic Tac Toe --
@@ -242,7 +246,7 @@ win b p = let h = chunk 3 b
 ticTacToe = takeTurns 2 end avail exec pay (replicate 9 Empty)
 
 -- A Minimax Player
-mm = "Minimaxi" `plays` minimax
+mm = "Minimaxi" ::: minimax
 
 --------------------
 -- The Match Game --   -- Try to force your opponent to take the last match.
@@ -260,7 +264,7 @@ matches n ms = takeTurns 2 end moves exec pay n
 
 -- Problem: No way to get state from the strategy of a state game!!!
 
-matchman = "Match Man" `plays`
+matchman = "Match Man" :::
     do n <- numMatches
        g <- game
        let ms = availMoves (tree g)
