@@ -25,8 +25,14 @@ location = getExecState >>= \s -> return $ info (_game s) (_location s)
 transcript :: GameMonad m mv => m (Transcript mv)
 transcript = liftM _transcript getExecState
 
+transcripts :: GameMonad m mv => m (ByGame (Transcript mv))
+transcripts = liftM _transcripts history
+
 history :: GameMonad m mv => m (History mv)
 history = liftM _history getExecState
+
+summaries :: GameMonad m mv => m (ByGame (Summary mv))
+summaries = liftM _summaries history
 
 finished :: GameMonad m mv => m Int
 finished = liftM (length . toList) history
@@ -37,14 +43,6 @@ gameNumber = liftM (+1) finished
 -- True if this is the first iteration in this execution instance.
 isFirstGame :: GameMonad m mv => m Bool
 isFirstGame = liftM (null . toList) history
-
--- All previous games' transcripts.
-transcripts :: GameMonad m mv => m (ByGame (Transcript mv))
-transcripts = liftM (ByGame . fst . unzip . toList) history
-
--- Summary of each game.
-summaries :: GameMonad m mv => m (ByGame (Summary mv))
-summaries = liftM (ByGame . snd . unzip . toList) history
 
 -- All moves made by each player in each game.
 moves :: GameMonad m mv => m (ByGame (ByPlayer (ByTurn mv)))
