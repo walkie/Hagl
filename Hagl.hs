@@ -33,7 +33,7 @@ module Hagl (
   -- Game.Strategy.Selector
   each, inThe, 
   myIx, my, his, her, our, their,
-  every, first, firstn, last, lastn,
+  this, every, first, firstn, last, lastn,
   -- Game.Util
   chunk
 ) where

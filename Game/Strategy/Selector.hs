@@ -46,6 +46,11 @@ their x = do ByPlayer as <- x
              i <- myIx
              return $ (take i as) ++ (drop (i+1) as)
 
+-- ByGame Selection
+
+this :: GameMonad m mv => ByGame a -> m (ByGame a) -> m a
+this _ = liftM (head . toList)
+
 -- ByGameOrTurn Selection --
 
 every :: (ByGameOrTurn d, GameMonad m mv) => d a -> m (d a) -> m [a]
