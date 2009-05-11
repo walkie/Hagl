@@ -26,9 +26,6 @@ rr = "Russian Roulette" ::: mixed [(5, Cooperate), (1, Defect)]
 
 -- The famous Tit-for-Tat.
 tft = "Tit for Tat" ::: play Cooperate `atFirstThen` his (last game's move)
---titForTat = "Tit for Tat" ::: [play Cooperate] `thereafter` his (prev move)
---titForTat = "Tit for Tat" `plays` (initially (play Cooperate) `thereafter` his (prev move))
---titForTat = "Tit for Tat" `plays` (Cooperate `initiallyThen` his (prev move))
 
 axelrod :: [Player Dilemma] -> IO ()
 axelrod ps = roundRobin pd ps (times 100 >> printScore)
@@ -56,35 +53,11 @@ grim = "Grim Trigger" :::
     do ms <- his `each` every game's move
        return $ if Defect `elem` ms then Defect else Cooperate
 
-{-
-grim' = Player "Stately Grim Trigger" False
-    (do m <- his (prev move)
-        triggered <- get
-        put (triggered || m == Defect)
-        if triggered then play Defect else play Cooperate)
-
-statelyGrim = Player "Grim Trigger" False $ get >>= trig
-  where trig True = return Defect
-        trig False = do m <- his (prev move)
-                        if m == Cooperate then return Cooperate
-                                          else put True >> return Defect
--}
-
 grim' = Player "Stately Grim" False $ 
   play Cooperate `atFirstThen`
   do m <- his (last game's move)
      triggered <- update (|| m == Defect)
      if triggered then play Defect else play Cooperate
-
-{-
--- If last move resulted in a "big" payoff, do it again, otherwise switch.
-pavlov = "Pavlov" `plays`
-    (randomly `atFirstThen`
-     do p <- my (prev payoff)
-        m <- my (prev move)
-        return $ if p > 1 then m else
-          if m == Cooperate then Defect else Cooperate)
--}
 
 -- Made-up strategy: Pick randomlyly until we have a lead, then
 -- preserve it by repeatedly choosing Defect.
@@ -174,29 +147,6 @@ kennedy = "Kennedy" ::: mixed [(2, "Blockade"), (1, "Air Strike")]
 
 -- To run, e.g.
 -- > runGame crisis [khrushchev, kennedy] (once >> printTranscript)
-
-{-
-nuclearWar    = Payoff [-100,-100]
-nukesInCuba   = Payoff [   1,  -1]
-nukesInTurkey = Payoff [  -1,   1]
-usaLooksGood  = Payoff [   0,   1]
-ussrLooksGood = Payoff [   1,   0]
-
-start = ussr ("Send Missiles to Cuba", usaResponse) 
-         <|> ("Do Nothing", nukesInTurkey)
-
-usaResponse = usa ("Do Nothing", nukesInTurkey <+> nukesInCuba <+> ussrLooksGood)
-              <|> ("Blockade", ussrBlockadeCounter)
-              <|> ("Invade", ussrInvasionCounter)
-
-ussrBlockadeCounter = ussr ("Agree to Terms", usaLooksGood) 
-                       <|> ("Escalate", nuclearWar)
-
-ussrInvasionCounter = ussr ("Pull Out", nukesInTurkey <+> usaLooksGood) 
-                       <|> ("Escalate", nuclearWar)
-
-crisis = extensive start
--}
 
 ------------------------
 -- Two Person Auction --
