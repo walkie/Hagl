@@ -1,9 +1,10 @@
 module Game.Strategy.Selector where
 
 import Control.Monad
-import Data.List
+import Data.List hiding (last)
 import Game.Definition
 import Game.Execution
+import Game.Lists
 import Game.Strategy.Accessor
 
 --------------------
@@ -12,7 +13,10 @@ import Game.Strategy.Accessor
 
 -- Apply selection to each element of a list.
 each :: Monad m => (m a -> m b) -> m [a] -> m [b]
-each f xs = (sequence . map f . map return) =<< xs
+each f xs = mapM (f . return) =<< xs
+
+-- Apply list selectors in reverse order.
+inThe = flip ($)
 
 -- ByPlayer Selection --
 
@@ -22,51 +26,43 @@ myIx = do Decision p _ <- _exactLoc
           return (p-1)
 
 my :: GameMonad m mv => m (ByPlayer a) -> m a
-my x = liftM2 (!!) (liftM asList x) myIx
+my x = myIx >>= forPlayerM x
 
 -- Selects the next player's x.
 his :: GameMonad m mv => m (ByPlayer a) -> m a
-his x = do ByPlayer as <- x
-           i <- myIx
-           g <- game
-           return $ as !! ((i+1) `mod` numPlayers g)
+his x = myIx >>= forPlayerM x . next
+  where next 1 = 2
+        next 2 = 1
+        next _ = error "his/her can only be used in two player games"
 
 her :: GameMonad m mv => m (ByPlayer a) -> m a
 her = his
 
 our :: GameMonad m mv => m (ByPlayer a) -> m [a]
-our = liftM asList
+our = liftM toList
 
 their :: GameMonad m mv => m (ByPlayer a) -> m [a]
 their x = do ByPlayer as <- x
              i <- myIx
              return $ (take i as) ++ (drop (i+1) as)
 
-playern :: GameMonad m mv => PlayerIx -> m (ByPlayer a) -> m a
-playern i x = do ByPlayer as <- x
-                 return $ as !! (i-1)
+-- ByGameOrTurn Selection --
 
--- ByGame Selection --
+every :: (ByGameOrTurn d, GameMonad m mv) => d a -> m (d a) -> m [a]
+every _ = liftM toList
 
-every :: GameMonad m mv => m (ByGame a) -> m [a]
-every = liftM asList
+first :: (ByGameOrTurn d, GameMonad m mv) => d a -> m (d a) -> m a
+first _ = flip forGameOrTurnM 1
 
-first :: GameMonad m mv => m (ByGame a) -> m a
-first = liftM (last . asList)
+firstn :: (ByGameOrTurn d, GameMonad m mv) => Int -> d a -> m (d a) -> m [a]
+firstn n _ x = mapM (forGameOrTurnM x) [n, n-1 .. 1]
 
-firstn :: GameMonad m mv => Int -> m (ByGame a) -> m [a]
-firstn n = liftM (reverse . take n . reverse . asList)
+last :: (ByGameOrTurn d, GameMonad m mv) => d a -> m (d a) -> m a
+last _ x = numGames >>= forGameOrTurnM x
 
-prev :: GameMonad m mv => m (ByGame a) -> m a
-prev = liftM (head . asList)
-
-prevn :: GameMonad m mv => Int -> m (ByGame a) -> m [a]
-prevn n = liftM (take n . asList)
-
-gamen :: GameMonad m mv => Int -> m (ByGame a) -> m a
-gamen i x = do ByGame as <- x
-               n <- numGames
-               return $ as !! (n-i)
+lastn :: (ByGameOrTurn d, GameMonad m mv) => Int -> d a -> m (d a) -> m [a]
+lastn n _ x = do m <- numGames
+                 mapM (forGameOrTurnM x) [n, n-1 .. m]
 
 -----------------------
 -- Utility Functions --

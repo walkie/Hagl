@@ -7,6 +7,7 @@ import Data.Maybe
 import Game.Definition
 import Game.Execution
 import Game.Execution.Util
+import Game.Lists
 import Game.Strategy.Accessor
 import Game.Strategy.Selector
 import Game.Util
@@ -113,4 +114,5 @@ maxIndex :: (Ord a) => [a] -> Int
 maxIndex as = fromJust $ elemIndex (maximum as) as
 
 numMoves :: GameMonad m mv => m Int
-numMoves = liftM (length . concat) (my `each` every moves)
+numMoves = liftM (length . concat . concat . toList3) moves
+--numMoves = liftM (length . concat) (my `each` every moves)

@@ -8,7 +8,6 @@ module Hagl (
   children, bfs, dfs,
   -- Game.Execution
   History, Transcript, Summary, Event,
-  ByGame(..), ByPlayer(..), asList, asList2,
   Name, Player(..), name,
   GameExec, StratExec, Strategy, GameMonad, update,
   -- Game.Execution.Run
@@ -19,6 +18,12 @@ module Hagl (
   printSummaries, printSummaryOfGame, printScore,
   -- Game.Execution.Tournament
   runGames, tournament, fullRoundRobin, roundRobin,
+  -- Game.Lists
+  ByGame(..), ByTurn(..), ByPlayer(..), 
+  forGame, forTurn, forPlayer, forGameM, forTurnM, forPlayerM,
+  forGameOrTurn, forGameOrTurnM,
+  game's, games', turn, turn's, turns',
+  toList, toList2, toList3,
   -- Game.Strategy
   play, pure, randomly, randomlyFrom, mixed, periodic, minimax,
   atFirstThen, thereafter,
@@ -26,8 +31,9 @@ module Hagl (
   game, players, location, transcript, history, numGames,
   isFirstGame, transcripts, summaries, moves, move, payoff, score,
   -- Game.Strategy.Selector
-  each, myIx, my, his, her, our, their, playern,
-  every, first, firstn, prev, prevn, gamen,
+  each, inThe, 
+  myIx, my, his, her, our, their,
+  every, first, firstn, last, lastn,
   -- Game.Util
   chunk
 ) where
@@ -37,9 +43,10 @@ import Game.Execution
 import Game.Execution.Run
 import Game.Execution.Print
 import Game.Execution.Tournament
+import Game.Lists
 import Game.Strategy
 import Game.Strategy.Accessor
 import Game.Strategy.Selector
 import Game.Util
 
-import Prelude hiding (print)
+import Prelude hiding (last, print)

@@ -5,6 +5,7 @@ import Data.List
 import Game.Definition
 import Game.Execution
 import Game.Execution.Util
+import Game.Lists
 import Game.Strategy
 import Game.Strategy.Accessor
 import Game.Strategy.Selector
@@ -50,7 +51,8 @@ printSummaryOfGame n =
        ps <- players
        printStrLn $ "Summary of Game "++show n++":"
        let (ByPlayer mss, ByPlayer vs) = ss !! (length ss - n)
-        in do printStr $ unlines ["  "++show p++" moves: "++show (reverse ms) | (p,ms) <- zip ps mss]
+        in do printStr $ unlines ["  "++show p++" moves: "++show (reverse ms) 
+                                 | (p, ByTurn ms) <- zip ps mss]
               printStrLn $ "  Score: "++show vs
 
 printScore :: (MonadIO m, GameMonad m mv, Show mv) => m ()

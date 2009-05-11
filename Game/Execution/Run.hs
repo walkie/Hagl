@@ -5,6 +5,7 @@ import Data.Maybe
 import Game.Definition
 import Game.Execution
 import Game.Execution.Util
+import Game.Lists
 import Game.Util
 
 --------------------
@@ -41,7 +42,7 @@ step = get >>= \state ->
       Payoff vs ->
         let transcript = PayoffEvent vs : _transcript state
             summary = summarize (_game state) transcript
-            history = ByGame $ (transcript, summary) : asList (_history state)
+            history = ByGame $ (transcript, summary) : toList (_history state)
         in put state { _location = tree $ _game state,
                        _transcript = [],
                        _history = history }

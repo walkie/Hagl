@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fglasgow-exts #-}
+
 module Game.Strategy.Accessor where
 
 import Control.Monad
@@ -5,6 +7,7 @@ import Data.List
 import Game.Definition
 import Game.Execution
 import Game.Execution.Util
+import Game.Lists
 
 --------------------
 -- Data Accessors --
@@ -26,38 +29,40 @@ history :: GameMonad m mv => m (History mv)
 history = liftM _history getExecState
 
 numGames :: GameMonad m mv => m Int
-numGames = liftM (length . asList) history
+numGames = liftM (length . toList) history
 
 -- True if this is the first iteration in this execution instance.
 isFirstGame :: GameMonad m mv => m Bool
-isFirstGame = liftM (null . asList) history
+isFirstGame = liftM (null . toList) history
 
--- Transcript of each game.
+-- All previous games' transcripts.
 transcripts :: GameMonad m mv => m (ByGame (Transcript mv))
-transcripts = do t <- transcript
-                 h <- history
-                 return (ByGame (t : (fst . unzip . asList) h))
+transcripts = liftM (ByGame . fst . unzip . toList) history
 
 -- Summary of each game.
 summaries :: GameMonad m mv => m (ByGame (Summary mv))
-summaries = do g <- game
-               t <- transcript
-               h <- history
-               return (ByGame (summarize g t : (snd . unzip . asList) h))
+summaries = liftM (ByGame . snd . unzip . toList) history
 
 -- All moves made by each player in each game.
-moves :: GameMonad m mv => m (ByGame (ByPlayer [mv]))
-moves = liftM (ByGame . fst . unzip . asList) summaries
+moves :: GameMonad m mv => m (ByGame (ByPlayer (ByTurn mv)))
+moves = liftM (ByGame . fst . unzip . toList) summaries
 
+class (DList d, DList e) => MoveList d e where
+  move :: GameMonad m mv => m (d (e mv))
+instance MoveList ByGame ByPlayer where
+  move = liftM (ByGame . map (ByPlayer . map head) . toList3) moves
+instance MoveList ByPlayer ByTurn where
+  move = liftM fst (liftM2 summarize game transcript)
+            
 -- The last move by each player in each game.
-move :: GameMonad m mv => m (ByGame (ByPlayer mv))
-move = liftM (ByGame . map (ByPlayer . map head) . asList2) moves
+--move :: GameMonad m mv => m (ByGame (ByPlayer mv))
+--move = liftM (ByGame . map (ByPlayer . map head) . toList3) moves
 
 -- The total payoff for each player for each game.
 payoff :: GameMonad m mv => m (ByGame (ByPlayer Float))
-payoff = liftM (ByGame . snd . unzip . asList) summaries
+payoff = liftM (ByGame . snd . unzip . toList) summaries
 
 -- The current score of each player.
 score :: GameMonad m mv => m (ByPlayer Float)
-score = liftM (ByPlayer . map sum . transpose . asList2) payoff
+score = liftM (ByPlayer . map sum . transpose . toList2) payoff
 

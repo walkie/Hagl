@@ -1,10 +1,10 @@
 {-# OPTIONS_GHC -XNoMonomorphismRestriction #-}
 
-import Data.List
+import Data.List hiding (last)
 import Hagl
 
 import Control.Monad.State
-import Prelude hiding (print)
+import Prelude hiding (last,print)
 
 ------------------------
 -- Prisoner's Dilemma --
@@ -25,10 +25,13 @@ randy = "Randy" ::: randomly
 rr = "Russian Roulette" ::: mixed [(5, Cooperate), (1, Defect)]
 
 -- The famous Tit-for-Tat.
-titForTat = "Tit for Tat" ::: play Cooperate `atFirstThen` his (prev move)
+tft = "Tit for Tat" ::: play Cooperate `atFirstThen` his (last game's move)
 --titForTat = "Tit for Tat" ::: [play Cooperate] `thereafter` his (prev move)
 --titForTat = "Tit for Tat" `plays` (initially (play Cooperate) `thereafter` his (prev move))
 --titForTat = "Tit for Tat" `plays` (Cooperate `initiallyThen` his (prev move))
+
+axelrod :: [Player Dilemma] -> IO ()
+axelrod ps = roundRobin pd ps (times 1000 >> printScore)
 
 stately = Player "Stately Alternator" Cooperate $
   do m <- get
@@ -41,16 +44,16 @@ mod3 = Player "Mod3 Cooperator" 0 $
      return $ if i `mod` 3 == 0 then Cooperate else Defect
      
 -- Suspicious Tit-for-Tat (like Tit-for-Tat but defect on first move)
-suspicious = "Suspicious Tit-for-Tat" ::: play Defect `atFirstThen` his (prev move)
+suspicious = "Suspicious Tit-for-Tat" ::: play Defect `atFirstThen` his (last game's move)
 
 -- Tit-for-Tat that only defects after two defects in a row.
 titForTwoTats = "Tit-for-Two-Tats" :::
-    do ms <- his `each` prevn 2 move
+    do ms <- his `each` lastn 2 games' move
        return $ if ms == [Defect, Defect] then Defect else Cooperate
 
 -- The Grim Trigger: Cooperates until opponent defects, then defects forever.
 grim = "Grim Trigger" :::
-    do ms <- his `each` every move
+    do ms <- his `each` every game's move
        return $ if Defect `elem` ms then Defect else Cooperate
 
 {-
@@ -69,7 +72,7 @@ statelyGrim = Player "Grim Trigger" False $ get >>= trig
 
 grim' = Player "Stately Grim" False $ 
   play Cooperate `atFirstThen`
-  do m <- his (prev move)
+  do m <- his (last game's move)
      triggered <- update (|| m == Defect)
      if triggered then play Defect else play Cooperate
 
@@ -124,13 +127,13 @@ tricky = "Tricky" ::: [play Rock, play Paper] `thereafter` play Scissors
 -- If last move resulted in a "big" payoff, do it again, otherwise switch.
 pavlov = "Pavlov" :::
     randomly `atFirstThen`
-    do p <- my (prev payoff)
-       m <- my (prev move)
+    do p <- my (last game's payoff)
+       m <- my (last game's move)
        if p > 0 then return m else randomly
 
 -- Play the move that will beat the move the opponent has played most.
 frequency = "Huckleberry" :::
-    do ms <- his `each` every move
+    do ms <- his `each` every game's move
        let r = length $ filter (Rock ==) ms
            p = length $ filter (Paper ==) ms
            s = length $ filter (Scissors ==) ms
@@ -162,7 +165,7 @@ crisis = extensive start
 
 khrushchev = "Khrushchev" :::
     play "Send Missiles to Cuba" `atFirstThen`
-    do m <- his (prev move)
+    do m <- his move `inThe` last turn
        play $ case m of "Blockade" -> "Agree to Terms"
                         "Air Strike" -> "Pull Out"
 

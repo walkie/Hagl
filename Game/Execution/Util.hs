@@ -3,6 +3,7 @@ module Game.Execution.Util where
 import Control.Monad.State
 import Game.Definition
 import Game.Execution
+import Game.Lists
 import System.Random
 
 -- Generate a string showing a set of players' scores.
@@ -22,4 +23,4 @@ summarize g t =
         moves (DecisionEvent i m : es) = addmove (i-1) m (moves es)
         moves (e : es) = moves es
         moves [] = take np (repeat [])
-    in (ByPlayer (moves t), ByPlayer (payoffs t))
+    in (ByPlayer (map ByTurn (moves t)), ByPlayer (payoffs t))

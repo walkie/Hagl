@@ -4,6 +4,7 @@ module Game.Execution where
 
 import Control.Monad.State
 import Game.Definition
+import Game.Lists
 
 -----------
 -- Types --
@@ -21,25 +22,12 @@ data ExecState mv = ExecState {
 -- History
 type History mv = ByGame (Transcript mv, Summary mv)
 type Transcript mv = [Event mv]
-type Summary mv = (ByPlayer [mv], ByPlayer Float)
+type Summary mv = (ByPlayer (ByTurn mv), ByPlayer Float)
 
 data Event mv = DecisionEvent PlayerIx mv
               | ChanceEvent Int
               | PayoffEvent [Float]
               deriving (Eq, Show)
-
-data ByGame a = ByGame [a] deriving (Eq, Show)
-data ByPlayer a = ByPlayer [a] deriving (Eq, Show)
-
-class DList f where
-  asList :: f a -> [a]
-instance DList ByGame where
-  asList (ByGame as) = as
-instance DList ByPlayer where
-  asList (ByPlayer as) = as
-
-asList2 :: (DList f, DList g) => f (g a) -> [[a]]
-asList2 = map asList . asList
 
 -- Player
 type Name = String
