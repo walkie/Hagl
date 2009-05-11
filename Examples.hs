@@ -172,6 +172,9 @@ khrushchev = "Khrushchev" :::
 
 kennedy = "Kennedy" ::: mixed [(2, "Blockade"), (1, "Air Strike")]
 
+-- To run, e.g.
+-- > runGame crisis [khrushchev, kennedy] (once >> printTranscript)
+
 {-
 nuclearWar    = Payoff [-100,-100]
 nukesInCuba   = Payoff [   1,  -1]
