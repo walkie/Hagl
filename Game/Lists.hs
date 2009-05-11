@@ -61,13 +61,17 @@ turn's = undefined :: ByTurn a
 turns' = undefined :: ByTurn a
 
 class Functor d => DList d where
-  toList :: d a -> [a]
+  toList   :: d a -> [a]
+  fromList :: [a] -> d a
 instance DList ByGame where
   toList (ByGame as) = as
+  fromList = ByGame
 instance DList ByTurn where
   toList (ByTurn as) = as
+  fromList = ByTurn
 instance DList ByPlayer where
   toList (ByPlayer as) = as
+  fromList = ByPlayer
 
 toList2 :: (DList f, DList g) => f (g a) -> [[a]]
 toList2 = map toList . toList
