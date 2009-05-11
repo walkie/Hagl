@@ -25,14 +25,8 @@ location = getExecState >>= \s -> return $ info (_game s) (_location s)
 transcript :: GameMonad m mv => m (Transcript mv)
 transcript = liftM _transcript getExecState
 
-transcripts :: GameMonad m mv => m (ByGame (Transcript mv))
-transcripts = liftM _transcripts history
-
 history :: GameMonad m mv => m (History mv)
 history = liftM _history getExecState
-
-summaries :: GameMonad m mv => m (ByGame (Summary mv))
-summaries = liftM _summaries history
 
 finished :: GameMonad m mv => m Int
 finished = liftM (length . toList) history
@@ -44,16 +38,29 @@ gameNumber = liftM (+1) finished
 isFirstGame :: GameMonad m mv => m Bool
 isFirstGame = liftM (null . toList) history
 
+transcripts :: GameMonad m mv => m (ByGame (Transcript mv))
+transcripts = do ts <- liftM _transcripts history
+                 t  <- transcript
+                 return (t `mcons` ts)
+
+summary :: GameMonad m mv => m (Summary mv)
+summary = liftM2 summarize game transcript
+
+summaries :: GameMonad m mv => m (ByGame (Summary mv))
+summaries = do ss <- liftM _summaries history
+               s  <- summary
+               return (s `mcons` ss)
+
 -- All moves made by each player in each game.
 moves :: GameMonad m mv => m (ByGame (ByPlayer (ByTurn mv)))
-moves = liftM (ByGame . fst . unzip . toList) summaries
+moves = liftM (fmap _moves) summaries
 
 class (DList d, DList e) => MoveList d e where
   move :: GameMonad m mv => m (d (e mv))
 instance MoveList ByGame ByPlayer where
-  move = liftM (ByGame . map (ByPlayer . map head) . toList3) moves
+  move = liftM (fmap (fmap (head . toList))) moves
 instance MoveList ByPlayer ByTurn where
-  move = liftM fst (liftM2 summarize game transcript)
+  move = liftM _moves summary
             
 -- The last move by each player in each game.
 --move :: GameMonad m mv => m (ByGame (ByPlayer mv))
@@ -61,7 +68,7 @@ instance MoveList ByPlayer ByTurn where
 
 -- The total payoff for each player for each game.
 payoff :: GameMonad m mv => m (ByGame (ByPlayer Float))
-payoff = liftM (ByGame . snd . unzip . toList) summaries
+payoff = liftM (fmap _payoff) summaries
 
 -- The current score of each player.
 score :: GameMonad m mv => m (ByPlayer Float)
