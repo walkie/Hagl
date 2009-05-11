@@ -56,7 +56,7 @@ next ss s = ss ++ [s]
 
 -- Play a list of initial strategies, then a primary strategy thereafter.
 thereafter :: [Strategy mv s] -> Strategy mv s -> Strategy mv s
-thereafter ss s = finished >>= \n -> if n < length ss then ss !! n else s
+thereafter ss s = totalMoves >>= \n -> if n < length ss then ss !! n else s
 
 atFirstThen :: Strategy mv s -> Strategy mv s -> Strategy mv s
 atFirstThen s = thereafter [s]

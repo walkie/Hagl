@@ -1,6 +1,7 @@
 module Game.Execution.Util where
 
 import Control.Monad.State
+import Data.List
 import Game.Definition
 import Game.Execution
 import Game.Lists
@@ -19,8 +20,8 @@ summarize g t =
         addmove i a as = take i as ++ ((a:(as!!i)) : drop i as)
         payoffs (PayoffEvent vs : es) = zipWith (+) vs (payoffs es)
         payoffs (e : es) = payoffs es
-        payoffs [] = take np (repeat 0)
+        payoffs [] = replicate np 0
         moves (DecisionEvent i m : es) = addmove (i-1) m (moves es)
         moves (e : es) = moves es
-        moves [] = take np (repeat [])
+        moves [] = replicate np []
     in (ByPlayer (map ByTurn (moves t)), ByPlayer (payoffs t))

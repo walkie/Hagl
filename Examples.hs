@@ -31,7 +31,7 @@ tft = "Tit for Tat" ::: play Cooperate `atFirstThen` his (last game's move)
 --titForTat = "Tit for Tat" `plays` (Cooperate `initiallyThen` his (prev move))
 
 axelrod :: [Player Dilemma] -> IO ()
-axelrod ps = roundRobin pd ps (times 1000 >> printScore)
+axelrod ps = roundRobin pd ps (times 100 >> printScore)
 
 stately = Player "Stately Alternator" Cooperate $
   do m <- get

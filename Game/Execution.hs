@@ -99,7 +99,7 @@ update f = modify f >> get
 -- GameMonad Type Class --
 --------------------------
 
-class Monad m => GameMonad m mv | m -> mv where
+class MonadIO m => GameMonad m mv | m -> mv where
   getExecState :: m (ExecState mv)
 
 instance GameMonad (GameExec mv) mv where

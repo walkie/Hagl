@@ -23,7 +23,7 @@ inThe = flip ($)
 -- The index of the current player.
 myIx :: GameMonad m mv => m PlayerIx
 myIx = do Decision p _ <- _exactLoc
-          return (p-1)
+          return p
 
 my :: GameMonad m mv => m (ByPlayer a) -> m a
 my x = myIx >>= forPlayerM x
@@ -49,7 +49,7 @@ their x = do ByPlayer as <- x
 -- ByGame Selection
 
 this :: GameMonad m mv => ByGame a -> m (ByGame a) -> m a
-this _ = liftM (head . toList)
+this _ x = gameNumber >>= forGameOrTurnM x
 
 -- ByGameOrTurn Selection --
 
@@ -62,12 +62,34 @@ first _ = flip forGameOrTurnM 1
 firstn :: (ByGameOrTurn d, GameMonad m mv) => Int -> d a -> m (d a) -> m [a]
 firstn n _ x = mapM (forGameOrTurnM x) [n, n-1 .. 1]
 
-last :: (ByGameOrTurn d, GameMonad m mv) => d a -> m (d a) -> m a
-last _ x = finished >>= forGameOrTurnM x
+last :: (Last d, GameMonad m mv) => d a -> m (d a) -> m a
+last d x = lastGameOrTurn d >>= forGameOrTurnM x
 
-lastn :: (ByGameOrTurn d, GameMonad m mv) => Int -> d a -> m (d a) -> m [a]
-lastn n _ x = do m <- finished
-                 mapM (forGameOrTurnM x) [n, n-1 .. m]
+lastn :: (Last d, GameMonad m mv) => Int -> d a -> m (d a) -> m [a]
+lastn n d x = do m <- lastGameOrTurn d
+                 mapM (forGameOrTurnM x) (take n [m, m-1 ..])
+
+
+--
+-- These are actually accessors, but are here because they rely on selectors.
+--
+numMine :: GameMonad m mv => m (ByPlayer (ByTurn a)) -> m Int
+numMine = liftM (length . toList) . my
+
+turnNumber :: GameMonad m mv => m Int
+turnNumber = liftM (1+) (numMine (this game's moves))
+
+totalMoves :: GameMonad m mv => m Int
+totalMoves = do ms <- every game's moves
+                ns <- sequence [numMine (return m) | m <- ms]
+                return (sum ns)
+
+class ByGameOrTurn d => Last d where
+  lastGameOrTurn :: GameMonad m mv => d a -> m Int
+instance Last ByGame where
+  lastGameOrTurn _ = liftM (subtract 1) gameNumber
+instance Last ByTurn where
+  lastGameOrTurn _ = liftM (subtract 1) turnNumber
 
 -----------------------
 -- Utility Functions --
