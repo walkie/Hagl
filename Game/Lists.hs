@@ -18,15 +18,12 @@ instance Functor ByPlayer where
 instance Monoid (ByGame a) where
   mempty = ByGame []
   mappend (ByGame as) (ByGame bs) = ByGame (as ++ bs)
-  mconcat as = ByGame (concat [a | ByGame a <- as])
 instance Monoid (ByTurn a) where
   mempty = ByTurn []
   mappend (ByTurn as) (ByTurn bs) = ByTurn (as ++ bs)
-  mconcat as = ByTurn (concat [a | ByTurn a <- as])
 instance Monoid (ByPlayer a) where
   mempty = ByPlayer []
   mappend (ByPlayer as) (ByPlayer bs) = ByPlayer (as ++ bs)
-  mconcat as = ByPlayer (concat [a | ByPlayer a <- as])
 
 forGame :: ByGame a -> Int -> a
 forGame (ByGame as) i = as !! (length as - i)
