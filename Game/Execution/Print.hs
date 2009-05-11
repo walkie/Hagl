@@ -27,7 +27,7 @@ printStrLn :: MonadIO m => String -> m ()
 printStrLn = liftIO . putStrLn
 
 printTranscript :: (MonadIO m, GameMonad m mv, Show mv) => m ()
-printTranscript = do n <- numGames
+printTranscript = do n <- finished
                      sequence_ $ map printTranscriptOfGame [1..n]
 
 printTranscriptOfGame :: (MonadIO m, GameMonad m mv, Show mv) => Int -> m ()
@@ -42,7 +42,7 @@ printTranscriptOfGame n =
         in printStr $ unlines $ map event t
 
 printSummaries :: (MonadIO m, GameMonad m mv, Show mv) => m ()
-printSummaries = do n <- numGames
+printSummaries = do n <- finished
                     sequence_ $ map printSummaryOfGame [1..n]
 
 printSummaryOfGame :: (MonadIO m, GameMonad m mv, Show mv) => Int -> m ()

@@ -58,10 +58,10 @@ firstn :: (ByGameOrTurn d, GameMonad m mv) => Int -> d a -> m (d a) -> m [a]
 firstn n _ x = mapM (forGameOrTurnM x) [n, n-1 .. 1]
 
 last :: (ByGameOrTurn d, GameMonad m mv) => d a -> m (d a) -> m a
-last _ x = numGames >>= forGameOrTurnM x
+last _ x = finished >>= forGameOrTurnM x
 
 lastn :: (ByGameOrTurn d, GameMonad m mv) => Int -> d a -> m (d a) -> m [a]
-lastn n _ x = do m <- numGames
+lastn n _ x = do m <- finished
                  mapM (forGameOrTurnM x) [n, n-1 .. m]
 
 -----------------------

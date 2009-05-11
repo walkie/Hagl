@@ -28,8 +28,11 @@ transcript = liftM _transcript getExecState
 history :: GameMonad m mv => m (History mv)
 history = liftM _history getExecState
 
-numGames :: GameMonad m mv => m Int
-numGames = liftM (length . toList) history
+finished :: GameMonad m mv => m Int
+finished = liftM (length . toList) history
+
+gameNumber :: GameMonad m mv => m Int
+gameNumber = liftM (+1) finished
 
 -- True if this is the first iteration in this execution instance.
 isFirstGame :: GameMonad m mv => m Bool

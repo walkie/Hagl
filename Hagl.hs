@@ -28,7 +28,7 @@ module Hagl (
   play, pure, randomly, randomlyFrom, mixed, periodic, minimax,
   atFirstThen, thereafter,
   -- Game.Strategy.Accessor
-  game, players, location, transcript, history, numGames,
+  game, players, location, transcript, history, finished, gameNumber,
   isFirstGame, transcripts, summaries, moves, move, payoff, score,
   -- Game.Strategy.Selector
   each, inThe, 
