@@ -2,10 +2,31 @@
 module Game.Lists where
 
 import Control.Monad
+import Data.Monoid
 
 data ByGame a = ByGame [a] deriving (Eq, Show)
 data ByTurn a = ByTurn [a] deriving (Eq, Show)
 data ByPlayer a = ByPlayer [a] deriving (Eq, Show)
+
+instance Functor ByGame where
+  fmap f (ByGame as) = ByGame (map f as)
+instance Functor ByTurn where
+  fmap f (ByTurn as) = ByTurn (map f as)
+instance Functor ByPlayer where
+  fmap f (ByPlayer as) = ByPlayer (map f as)
+
+instance Monoid (ByGame a) where
+  mempty = ByGame []
+  mappend (ByGame as) (ByGame bs) = ByGame (as ++ bs)
+  mconcat as = ByGame (concat [a | ByGame a <- as])
+instance Monoid (ByTurn a) where
+  mempty = ByTurn []
+  mappend (ByTurn as) (ByTurn bs) = ByTurn (as ++ bs)
+  mconcat as = ByTurn (concat [a | ByTurn a <- as])
+instance Monoid (ByPlayer a) where
+  mempty = ByPlayer []
+  mappend (ByPlayer as) (ByPlayer bs) = ByPlayer (as ++ bs)
+  mconcat as = ByPlayer (concat [a | ByPlayer a <- as])
 
 forGame :: ByGame a -> Int -> a
 forGame (ByGame as) i = as !! (length as - i)
@@ -41,13 +62,6 @@ games' = undefined :: ByGame a
 turn   = undefined :: ByTurn a
 turn's = undefined :: ByTurn a
 turns' = undefined :: ByTurn a
-
-instance Functor ByGame where
-  fmap f (ByGame as) = ByGame (map f as)
-instance Functor ByTurn where
-  fmap f (ByTurn as) = ByTurn (map f as)
-instance Functor ByPlayer where
-  fmap f (ByPlayer as) = ByPlayer (map f as)
 
 class Functor d => DList d where
   toList :: d a -> [a]
