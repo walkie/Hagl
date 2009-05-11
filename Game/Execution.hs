@@ -21,6 +21,13 @@ data ExecState mv = ExecState {
 
 -- History
 type History mv = ByGame (Transcript mv, Summary mv)
+type Transcript mv = [Event mv]
+type Summary mv = (ByPlayer (ByTurn mv), ByPlayer Float)
+
+data Event mv = DecisionEvent PlayerIx mv
+              | ChanceEvent Int
+              | PayoffEvent [Float]
+              deriving (Eq, Show)
 
 _transcripts :: History mv -> ByGame (Transcript mv)
 _transcripts = fmap fst
@@ -28,20 +35,11 @@ _transcripts = fmap fst
 _summaries :: History mv -> ByGame (Summary mv)
 _summaries = fmap snd
 
-type Transcript mv = [Event mv]
-
-type Summary mv = (ByPlayer (ByTurn mv), ByPlayer Float)
-
 _moves :: Summary mv -> ByPlayer (ByTurn mv)
 _moves = fst
 
 _payoff :: Summary mv -> ByPlayer Float
 _payoff = snd
-
-data Event mv = DecisionEvent PlayerIx mv
-              | ChanceEvent Int
-              | PayoffEvent [Float]
-              deriving (Eq, Show)
 
 -- Player
 type Name = String
