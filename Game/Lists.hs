@@ -25,6 +25,9 @@ instance Monoid (ByPlayer a) where
   mempty = ByPlayer []
   mappend (ByPlayer as) (ByPlayer bs) = ByPlayer (as ++ bs)
 
+mcons :: (DList d, Monoid (d a)) => a -> d a -> d a
+mcons a = mappend (fromList [a])
+
 forGame :: ByGame a -> Int -> a
 forGame (ByGame as) i = as !! (length as - i)
 
