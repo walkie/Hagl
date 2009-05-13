@@ -66,10 +66,6 @@ instance MoveList ByGame ByPlayer where
 instance MoveList ByPlayer ByTurn where
   move = liftM _moves summary
             
--- The last move by each player in each game.
---move :: GameMonad m mv => m (ByGame (ByPlayer mv))
---move = liftM (ByGame . map (ByPlayer . map head) . toList3) moves
-
 -- The total payoff for each player for each game.
 payoff :: GameMonad m mv => m (ByGame (ByPlayer Float))
 payoff = liftM (fmap _payoff) summaries
