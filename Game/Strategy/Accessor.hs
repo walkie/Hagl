@@ -19,6 +19,9 @@ game = liftM _game getExecState
 players :: GameMonad m mv => m [Player mv]
 players = liftM _players getExecState
 
+numMoves :: GameMonad m mv => m (ByPlayer Int)
+numMoves = liftM _numMoves getExecState
+
 location :: GameMonad m mv => m (InfoGroup mv)
 location = getExecState >>= \s -> return $ info (_game s) (_location s)
 

@@ -14,6 +14,7 @@ import Game.Lists
 data ExecState mv = ExecState {
     _game       :: Game mv,       -- game definition
     _players    :: [Player mv],   -- players active in game
+    _numMoves   :: ByPlayer Int,  -- number of moves played by each player
     _location   :: GameTree mv,   -- current node in game tree
     _transcript :: Transcript mv, -- events so far this game (newest at head)
     _history    :: History mv     -- a summary of each game

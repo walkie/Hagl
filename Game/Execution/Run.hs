@@ -29,8 +29,10 @@ step = get >>= \state ->
     let t = _location state in case t of
       Decision t next ->
         let (ph, (p:pt)) = splitAt (t-1) $ _players state 
+            (nh, (n:nt)) = splitAt (t-1) $ toList (_numMoves state)
         in do (m, p') <- runStrategy p
               put state { _players = ph ++ p' : pt,
+                          _numMoves = ByPlayer (nh ++ n+1 : nt),
                           _location = fromMaybe (error ("No such move: " ++ show m)) 
                                                 (lookup m next),
                           _transcript = DecisionEvent t m : _transcript state }
@@ -62,5 +64,5 @@ times n = once >> times (n-1)
 ---------------
 
 initState :: Game mv -> [Player mv] -> ExecState mv
-initState game ps = ExecState game ps (tree game) [] (ByGame [])
-
+initState game ps = ExecState game ps ms (tree game) [] (ByGame [])
+  where ms = ByPlayer (replicate (length ps) 0)

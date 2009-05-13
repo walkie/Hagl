@@ -42,11 +42,11 @@ mixed = randomlyFrom . expandDist
 
 -- Perform some pattern of moves periodically.
 periodic :: [mv] -> Strategy mv s
-periodic ms = numMoves >>= \n -> return $ ms !! mod n (length ms)
+periodic ms = my numMoves >>= \n -> return $ ms !! mod n (length ms)
 
 -- Play a list of initial strategies, then a primary strategy thereafter.
 thereafter :: [Strategy mv s] -> Strategy mv s -> Strategy mv s
-thereafter ss s = numMoves >>= \n -> if n < length ss then ss !! n else s
+thereafter ss s = my numMoves >>= \n -> if n < length ss then ss !! n else s
 
 atFirstThen :: Strategy mv s -> Strategy mv s -> Strategy mv s
 atFirstThen s = thereafter [s]
@@ -80,9 +80,3 @@ infinity = 1/0
 
 maxIndex :: (Ord a) => [a] -> Int
 maxIndex as = fromJust $ elemIndex (maximum as) as
-
-numMoves :: GameMonad m mv => m Int
-numMoves = do ms <- every game's moves
-              ns <- sequence [numMine (return m) | m <- ms]
-              return (sum ns)
-
