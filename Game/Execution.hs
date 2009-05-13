@@ -64,8 +64,8 @@ instance Ord (Player mv) where
 -- Game Execution and Strategy Monads --
 ----------------------------------------
 
-data GameExec mv a = GameExec { unG :: StateT (ExecState mv) IO a }
-data StratExec mv s a = StratExec { unS :: StateT s (GameExec mv) a }
+newtype GameExec mv a = GameExec { unG :: StateT (ExecState mv) IO a }
+newtype StratExec mv s a = StratExec { unS :: StateT s (GameExec mv) a }
 type Strategy mv s = StratExec mv s mv
 
 -- GameExec instances
