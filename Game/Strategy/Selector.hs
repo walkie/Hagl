@@ -79,11 +79,6 @@ numMine = liftM (length . toList) . my
 turnNumber :: GameMonad m mv => m Int
 turnNumber = liftM (1+) (numMine (this game's moves))
 
-totalMoves :: GameMonad m mv => m Int
-totalMoves = do ms <- every game's moves
-                ns <- sequence [numMine (return m) | m <- ms]
-                return (sum ns)
-
 class ByGameOrTurn d => Last d where
   lastGameOrTurn :: GameMonad m mv => d a -> m Int
 instance Last ByGame where
