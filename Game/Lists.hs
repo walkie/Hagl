@@ -4,9 +4,9 @@ module Game.Lists where
 import Control.Monad
 import Data.Monoid
 
-data ByGame a = ByGame [a] deriving (Eq, Show)
-data ByTurn a = ByTurn [a] deriving (Eq, Show)
-data ByPlayer a = ByPlayer [a] deriving (Eq, Show)
+newtype ByGame a = ByGame [a] deriving (Eq, Show)
+newtype ByTurn a = ByTurn [a] deriving (Eq, Show)
+newtype ByPlayer a = ByPlayer [a] deriving (Eq, Show)
 
 instance Functor ByGame where
   fmap f (ByGame as) = ByGame (map f as)
