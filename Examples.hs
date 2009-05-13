@@ -28,7 +28,7 @@ rr = "Russian Roulette" ::: mixed [(5, Cooperate), (1, Defect)]
 tft = "Tit for Tat" ::: play Cooperate `atFirstThen` his (last game's move)
 
 axelrod :: [Player Dilemma] -> IO ()
-axelrod ps = roundRobin pd ps (times 100 >> printScore)
+axelrod ps = roundRobin pd ps (times 1000 >> printScore)
 
 stately = Player "Stately Alternator" Cooperate $
   do m <- get
