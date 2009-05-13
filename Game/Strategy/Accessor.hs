@@ -61,7 +61,8 @@ moves = liftM (fmap _moves) summaries
 class (DList d, DList e) => MoveList d e where
   move :: GameMonad m mv => m (d (e mv))
 instance MoveList ByGame ByPlayer where
-  move = liftM (fmap (fmap (head . toList))) moves
+  move = do ByGame ms <- moves
+            return $ ByGame [fmap (head . toList) m | m <- tail ms]
 instance MoveList ByPlayer ByTurn where
   move = liftM _moves summary
             
