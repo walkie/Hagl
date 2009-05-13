@@ -17,7 +17,7 @@ randomIndex as = liftIO $ getStdRandom $ randomR (0, length as - 1)
 summarize :: Game mv -> Transcript mv -> Summary mv
 summarize g t = 
     let np = numPlayers g
-        addmove i a as = take i as ++ ((a:(as!!i)) : drop i as)
+        addmove i a as = let (h,ai:t) = splitAt i as in h ++ ai : t
         payoffs (PayoffEvent vs : es) = zipWith (+) vs (payoffs es)
         payoffs (e : es) = payoffs es
         payoffs [] = replicate np 0
