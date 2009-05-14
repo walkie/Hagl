@@ -25,7 +25,7 @@ instance Monoid (ByPlayer a) where
   mempty = ByPlayer []
   mappend (ByPlayer as) (ByPlayer bs) = ByPlayer (as ++ bs)
 
-mcons :: (DList d, Monoid (d a)) => a -> d a -> d a
+mcons :: (ByX d, Monoid (d a)) => a -> d a -> d a
 mcons a = mappend (fromList [a])
 
 forGame :: ByGame a -> Int -> a
@@ -46,7 +46,7 @@ forTurnM l i = liftM (flip forTurn i) l
 forPlayerM :: Monad m => m (ByPlayer a) -> Int -> m a
 forPlayerM l i = liftM (flip forPlayer i) l
 
-class DList d => ByGameOrTurn d where
+class ByX d => ByGameOrTurn d where
   forGameOrTurn  :: d a -> Int -> a
   forGameOrTurnM :: Monad m => m (d a) -> Int -> m a
 instance ByGameOrTurn ByGame where
@@ -63,21 +63,21 @@ turn   = undefined :: ByTurn a
 turn's = undefined :: ByTurn a
 turns' = undefined :: ByTurn a
 
-class Functor d => DList d where
+class Functor d => ByX d where
   toList   :: d a -> [a]
   fromList :: [a] -> d a
-instance DList ByGame where
+instance ByX ByGame where
   toList (ByGame as) = as
   fromList = ByGame
-instance DList ByTurn where
+instance ByX ByTurn where
   toList (ByTurn as) = as
   fromList = ByTurn
-instance DList ByPlayer where
+instance ByX ByPlayer where
   toList (ByPlayer as) = as
   fromList = ByPlayer
 
-toList2 :: (DList f, DList g) => f (g a) -> [[a]]
+toList2 :: (ByX f, ByX g) => f (g a) -> [[a]]
 toList2 = map toList . toList
 
-toList3 :: (DList f, DList g, DList h) => f (g (h a)) -> [[[a]]]
+toList3 :: (ByX f, ByX g, ByX h) => f (g (h a)) -> [[[a]]]
 toList3 = map toList2 . toList

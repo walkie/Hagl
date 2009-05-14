@@ -58,7 +58,7 @@ summaries = do ss <- liftM _summaries history
 moves :: GameMonad m mv => m (ByGame (ByPlayer (ByTurn mv)))
 moves = liftM (fmap _moves) summaries
 
-class (DList d, DList e) => MoveList d e where
+class (ByX d, ByX e) => MoveList d e where
   move :: GameMonad m mv => m (d (e mv))
 instance MoveList ByGame ByPlayer where
   move = do ByGame ms <- moves
