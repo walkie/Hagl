@@ -12,8 +12,8 @@ import Game.Strategy.Accessor
 --------------------
 
 -- Apply selection to each element of a list.
-each :: Monad m => (m a -> m b) -> m [a] -> m [b]
-each f xs = mapM (f . return) =<< xs
+eachAnd :: Monad m => (m a -> m b) -> m [a] -> m [b]
+eachAnd f xs = mapM (f . return) =<< xs
 
 -- Apply list selectors in reverse order.
 inThe = flip ($)

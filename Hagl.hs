@@ -31,7 +31,7 @@ module Hagl (
   game, players, location, transcript, history, finished, gameNumber,
   isFirstGame, transcripts, summaries, moves, move, payoff, score,
   -- Game.Strategy.Selector
-  each, inThe, 
+  eachAnd, inThe, 
   myIx, my, his, her, our, their,
   this, every, first, firstn, last, lastn,
   -- Game.Util

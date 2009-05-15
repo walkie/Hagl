@@ -45,17 +45,17 @@ suspicious = "Suspicious Tit-for-Tat" ::: play Defect `atFirstThen` his (last ga
 
 -- Tit-for-Tat that only defects after two defects in a row.
 titForTwoTats = "Tit-for-Two-Tats" :::
-    do ms <- his `each` lastn 2 games' move
+    do ms <- his `eachAnd` lastn 2 games' move
        return $ if ms == [Defect, Defect] then Defect else Cooperate
 
 -- The Grim Trigger: Cooperates until opponent defects, then defects forever.
 grim = "Grim Trigger" :::
-    do ms <- his `each` every game's move
-       return $ if Defect `elem` ms then Defect else Cooperate
+    do ms <- her `eachAnd` every games' move
+       if Defect `elem` ms then play Defect else play Cooperate
 
 grim' = Player "Stately Grim" False $ 
   play Cooperate `atFirstThen`
-  do m <- his (last game's move)
+  do m <- her (last game's move)
      triggered <- update (|| m == Defect)
      if triggered then play Defect else play Cooperate
 
@@ -106,7 +106,7 @@ pavlov = "Pavlov" :::
 
 -- Play the move that will beat the move the opponent has played most.
 frequency = "Huckleberry" :::
-    do ms <- his `each` every game's move
+    do ms <- her `eachAnd` every games' move
        let r = length $ filter (Rock ==) ms
            p = length $ filter (Paper ==) ms
            s = length $ filter (Scissors ==) ms
