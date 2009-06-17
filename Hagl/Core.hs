@@ -53,16 +53,16 @@ type MoveSummary g = ByPlayer (ByTurn (Move g))
 type Summary g     = (MoveSummary g, Maybe Payoff)
 type History g     = ByGame (Transcript g, Summary g)
 
-_transcripts :: History g -> ByGame (Transcript g)
+_transcripts :: Game g => History g -> ByGame (Transcript g)
 _transcripts = fmap fst
 
 _summaries :: History g -> ByGame (Summary g)
 _summaries = fmap snd
 
-_moves :: Summary g -> ByPlayer (ByTurn (Move g))
+--_moves :: Summary g -> ByPlayer (ByTurn (Move g))
 _moves = fst
 
-_payoff :: Summary g -> Payoff
+--_payoff :: Summary g -> Payoff
 _payoff = fromMaybe e . snd
   where e = error "Incomplete game does not have a payoff!"
 
@@ -72,8 +72,8 @@ _payoff = fromMaybe e . snd
 
 type Name = String
 
-data Player g = forall s. Player Name s (Strategy g s)
-              | Name ::: Strategy g ()
+data Player g = forall s. Player Name s (Strategy s g)
+              | Name ::: Strategy () g
 
 infix 0 :::
 
@@ -93,11 +93,14 @@ instance Ord (Player g) where
 -----------------------------------
 
 data ExecM g a = ExecM { unE :: StateT (Exec g) IO a }
-data StratM g s a = StratM { unS :: StateT s (ExecM g) a }
-type Strategy g s = StratM g s (Move g)
+data StratM s g a = StratM { unS :: StateT s (ExecM g) a }
+type Strategy s g = StratM s g (Move g)
 
-class (Monad m, MonadIO m) => GameM m g | m -> g where
+class (Game g, Monad m, MonadIO m) => GameM m g | m -> g where
   getExec :: m (Exec g)
+
+liftG :: GameM m g => (a -> r) -> m a -> m r
+liftG = liftM
 
 update :: MonadState s m => (s -> s) -> m s
 update f = modify f >> get
@@ -124,22 +127,22 @@ instance MonadState (Exec g) (ExecM g) where
 instance MonadIO (ExecM g) where
   liftIO = ExecM . liftIO
 
-instance GameM (ExecM g) g where
+instance Game g => GameM (ExecM g) g where
   getExec = ExecM get
 
 -- StratM instances
-instance Monad (StratM g s) where
+instance Monad (StratM s g) where
   return = StratM . return
   (StratM x) >>= f = StratM (x >>= unS . f)
 
-instance MonadState s (StratM g s) where
+instance MonadState s (StratM s g) where
   get = StratM get
   put = StratM . put
 
-instance MonadIO (StratM g s) where
+instance MonadIO (StratM s g) where
   liftIO = StratM . liftIO
 
-instance GameM (StratM g s) g where
+instance Game g => GameM (StratM s g) g where
   getExec = StratM (lift getExec)
 
 debug :: MonadIO m => String -> m ()
