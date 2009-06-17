@@ -1,8 +1,51 @@
+module Hagl.Lists where
 
-module Game.Lists where
+import Control.Monad       (liftM)
+import Control.Monad.Trans (MonadIO(..))
+import Data.List           (nub, sort)
+import Data.Monoid         (Monoid(..))
+import System.Random       (randomRIO)
 
-import Control.Monad
-import Data.Monoid
+----------------------------
+-- List Utility Functions --
+----------------------------
+
+cross :: [[a]] -> [[a]]
+cross (xs:xss) = [y:ys | y <- xs, ys <- cross xss]
+cross [] = [[]]
+
+ucross :: (Ord a) => [[a]] -> [[a]]
+ucross = nub . map sort . cross
+
+-- Break a list into n-sized chunks.
+chunk :: Int -> [a] -> [[a]]
+chunk _ [] = []
+chunk n l = take n l : chunk n (drop n l)
+
+randomIndex :: MonadIO m => [a] -> m Int
+randomIndex as = liftIO $ randomRIO (0, length as - 1)
+
+-- Pick an element randomly from a list.
+randomlyFrom :: MonadIO m => [a] -> m a
+randomlyFrom as = liftM (as !!) (randomIndex as)
+
+-------------------
+-- Distributions --
+-------------------
+-- Maybe replace with Martin's probability package?
+
+type Dist a = [(Int, a)]
+
+expandDist :: Dist a -> [a]
+expandDist d = concat [replicate i a | (i, a) <- d]
+
+-- Pick an element randomly from a distribution
+fromDist :: MonadIO m => Dist a -> m a
+fromDist = randomlyFrom . expandDist
+
+-----------------------
+-- Dimensioned Lists --
+-----------------------
 
 newtype ByGame a = ByGame [a] deriving (Eq, Show)
 newtype ByTurn a = ByTurn [a] deriving (Eq, Show)
@@ -81,3 +124,9 @@ toList2 = map toList . toList
 
 toList3 :: (ByX f, ByX g, ByX h) => f (g (h a)) -> [[[a]]]
 toList3 = map toList2 . toList
+
+dcross :: ByX f => f [a] -> [f a]
+dcross = map fromList . cross . toList
+
+dzipWith :: ByX f => (a -> b -> c) -> f a -> f b -> f c
+dzipWith f as bs = fromList (zipWith f (toList as) (toList bs))
