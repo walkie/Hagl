@@ -119,6 +119,9 @@ instance ByX ByPlayer where
   toList (ByPlayer as) = as
   fromList = ByPlayer
 
+inList :: ByX f => ([a] -> [b]) -> f a -> f b
+inList f = fromList . f . toList
+
 toList2 :: (ByX f, ByX g) => f (g a) -> [[a]]
 toList2 = map toList . toList
 
