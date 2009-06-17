@@ -1,10 +1,11 @@
 {-# OPTIONS_GHC -fglasgow-exts #-}
 
 -- This module contains stuff that almost every Hagl file will need to import.
-module Hagl.Core where
+module Hagl.Core (module Hagl.Core, module Hagl.List) where
 
 import Control.Monad.State hiding (State)
 import Data.Function (on)
+import Data.Maybe    (fromMaybe)
 
 import Hagl.List
 
@@ -44,8 +45,9 @@ initExec g ps = Exec g ps (initState g) Nothing [] (ByGame []) ms
 type Moved g      = (Maybe PlayerIx, Move g)
 type Transcript g = [Moved g]
 
-type History g = ByGame (Transcript g, Summary g)
-type Summary g = (ByPlayer (ByTurn (Move g)), Payoff)
+type MoveSummary g = ByPlayer (ByTurn (Move g))
+type Summary g     = (MoveSummary g, Maybe Payoff)
+type History g     = ByGame (Transcript g, Summary g)
 
 _transcripts :: History g -> ByGame (Transcript g)
 _transcripts = fmap fst
@@ -56,8 +58,9 @@ _summaries = fmap snd
 _moves :: Summary g -> ByPlayer (ByTurn (Move g))
 _moves = fst
 
-_payoff :: Summary g -> ByPlayer Float
-_payoff = snd
+_payoff :: Summary g -> Payoff
+_payoff = fromMaybe e . snd
+  where e = error "Incomplete game does not have a payoff!"
 
 -------------
 -- Players --
