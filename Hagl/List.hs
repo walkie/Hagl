@@ -1,4 +1,4 @@
-module Hagl.Lists where
+module Hagl.List where
 
 import Control.Monad       (liftM)
 import Control.Monad.Trans (MonadIO(..))
