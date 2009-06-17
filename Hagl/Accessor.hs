@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fglasgow-exts #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Hagl.Accessor where
 

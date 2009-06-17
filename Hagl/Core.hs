@@ -1,4 +1,8 @@
-{-# OPTIONS_GHC -fglasgow-exts #-}
+{-# LANGUAGE ExistentialQuantification, 
+             FlexibleInstances, 
+             FunctionalDependencies,
+             MultiParamTypeClasses, 
+             TypeFamilies #-}
 
 -- This module contains stuff that almost every Hagl file will need to import.
 module Hagl.Core (module Hagl.Core, module Hagl.List) where
