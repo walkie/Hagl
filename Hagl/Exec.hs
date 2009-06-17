@@ -1,14 +1,13 @@
-module Game.Execution.Tournament where
+{-# OPTIONS_GHC -fglasgow-exts #-}
+
+module Hagl.Exec where
 
 import Control.Monad.State
 import Data.List
-import Game.Definition
-import Game.Execution
-import Game.Execution.Run
-import Game.Execution.Util
-import Game.Strategy
-import Game.Strategy.Accessor
-import Game.Strategy.Selector
+
+import Hagl.Core
+import Hagl.Accessor
+import Hagl.Print
 
 -- Run a game with each successive collection of players. Aggregate the scores
 -- of all Players (based on name) and print the final scores.
