@@ -33,7 +33,7 @@ class Game g where
 -- Game Execution State
 data Exec g = Exec {
   _game       :: g,                   -- game definition
-  _players    :: [Player g],          -- players active in game
+  _players    :: ByPlayer (Player g), -- players active in game
   _gameState  :: State g,             -- the current state of the game
   _playerIx   :: Maybe PlayerIx,      -- the index of the currently deciding player
   _transcript :: Transcript (Move g), -- moves so far this iteration (newest at head)
@@ -42,7 +42,7 @@ data Exec g = Exec {
 }
 
 initExec :: Game g => g -> [Player g] -> Exec g
-initExec g ps = Exec g ps (initState g) Nothing [] (ByGame []) ms
+initExec g ps = Exec g (ByPlayer ps) (initState g) Nothing [] (ByGame []) ms
   where ms = ByPlayer (replicate (length ps) 0)
 
 -- History

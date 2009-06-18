@@ -19,7 +19,7 @@ import Hagl.Core
 game :: GameM m g => m g
 game = liftM _game getExec
 
-players :: GameM m g => m [Player g]
+players :: GameM m g => m (ByPlayer (Player g))
 players = liftM _players getExec
 
 gameState :: GameM m g => m (State g)
@@ -48,11 +48,11 @@ myIx = liftM (fromMaybe e) playerIx
 
 -- The number of players playing the game.
 numPlayers :: GameM m g => m Int
-numPlayers = liftM length players
+numPlayers = liftM dlength players
 
 -- The number of completed games.
 numGames :: GameM m g => m Int
-numGames = liftM (length . toList) history
+numGames = liftM dlength history
 
 -- The current game number.
 gameNumber :: GameM m g => m Int
@@ -66,7 +66,7 @@ isFirstGame = liftM (>1) gameNumber
 transcripts :: GameM m g => m (ByGame (Transcript (Move g)))
 transcripts = do ts <- liftM _transcripts history
                  t  <- transcript
-                 return (t `mcons` ts)
+                 return (t `dcons` ts)
 
 -- MoveSummary of the current (incomplete) game.
 moveSummary :: GameM m g => m (MoveSummary (Move g))
@@ -84,7 +84,7 @@ summary = do ms <- moveSummary
 summaries :: GameM m g => m (ByGame (Summary (Move g)))
 summaries = do ss <- liftM _summaries history
                s  <- summary
-               return (s `mcons` ss)
+               return (s `dcons` ss)
 
 -- All moves made by each player in each game.
 moves :: GameM m g => m (ByGame (MoveSummary (Move g)))

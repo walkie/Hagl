@@ -68,9 +68,6 @@ instance Monoid (ByPlayer a) where
   mempty = ByPlayer []
   mappend (ByPlayer as) (ByPlayer bs) = ByPlayer (as ++ bs)
 
-mcons :: (ByX d, Monoid (d a)) => a -> d a -> d a
-mcons a = mappend (fromList [a])
-
 forGame :: ByGame a -> Int -> a
 forGame (ByGame as) i = as !! (length as - i)
 
@@ -119,14 +116,20 @@ instance ByX ByPlayer where
   toList (ByPlayer as) = as
   fromList = ByPlayer
 
-inList :: ByX f => ([a] -> [b]) -> f a -> f b
-inList f = fromList . f . toList
-
 toList2 :: (ByX f, ByX g) => f (g a) -> [[a]]
 toList2 = map toList . toList
 
 toList3 :: (ByX f, ByX g, ByX h) => f (g (h a)) -> [[[a]]]
 toList3 = map toList2 . toList
+
+inList :: ByX f => ([a] -> [b]) -> f a -> f b
+inList f = fromList . f . toList
+
+dcons :: ByX f => a -> f a -> f a
+dcons a = inList (a:)
+
+dlength :: ByX f => f a -> Int
+dlength = length . toList
 
 dcross :: ByX f => f [a] -> [f a]
 dcross = map fromList . cross . toList
