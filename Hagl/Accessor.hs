@@ -28,10 +28,10 @@ gameState = liftM _gameState getExec
 playerIx :: GameM m g => m (Maybe PlayerIx)
 playerIx = liftM _playerIx getExec
 
-transcript :: GameM m g => m (Transcript g)
+transcript :: GameM m g => m (Transcript (Move g))
 transcript = liftM _transcript getExec
 
-history :: GameM m g => m (History g)
+history :: GameM m g => m (History (Move g))
 history = liftM _history getExec
 
 numMoves :: GameM m g => m (ByPlayer Int)
@@ -63,43 +63,32 @@ isFirstGame :: GameM m g => m Bool
 isFirstGame = liftM (>1) gameNumber
 
 -- Transcript of each game.
-transcripts :: GameM m g => m (ByGame (Transcript g))
-{-
+transcripts :: GameM m g => m (ByGame (Transcript (Move g)))
 transcripts = do ts <- liftM _transcripts history
                  t  <- transcript
                  return (t `mcons` ts)
--}
-transcripts = do h <- history
-                 t <- transcript
-                 return (inList ((t:) . map fst) h)
 
 -- MoveSummary of the current (incomplete) game.
-moveSummary :: GameM m g => m (MoveSummary g)
+moveSummary :: GameM m g => m (MoveSummary (Move g))
 moveSummary = do np <- numPlayers
                  t  <- transcript
                  (return . ByPlayer . map (forp t)) [1..np]
   where forp t i = ByTurn [mv | (mi,mv) <- t, mi == Just i]
 
 -- Summary of the current (incomplete) game.
-summary :: GameM m g => m (Summary g)
+summary :: GameM m g => m (Summary (Move g))
 summary = do ms <- moveSummary 
              return (ms, Nothing)
 
 -- Summary of each game.
-summaries :: GameM m g => m (ByGame (Summary g))
-{-
+summaries :: GameM m g => m (ByGame (Summary (Move g)))
 summaries = do ss <- liftM _summaries history
                s  <- summary
                return (s `mcons` ss)
--}
-summaries = do h <- history
-               s <- summary
-               return (inList ((s:) . map snd) h)
 
 -- All moves made by each player in each game.
-moves :: GameM m g => m (ByGame (ByPlayer (ByTurn (Move g))))
-moves = liftM (inList (map fst)) summaries
---moves = liftM (fmap _moves) summaries
+moves :: GameM m g => m (ByGame (MoveSummary (Move g)))
+moves = liftM (fmap _moves) summaries
 
 class (ByX d, ByX e) => MoveList d e where
   move :: GameM m g => m (d (e (Move g)))
