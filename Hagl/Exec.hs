@@ -52,7 +52,7 @@ runGames g pss f =
 -- Run a tournament where all combinations of players are played
 -- where player 1 comes from list 1, player 2 from list 2, etc.
 tournament :: (Game g, Show (Move g)) => g -> [[Player g]] -> ExecM g a -> IO ()
-tournament g pss = runGames g (cross pss)
+tournament g = runGames g . cross
 
 -- Run a tournament where all orders of all players are played 
 -- (including against selves).
