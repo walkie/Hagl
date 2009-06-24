@@ -1,24 +1,21 @@
-module Game.Execution.Print where
+{-# LANGUAGE FlexibleContexts #-}
+module Hagl.Print where
 
 import Control.Monad.State
 import Data.List
-import Game.Definition
-import Game.Execution
-import Game.Execution.Util
-import Game.Lists
-import Game.Strategy
-import Game.Strategy.Accessor
-import Game.Strategy.Selector
+
+import Hagl.Core
+import Hagl.Accessor
 
 ------------------------
 -- Printing Functions --
 ------------------------
 
 print :: (MonadIO m, Show a) => m a -> m ()
-print = (>>= liftIO . putStr . show)
+print = (>>= printStr . show)
 
 printLn :: (MonadIO m, Show a) => m a -> m ()
-printLn = (>>= liftIO . putStrLn . show)
+printLn = (>>= printStrLn . show)
 
 printStr :: MonadIO m => String -> m ()
 printStr = liftIO . putStr
@@ -26,36 +23,62 @@ printStr = liftIO . putStr
 printStrLn :: MonadIO m => String -> m ()
 printStrLn = liftIO . putStrLn
 
-printTranscript :: (MonadIO m, GameMonad m mv, Show mv) => m ()
-printTranscript = do n <- finished
-                     sequence_ $ map printTranscriptOfGame [1..n]
+-- Print transcript of the last game.
+printTranscript :: (GameM m g, Show (Move g)) => m ()
+printTranscript = numGames >>= printTranscriptOfGame
 
-printTranscriptOfGame :: (MonadIO m, GameMonad m mv, Show mv) => Int -> m ()
-printTranscriptOfGame n =
-    do ByGame ts <- transcripts
-       ps <- players
-       printStrLn $ "Game "++show n++":"
-       let t = reverse $ ts !! (length ts - n)
-           event (DecisionEvent i m) = "  " ++ show (ps !! (i-1)) ++ "'s move: " ++ show m
-           event (ChanceEvent i) = "  Chance: " ++ show i
-           event (PayoffEvent vs) = "  Payoff: " ++ show vs
-        in printStr $ unlines $ map event t
+-- Print transcripts of completed games.
+printTranscripts :: (GameM m g, Show (Move g)) => m ()
+printTranscripts = do n <- numGames
+                      mapM_ printTranscriptOfGame [1..n]
 
-printSummaries :: (MonadIO m, GameMonad m mv, Show mv) => m ()
-printSummaries = do n <- finished
-                    sequence_ $ map printSummaryOfGame [1..n]
+-- Print Transcript of the given game.
+printTranscriptOfGame :: (GameM m g, Show (Move g)) => Int -> m ()
+printTranscriptOfGame n = do
+    printStrLn $ "Game " ++ show n ++ ":"
+    -- print the transcript
+    t  <- transcripts `forGameM` n
+    ps <- players
+    let mv (Just i,  m) = "  " ++ show (ps `forPlayer` i) ++ "'s move: " ++ show m
+        mv (Nothing, m) = "  Chance: " ++ show m
+     in (printStr . unlines . map mv) (reverse t)
+    -- maybe print the payoff
+    p <- payoff `forGameM` n
+    this <- gameNumber
+    if this == n then return ()
+                 else printStrLn $ "  Payoff: " ++ show (toList p)
 
-printSummaryOfGame :: (MonadIO m, GameMonad m mv, Show mv) => Int -> m ()
+-- Print summary of the last game.
+printSummary :: (GameM m g, Show (Move g)) => m ()
+printSummary = numGames >>= printSummaryOfGame
+
+-- Print summary of every completed game.
+printSummaries :: (GameM m g, Show (Move g)) => m ()
+printSummaries = numGames >>= \n -> mapM_ printSummaryOfGame [1..n]
+
+-- Print the summary of the indicated game.
+printSummaryOfGame :: (GameM m g, Show (Move g)) => Int -> m ()
 printSummaryOfGame n = 
-    do ByGame ss <- summaries
+    do (mss,pay) <- summaries `forGameM` n
        ps <- players
        printStrLn $ "Summary of Game "++show n++":"
-       let (ByPlayer mss, ByPlayer vs) = ss !! (length ss - n)
-        in do printStr $ unlines ["  "++show p++" moves: "++show (reverse ms) 
-                                 | (p, ByTurn ms) <- zip ps mss]
-              printStrLn $ "  Score: "++show vs
+       printStr $ unlines ["  "++show p++" moves: "++show (reverse ms) 
+                          | (p,ms) <- zip (toList ps) (toList2 mss)]
+       printMaybePayoff pay
+    
+printScore :: (GameM m g, Show (Move g)) => m ()
+printScore = do printStrLn "Score:"
+                printStr =<< liftM2 scoreString players score
 
-printScore :: (MonadIO m, GameMonad m mv, Show mv) => m ()
-printScore = do s <- liftM2 scoreString players (our score)
-                printStrLn "Score:"
-                printStr =<< liftM2 scoreString players (our score)
+-----------------------
+-- Utility functions --
+-----------------------
+
+printMaybePayoff :: GameM m g => Maybe Payoff -> m ()
+printMaybePayoff Nothing  = return ()
+printMaybePayoff (Just p) = printStrLn $ "  Payoff: " ++ show (toList p)
+    
+-- Generate a string showing a set of players' scores.
+scoreString :: ByPlayer (Player g) -> Payoff -> String 
+scoreString (ByPlayer ps) (ByPlayer vs) = 
+    unlines ["  "++show p++": "++show v | (p,v) <- zip ps vs]
