@@ -1,5 +1,4 @@
-{-# OPTIONS_GHC -fglasgow-exts #-}
-
+{-# LANGUAGE FlexibleContexts #-}
 module Hagl.Exec where
 
 import Control.Monad.State
