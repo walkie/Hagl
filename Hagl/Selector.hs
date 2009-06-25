@@ -1,7 +1,6 @@
 module Hagl.Selector where
 
-import Control.Monad
-import Data.List hiding (last)
+import Control.Monad (liftM)
 
 import Hagl.Core
 import Hagl.Accessor
