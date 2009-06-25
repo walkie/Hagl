@@ -11,10 +11,11 @@ import Hagl.Game
 --------------------
 
 -- Apply selection to each element of a list.
-eachAnd :: Monad m => (m a -> m b) -> m [a] -> m [b]
+eachAnd :: GameM m g => (m a -> m b) -> m [a] -> m [b]
 eachAnd f xs = mapM (f . return) =<< xs
 
--- Apply list selectors in reverse order.
+-- Apply selectors in reverse order.
+inThe :: GameM m g => m a -> (m a -> m b) -> m b
 inThe = flip ($)
 
 -- ByPlayer Selection --
