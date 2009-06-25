@@ -1,8 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Hagl.Print where
 
-import Control.Monad.State
-import Data.List
+import Control.Monad       (liftM, liftM2)
+import Control.Monad.Trans (MonadIO(..))
 
 import Hagl.Core
 import Hagl.Accessor

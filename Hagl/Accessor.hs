@@ -2,8 +2,8 @@
 
 module Hagl.Accessor where
 
-import Control.Monad
-import Data.List
+import Control.Monad (liftM)
+import Data.List     (transpose)
 import Data.Maybe    (fromMaybe)
 
 import Hagl.Core
