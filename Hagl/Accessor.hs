@@ -62,6 +62,10 @@ gameNumber = liftM (+1) numGames
 isFirstGame :: GameM m g => m Bool
 isFirstGame = liftM (>1) gameNumber
 
+-- The turn number of the current game, for the current player.
+turnNumber :: GameM m g => m Int
+turnNumber = myIx >>= liftM (1+) . forPlayerM numMoves
+
 -- Transcript of each game.
 transcripts :: GameM m g => m (ByGame (Transcript (Move g)))
 transcripts = do ts <- liftM _transcripts history
