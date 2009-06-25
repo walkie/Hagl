@@ -125,6 +125,10 @@ toList3 = map toList2 . toList
 inList :: ByX f => ([a] -> [b]) -> f a -> f b
 inList f = fromList . f . toList
 
+setListElem :: ByX f => Int -> a -> f a -> f a
+setListElem i a as = fromList (h ++ a : t)
+  where (h, _:t) = splitAt i (toList as)
+
 dcons :: ByX f => a -> f a -> f a
 dcons a = inList (a:)
 
