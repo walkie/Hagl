@@ -18,7 +18,7 @@ type Edge mv = (mv, GameTree mv)
 
 data GameTree mv = Decision PlayerIx [Edge mv] -- decision made by a player
                  | Chance (Dist (Edge mv))     -- random move from distribution
-                 | Payoff Payoff               -- terminatinmv payoff
+                 | Payoff Payoff               -- terminating payoff
                  deriving Eq
 
 -- The moves available from a node.
@@ -48,7 +48,7 @@ bfs t = let b [] = []
             b ns = ns ++ b (concatMap children ns)
         in b [t]
 
--- Nodes DFS order.
+-- Nodes in DFS order.
 dfs :: GameTree mv -> [GameTree mv]
 dfs t = t : concatMap dfs (children t)
 
