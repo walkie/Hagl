@@ -1,175 +1,114 @@
-module Game.Definition where
+{-# LANGUAGE FlexibleContexts #-}
+module Hagl.GameTree where
 
 import Data.List
-import Data.Tree
-import Game.Util
+import Data.Maybe
+import qualified Data.Tree as Tree
 
----------------------
--- Game Definition --
----------------------
+import Hagl.Core
+import Hagl.Accessor
+import Hagl.Game
+import Hagl.Exec
 
--- Game Definition
-data Game mv = Game {
-    numPlayers :: Int,
-    info       :: GameTree mv -> InfoGroup mv,
-    tree       :: GameTree mv
-}
+----------------
+-- Game Trees --
+----------------
 
--- Game Tree
-type PlayerIx = Int
-data GameTree mv = Decision PlayerIx [(mv, GameTree mv)]
-                 | Chance [(Int, GameTree mv)]
-                 | Payoff [Float]
+type Edge mv = (mv, GameTree mv)
+
+data GameTree mv = Decision PlayerIx [Edge mv] -- decision made by a player
+                 | Chance (Dist (Edge mv))     -- random move from distribution
+                 | Payoff Payoff               -- terminatinmv payoff
                  deriving Eq
 
-data InfoGroup mv = Perfect (GameTree mv)
-                  | Imperfect [GameTree mv]
-                  deriving Eq
-
-
--- Instance Declarations
-instance (Show mv) => Show (GameTree mv) where
-  show t = condense $ drawTree $ s "" t
-    where s p (Decision i ts) = Node (p ++ "Player " ++ show i) [s (show m ++ " -> ") t | (m, t) <- ts]
-          s p (Chance ts) = Node (p ++ "Chance") [s (show c ++ " -> ") t | (c, t) <- ts]
-          s p (Payoff vs) = Node (p ++ show vs) []
-          condense s = let empty = not . and . map (\c -> c == ' ' || c == '|')
-                       in unlines $ filter empty $ lines s
-instance (Show mv) => Show (Game mv) where
-  show g = show (tree g)
-instance (Show mv) => Show (InfoGroup mv) where
-  show (Perfect t) = show t
-  show (Imperfect ts) = unlines $ intersperse " ** or **" (map (init . show) ts)
-
-----------------------------
--- Normal Form Definition --
-----------------------------
-
--- Construct a game from a Normal-Form definition
-normal :: Int -> [[mv]] -> [[Float]] -> Game mv
-normal np mss vs = Game np group (head (level 1))
-  where level n | n > np = [Payoff v | v <- vs]
-                | otherwise = let ms = mss !! (n-1) 
-                                  bs = chunk (length ms) (level (n+1)) 
-                              in map (Decision n . zip ms) bs
-        group (Decision n _) = Imperfect (level n)
-        group t = Perfect t
-
--- Construct a two-player game.
-matrix :: [mv] -> [[Float]] -> Game mv
-matrix ms = normal 2 [ms, ms]
-
--- Construct a two-player, zero-sum game.
-zerosum :: [mv] -> [Float] -> Game mv
-zerosum ms vs = matrix ms [[v,-v] | v <- vs]
-
--------------------------------
--- Extensive Form Definition --
--------------------------------
-
--- Build a game from a tree. Assumes a finite game tree.
-extensive :: GameTree mv -> Game mv
-extensive t = Game (maxPlayer t) Perfect t
-
------------------------------
--- State-Driven Definition --
------------------------------
-
-{- Build a state-based game.
- - Args:
-     * Number of players.
-     * Whose turn is it?
-     * Is the game over?
-     * What are the available moves?
-     * Execute a move and return the new state.
-     * What is the payoff for this (final) state?
-     * Initial state. -}
-stateGame :: Int -> (s -> PlayerIx) -> (s -> PlayerIx -> Bool) -> 
-             (s -> PlayerIx -> [mv]) -> (s -> PlayerIx -> mv -> s) -> 
-             (s -> PlayerIx -> [Float]) -> s -> Game mv
-stateGame np who end moves exec pay init = Game np Perfect (tree init)
-  where tree s | end s p = Payoff (pay s p)
-               | otherwise = Decision p [(m, tree (exec s p m)) | m <- moves s p]
-          where p = who s
-
-{- Build a state-based game where the players take turns. Player 1 goes first.
- - Args:
-     * Number of players.
-     * Is the game over?
-     * What are the available moves?
-     * Execute a move and return the new state.
-     * What is the payoff for this (final) state?
-     * Initial state. -}
-takeTurns :: Int -> (s -> PlayerIx -> Bool) -> (s -> PlayerIx -> [mv]) ->
-             (s -> PlayerIx -> mv -> s) -> (s -> PlayerIx -> [Float]) -> s ->
-             Game mv
-takeTurns np end moves exec pay init =
-    stateGame np snd (lft end) (lft moves) exec' (lft pay) (init, 1)
-  where exec' (s,_) p m = (exec s p m, (mod p np) + 1)
-        lft f (s,_) p = f s p
-
-----------------------------
--- Game Tree Construction --
-----------------------------
-
--- Construct a payoff where player w wins (1) and all other players,
--- out of np, lose (-1).
-winner :: Int -> PlayerIx -> [Float]
-winner np w = replicate (w-1) (-1) ++ (fromIntegral np - 1) : replicate (np - w) (-1)
-
--- Construct a payoff where player w loses (-1) and all other players,
--- out of np, win (1).
-loser :: Int -> PlayerIx -> [Float]
-loser np l = replicate (l-1) 1 ++ (1 - fromIntegral np) : replicate (np - l) 1
-
-tie :: Int -> [Float]
-tie np = replicate np 0
-
--- Construct a decision node with only one option.
-player :: PlayerIx -> (mv, GameTree mv) -> GameTree mv
-player i m = Decision i [m]
-
--- Combines two game trees.
-(<+>) :: GameTree mv -> GameTree mv -> GameTree mv
-Payoff as <+> Payoff bs = Payoff (zipWith (+) as bs)
-Chance as <+> Chance bs = Chance (as ++ bs)
-Decision a as <+> Decision b bs | a == b = Decision a (as ++ bs)
-
--- Add a decision branch to a game tree.
-(<|>) :: GameTree mv -> (mv, GameTree mv) -> GameTree mv
-Decision i ms <|> m = Decision i (m:ms)
-
--------------------------
--- Game Tree Traversal --
--------------------------
-
--- Returns the highest number player from this finite game tree.
-maxPlayer :: GameTree mv -> PlayerIx
-maxPlayer t = foldl1 max $ map p (dfs t)
-  where p (Decision i _) = i
-        p _ = 0
-
--- Return the moves that are available from this node.
-availMoves :: GameTree mv -> [mv]
-availMoves (Decision _ ms) = map fst ms
-availMoves _ = []
+-- The moves available from a node.
+movesFrom :: GameTree mv -> [mv]
+movesFrom (Decision _ es) = [m | (m,_) <- es]
+movesFrom (Chance d) = [m | (_,(m,_)) <- d]
+movesFrom _ = []
 
 -- The immediate children of a node.
 children :: GameTree mv -> [GameTree mv]
-children (Decision _ ms) = map snd ms
-children (Chance cs) = map snd cs
+children (Decision _ es) = [n | (_,n) <- es]
+children (Chance d) = [n | (_,(_,n)) <- d]
 children _ = []
 
--- Search nodes in BFS order.
+doMove :: (Eq mv, Show mv) => mv -> GameTree mv -> GameTree mv
+doMove m t = case t of
+    Decision _ es -> look es
+    Chance d      -> look (map snd d)
+  where look = fromMaybe (error ("move not found: " ++ show m)) . lookup m
+
+location :: (Searchable g, GameM m g) => m (GameTree (Move g))
+location = gameTreeM
+
+-- Nodes in BFS order.
 bfs :: GameTree mv -> [GameTree mv]
 bfs t = let b [] = []
-            b ts = ts ++ b (concatMap children ts)
+            b ns = ns ++ b (concatMap children ns)
         in b [t]
 
--- Search nodes DFS order.
+-- Nodes DFS order.
 dfs :: GameTree mv -> [GameTree mv]
 dfs t = t : concatMap dfs (children t)
 
--- Get the game tree as a Data.Tree structure.
-asTree :: GameTree mv -> Tree (GameTree mv)
-asTree t = Node t $ map asTree (children t)
+-- The highest numbered player in this finite game tree.
+maxPlayer :: GameTree mv -> Int
+maxPlayer t = foldl1 max $ map player (dfs t)
+  where player (Decision p _) = p
+        player _ = 0
+
+----------------------
+-- Searchable Class --
+----------------------
+
+class Game g => Searchable g where
+  gameTree :: g -> State g -> GameTree (Move g)
+  nextState :: g -> State g -> Move g -> State g
+
+gameTreeM :: (Searchable g, GameM m g) => m (GameTree (Move g))
+gameTreeM = do g <- game
+               s <- gameState
+               return (gameTree g s)
+
+nextStateM :: (Searchable g, GameM m g) => Move g -> m (State g)
+nextStateM m = do g <- game
+                  s <- gameState
+                  return (nextState g s m)
+
+step :: (Searchable g, Eq (Move g), Show (Move g)) => ExecM g (Maybe Payoff)
+step = gameTreeM >>= \t -> case t of
+  Decision i es ->
+    do m <- decide i 
+       s <- nextStateM m
+       putGameState s
+       return Nothing
+  Chance d ->
+    do (m, _) <- fromDist d
+       chanceMoved m
+       s <- nextStateM m 
+       putGameState s
+       return Nothing
+  Payoff p -> return (Just p)
+
+finish :: (Searchable g, Eq (Move g), Show (Move g)) => ExecM g ()
+finish = once
+
+runTree :: (Searchable g, Eq (Move g), Show (Move g)) => ExecM g Payoff
+runTree = step >>= maybe runTree return
+
+---------------
+-- Instances --
+---------------
+
+instance Show mv => Show (GameTree mv) where
+  show t = condense (Tree.drawTree (tree "" t))
+    where str (Decision p es) = "Player " ++ show p
+          str (Chance d) = "Chance"
+          str (Payoff (ByPlayer vs)) = show vs
+          sub (Decision p es) = [tree (show m ++ " -> ") t | (m,t) <- es]
+          sub (Chance d) = [tree (show i ++ " * " ++ show m ++ " -> ") t | (i,(m,t)) <- d]
+          sub (Payoff _) = []
+          tree pre t = Tree.Node (pre ++ str t) (sub t)
+          condense s = let empty = not . all (\c -> c == ' ' || c == '|')
+                       in unlines $ filter empty $ lines s
