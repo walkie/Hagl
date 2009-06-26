@@ -1,9 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Hagl.GameTree where
 
-import Data.List
-import Data.Maybe
-import qualified Data.Tree as Tree
+import Data.Maybe (fromMaybe)
+import Data.Tree  (Tree(..), drawTree)
 
 import Hagl.Core
 import Hagl.Accessor
@@ -63,7 +62,7 @@ maxPlayer t = foldl1 max $ map player (dfs t)
 ----------------------
 
 class Game g => Searchable g where
-  gameTree :: g -> State g -> GameTree (Move g)
+  gameTree  :: g -> State g -> GameTree (Move g)
   nextState :: g -> State g -> Move g -> State g
 
 gameTreeM :: (Searchable g, GameM m g) => m (GameTree (Move g))
@@ -102,13 +101,13 @@ runTree = step >>= maybe runTree return
 ---------------
 
 instance Show mv => Show (GameTree mv) where
-  show t = condense (Tree.drawTree (tree "" t))
+  show t = condense (drawTree (tree "" t))
     where str (Decision p es) = "Player " ++ show p
           str (Chance d) = "Chance"
           str (Payoff (ByPlayer vs)) = show vs
           sub (Decision p es) = [tree (show m ++ " -> ") t | (m,t) <- es]
           sub (Chance d) = [tree (show i ++ " * " ++ show m ++ " -> ") t | (i,(m,t)) <- d]
           sub (Payoff _) = []
-          tree pre t = Tree.Node (pre ++ str t) (sub t)
+          tree pre t = Node (pre ++ str t) (sub t)
           condense s = let empty = not . all (\c -> c == ' ' || c == '|')
                        in unlines $ filter empty $ lines s
