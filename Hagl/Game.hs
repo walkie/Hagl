@@ -69,17 +69,19 @@ endTurn = setPlayerIx Nothing
 -- Tracking moves
 
 chanceMoved :: Game g => Move g -> ExecM g ()
-chanceMoved = genericMoved Nothing
+chanceMoved m = do 
+    e <- getExec
+    put e { _transcript = (Nothing, m) : _transcript e }
 
 playerMoved :: Game g => PlayerIx -> Move g -> ExecM g ()
-playerMoved = genericMoved . Just
-
-genericMoved :: Game g => (Maybe PlayerIx) -> Move g -> ExecM g ()
-genericMoved i m = do e <- getExec
-                      put e { _transcript = (i, m) : _transcript e }
+playerMoved i m = do 
+    e  <- getExec
+    ns <- numMoves
+    put e { _transcript = (Just i, m) : _transcript e,
+            _numMoves = setListElem (i-1) (forPlayer ns i + 1) ns }
 
 --
--- Getters and setters. (Also see Hagl.Exec for basic getters.)
+-- Getters and setters. (Also see Hagl.Accessor for basic getters.)
 --
 
 setPlayerIx :: Game g => Maybe PlayerIx -> ExecM g ()
