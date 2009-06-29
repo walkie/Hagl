@@ -1,3 +1,4 @@
+-- TODO this code needs to be migrated to the new deal or removed.
 import Data.List
 import Hagl
 
