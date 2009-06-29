@@ -5,9 +5,6 @@ import Data.Maybe (fromMaybe)
 import Data.Tree  (Tree(..), drawTree)
 
 import Hagl.Core
-import Hagl.Accessor
-import Hagl.Game
-import Hagl.Exec
 
 ----------------
 -- Game Trees --
@@ -38,9 +35,6 @@ doMove m t = case t of
     Chance d      -> look (map snd d)
   where look = fromMaybe (error ("move not found: " ++ show m)) . lookup m
 
-location :: (Searchable g, GameM m g) => m (GameTree (Move g))
-location = gameTreeM
-
 -- Nodes in BFS order.
 bfs :: GameTree mv -> [GameTree mv]
 bfs t = let b [] = []
@@ -56,45 +50,6 @@ maxPlayer :: GameTree mv -> Int
 maxPlayer t = foldl1 max $ map player (dfs t)
   where player (Decision p _) = p
         player _ = 0
-
-----------------------
--- Searchable Class --
-----------------------
-
-class Game g => Searchable g where
-  gameTree  :: g -> State g -> GameTree (Move g)
-  nextState :: g -> State g -> Move g -> State g
-
-gameTreeM :: (Searchable g, GameM m g) => m (GameTree (Move g))
-gameTreeM = do g <- game
-               s <- gameState
-               return (gameTree g s)
-
-nextStateM :: (Searchable g, GameM m g) => Move g -> m (State g)
-nextStateM m = do g <- game
-                  s <- gameState
-                  return (nextState g s m)
-
-step :: (Searchable g, Eq (Move g), Show (Move g)) => ExecM g (Maybe Payoff)
-step = gameTreeM >>= \t -> case t of
-  Decision i es ->
-    do m <- decide i 
-       s <- nextStateM m
-       putGameState s
-       return Nothing
-  Chance d ->
-    do (m, _) <- fromDist d
-       chanceMoved m
-       s <- nextStateM m 
-       putGameState s
-       return Nothing
-  Payoff p -> return (Just p)
-
-finish :: (Searchable g, Eq (Move g), Show (Move g)) => ExecM g ()
-finish = once
-
-runTree :: (Searchable g, Eq (Move g), Show (Move g)) => ExecM g Payoff
-runTree = step >>= maybe runTree return
 
 ---------------
 -- Instances --
