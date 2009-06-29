@@ -1,8 +1,8 @@
 {-# LANGUAGE FlexibleContexts, TypeFamilies #-}
 module Hagl.Normal where
 
-import Data.List
-import Data.Maybe
+import Data.List  (elemIndex, intersect, transpose)
+import Data.Maybe (fromJust)
 
 import Hagl.Core
 import Hagl.Game
