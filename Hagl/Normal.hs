@@ -1,5 +1,4 @@
-{-# OPTIONS_GHC -fglasgow-exts #-}
-
+{-# LANGUAGE FlexibleContexts, TypeFamilies #-}
 module Hagl.Normal where
 
 import Data.List
