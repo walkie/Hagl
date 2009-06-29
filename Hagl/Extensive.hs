@@ -1,11 +1,12 @@
 {-# LANGUAGE TypeFamilies #-}
-module Hagl.Extensive where
+module Hagl.Extensive (module Hagl.Extensive, module Hagl.Searchable) where
 
 import Data.List
 
 import Hagl.Core
 import Hagl.Game
 import Hagl.GameTree
+import Hagl.Searchable
 
 -- Extensive form game
 data Extensive mv = Extensive Int (GameTree mv -> Info mv) (GameTree mv) 
