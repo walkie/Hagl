@@ -51,6 +51,11 @@ their x = do ByPlayer as <- x
 this :: GameM m g => ByGame a -> m (ByGame a) -> m a
 this _ x = gameNumber >>= forGameOrTurnM x
 
+-- Selects the elements corresponding to completed games.
+completed :: GameM m g => ByGame a -> m (ByGame a) -> m [a]
+completed _ x = do ByGame as <- x
+                   return (if null as then [] else tail as)
+
 -- ByGameOrTurn Selection --
 
 -- Selects the element corresponding to all games or moves.
