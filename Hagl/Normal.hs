@@ -83,9 +83,19 @@ saddle g = [p | p <- profiles g, v p == minimum (r p), v p == maximum (c p)]
         r (ByPlayer [m,_]) = row g (fromJust (elemIndex m (moves g 1)) + 1)
         c (ByPlayer [_,m]) = col g (fromJust (elemIndex m (moves g 2)) + 1)
 
---
--- Utility functions used in definitions.
---
+----------------
+-- Strategies --
+----------------
+
+-- Select a move randomly, for use in strategies.
+randomly :: Norm g => Strategy () g
+randomly = do g <- game
+              Just i <- playerIx
+              randomlyFrom (moves g i)
+
+-----------------------
+-- Utility Functions --
+-----------------------
 
 -- Get a particular row of the payoff matrix.
 row :: Matrix mv -> Int -> [Float]
@@ -117,15 +127,9 @@ lookupPay mss ps ms = fromJust (lookup ms (zip (dcross mss) ps))
 zerosum :: [Float] -> [Payoff]
 zerosum vs = [fromList [v, -v] | v <- vs]
 
--- Select a move randomly, for use in strategies.
-randomly :: Norm g => Strategy () g
-randomly = do g <- game
-              Just i <- playerIx
-              randomlyFrom (moves g i)
-
----------------------------
--- Instance Declarations --
----------------------------
+---------------
+-- Instances --
+---------------
 
 instance Eq mv => Game (Normal mv) where
   type Move (Normal mv) = mv
