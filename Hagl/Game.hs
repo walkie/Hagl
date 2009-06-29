@@ -98,4 +98,4 @@ getPlayer = forPlayerM players
 
 setPlayer :: Game g => PlayerIx -> Player g -> ExecM g ()
 setPlayer i p = do e <- getExec
-                   put e { _players = setListElem i p (_players e) }
+                   put e { _players = setListElem (i-1) p (_players e) }

@@ -108,4 +108,7 @@ payoff = liftM (fmap _payoff) summaries
 
 -- The current score of each player.
 score :: GameM m g => m (ByPlayer Float)
-score = liftM (ByPlayer . map sum . transpose . toList2) payoff
+score = do ByGame ps <- payoff
+           np <- numPlayers
+           (return . ByPlayer) (if null ps then replicate np 0.0
+                                else (map sum . transpose . map toList . tail) ps)
