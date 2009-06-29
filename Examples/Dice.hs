@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -fglasgow-exts #-}
-
 module Examples.Dice where
 
 import Hagl
