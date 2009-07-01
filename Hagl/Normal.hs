@@ -1,8 +1,9 @@
 {-# LANGUAGE FlexibleContexts, TypeFamilies #-}
 module Hagl.Normal where
 
-import Data.List  (elemIndex, intersect, transpose)
+import Data.List  -- (elemIndex, intersect, transpose)
 import Data.Maybe (fromJust)
+import Prelude hiding (showList)
 
 import Hagl.Core
 import Hagl.Game
@@ -21,7 +22,7 @@ class Game g => Norm g where
 --
 
 -- A general normal form game.
-data Normal mv = Normal Int (ByPlayer [mv]) [Payoff] deriving (Eq, Show)
+data Normal mv = Normal Int (ByPlayer [mv]) [Payoff] deriving Eq
 
 -- A two-player, zero-sum game.
 data Matrix mv = Matrix [mv] [mv] [Float] deriving (Eq, Show)
@@ -31,6 +32,7 @@ data Matrix mv = Matrix [mv] [mv] [Float] deriving (Eq, Show)
 ------------------------
 
 -- Smart constructor to build from bare lists.
+-- TODO should do some consistency checking
 normal :: Eq mv => Int -> [[mv]] -> [[Float]] -> Normal mv
 normal np mss vs = Normal np (ByPlayer mss) (map ByPlayer vs)
 
@@ -120,8 +122,11 @@ runNormal = do g <- game
                ms <- allPlayers decide
                return (g `pays` ms)
 
+payoffMap :: ByPlayer [mv] -> [Payoff] -> [(Profile mv, Payoff)]
+payoffMap mss ps = zip (dcross mss) ps
+
 lookupPay :: Eq mv => ByPlayer [mv] -> [Payoff] -> Profile mv -> Payoff
-lookupPay mss ps ms = fromJust (lookup ms (zip (dcross mss) ps))
+lookupPay mss ps ms = fromJust (lookup ms (payoffMap mss ps))
 
 -- Construct a zero-sum payoff grid.
 zerosum :: [Float] -> [Payoff]
@@ -158,4 +163,62 @@ instance Eq mv => Norm (Matrix mv) where
 -- Pretty Printing --
 ---------------------
 
--- TODO
+padLeft :: Int -> String -> String
+padLeft n s = replicate (n - length s) ' ' ++ s
+
+pad :: Int -> String -> String
+pad n s | length s <  n-1 = pad n (' ' : s ++ " ")
+        | length s == n-1 = ' ' : s
+        | otherwise       = s
+
+maxLength :: [String] -> Int
+maxLength = maximum . map length
+
+gridMax :: [[String]] -> Int
+gridMax = maximum . map maxLength
+
+showList :: Show a => [a] -> String
+showList = concat . intersperse "," . map show
+
+showPayoff :: Payoff -> String
+showPayoff = showList . toList
+
+showRow :: [String] -> String
+showRow = concat . intersperse " | "
+
+showRows :: [[String]] -> String
+showRows = unlines . map showRow
+
+showGrid :: Show mv => [mv] -> [mv] -> [Payoff] -> String
+showGrid rs cs vs = showRows (colHead : zipWith (:) rowHead grid)
+  where rs' = map show rs
+        cs' = map show cs
+        vs' = chunk (length cs) (map showPayoff vs)
+        gn  = max (maxLength cs') (gridMax vs')
+        rn  = maxLength rs'
+        colHead = padLeft rn "" : map (pad gn) cs'
+        rowHead = map (pad rn) rs'
+        grid    = (map . map) (pad gn) vs'
+
+toGrid :: [mv] -> [Payoff] -> [[Payoff]]
+toGrid cs = chunk (length cs)
+
+extractGrid :: Eq mv => ByPlayer [mv] -> [Payoff] -> [mv] -> [Payoff]
+extractGrid mss ps ms = [vs | (ByPlayer ms', vs) <- payoffMap mss ps, ms `isPrefixOf` ms']
+
+instance (Eq mv, Show mv) => Show (Normal mv) where
+  
+  show (Normal 2 (ByPlayer [ms,ns]) vs) = showGrid ms ns vs
+  
+  show (Normal 3 mss@(ByPlayer [ms,xs,ys]) vs) = 
+      unlines ["Player 1: " ++ show m ++ "\n" ++
+               showGrid xs ys (extractGrid mss vs [m])
+              | m <- ms]
+  
+  -- TODO this is wrong
+  show (Normal n mss vs) = 
+      unlines ["Players 1 - " ++ show (n-2) ++ ": " ++ showList ms ++ "\n" ++ 
+               showGrid xs ys (extractGrid mss vs ms)
+              | ms <- init]
+    where init    = take (n-2) (toList mss)
+          [xs,ys] = drop (n-2) (toList mss)
