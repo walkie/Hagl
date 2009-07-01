@@ -185,8 +185,8 @@ showFloat f | f == fromIntegral i = show i
             | otherwise           = show f
   where i = floor f
   
-showPayoff :: Payoff -> String
-showPayoff = showList . map showFloat . toList
+showPayoff :: [Float] -> String
+showPayoff = showList . map showFloat
 
 showRow :: [String] -> String
 showRow = concat . intersperse " | "
@@ -194,7 +194,7 @@ showRow = concat . intersperse " | "
 showRows :: [[String]] -> String
 showRows = unlines . map showRow
 
-showGrid :: Show mv => [mv] -> [mv] -> [Payoff] -> String
+showGrid :: Show mv => [mv] -> [mv] -> [[Float]] -> String
 showGrid rs cs vs = showRows (colHead : zipWith (:) rowHead grid)
   where rs' = map show rs
         cs' = map show cs
@@ -204,6 +204,9 @@ showGrid rs cs vs = showRows (colHead : zipWith (:) rowHead grid)
         rowHead = map (padLeft n) rs'
         grid    = (map . map) (pad n) vs'
 
+showPayoffGrid :: Show mv => [mv] -> [mv] -> [Payoff] -> String
+showPayoffGrid rs cs = showGrid rs cs . map toList
+
 toGrid :: [mv] -> [Payoff] -> [[Payoff]]
 toGrid cs = chunk (length cs)
 
@@ -212,20 +215,20 @@ extractGrid mss ps ms = [vs | (ByPlayer ms', vs) <- payoffMap mss ps, ms `isPref
 
 instance (Eq mv, Show mv) => Show (Normal mv) where
   
-  show (Normal 2 (ByPlayer [ms,ns]) vs) = showGrid ms ns vs
+  show (Normal 2 (ByPlayer [ms,ns]) vs) = showPayoffGrid ms ns vs
   
   show (Normal 3 mss@(ByPlayer [ms,xs,ys]) vs) = 
       unlines ["Player 1: " ++ show m ++ "\n" ++
-               showGrid xs ys (extractGrid mss vs [m])
+               showPayoffGrid xs ys (extractGrid mss vs [m])
               | m <- ms]
   
   -- TODO this is wrong
-  show (Normal n mss vs) = 
+  show (Normal n mss vs) =
       unlines ["Players 1 - " ++ show (n-2) ++ ": " ++ showList (map show ms) ++ "\n" ++ 
-               showGrid xs ys (extractGrid mss vs ms)
+               showPayoffGrid xs ys (extractGrid mss vs ms)
               | ms <- init]
     where init    = take (n-2) (toList mss)
           [xs,ys] = drop (n-2) (toList mss)
 
 instance Show mv => Show (Matrix mv) where
-  show (Matrix ms ns vs) = showGrid ms ns (zerosum vs)
+  show (Matrix ms ns vs) = showGrid ms ns (map (:[]) vs)
