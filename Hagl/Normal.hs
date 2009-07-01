@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts, TypeFamilies #-}
 module Hagl.Normal where
 
-import Data.List  -- (elemIndex, intersect, transpose)
+import Data.List
 import Data.Maybe (fromJust)
 import Prelude hiding (showList)
 
@@ -177,11 +177,16 @@ maxLength = maximum . map length
 gridMax :: [[String]] -> Int
 gridMax = maximum . map maxLength
 
-showList :: Show a => [a] -> String
-showList = concat . intersperse "," . map show
+showList :: [String] -> String
+showList = concat . intersperse ","
 
+showFloat :: Float -> String
+showFloat f | f == fromIntegral i = show i 
+            | otherwise           = show f
+  where i = floor f
+  
 showPayoff :: Payoff -> String
-showPayoff = showList . toList
+showPayoff = showList . map showFloat . toList
 
 showRow :: [String] -> String
 showRow = concat . intersperse " | "
@@ -194,11 +199,10 @@ showGrid rs cs vs = showRows (colHead : zipWith (:) rowHead grid)
   where rs' = map show rs
         cs' = map show cs
         vs' = chunk (length cs) (map showPayoff vs)
-        gn  = max (maxLength cs') (gridMax vs')
-        rn  = maxLength rs'
-        colHead = padLeft rn "" : map (pad gn) cs'
-        rowHead = map (pad rn) rs'
-        grid    = (map . map) (pad gn) vs'
+        n  = max (maxLength cs') (gridMax vs')
+        colHead = padLeft n "" : map (pad n) cs'
+        rowHead = map (padLeft n) rs'
+        grid    = (map . map) (pad n) vs'
 
 toGrid :: [mv] -> [Payoff] -> [[Payoff]]
 toGrid cs = chunk (length cs)
@@ -217,7 +221,7 @@ instance (Eq mv, Show mv) => Show (Normal mv) where
   
   -- TODO this is wrong
   show (Normal n mss vs) = 
-      unlines ["Players 1 - " ++ show (n-2) ++ ": " ++ showList ms ++ "\n" ++ 
+      unlines ["Players 1 - " ++ show (n-2) ++ ": " ++ showList (map show ms) ++ "\n" ++ 
                showGrid xs ys (extractGrid mss vs ms)
               | ms <- init]
     where init    = take (n-2) (toList mss)
