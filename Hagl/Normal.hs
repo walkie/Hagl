@@ -25,7 +25,7 @@ class Game g => Norm g where
 data Normal mv = Normal Int (ByPlayer [mv]) [Payoff] deriving Eq
 
 -- A two-player, zero-sum game.
-data Matrix mv = Matrix [mv] [mv] [Float] deriving (Eq, Show)
+data Matrix mv = Matrix [mv] [mv] [Float] deriving Eq
 
 ------------------------
 -- Smart Constructors --
@@ -222,3 +222,6 @@ instance (Eq mv, Show mv) => Show (Normal mv) where
               | ms <- init]
     where init    = take (n-2) (toList mss)
           [xs,ys] = drop (n-2) (toList mss)
+
+instance Show mv => Show (Matrix mv) where
+  show (Matrix ms ns vs) = showGrid ms ns (zerosum vs)
