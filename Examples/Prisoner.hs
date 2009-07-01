@@ -18,7 +18,7 @@ From GHCi, try some of the following.
 module Examples.Prisoner where
 
 import Control.Monad.State
-import Prelude hiding (last)
+import Prelude hiding (last, print)
 
 import Hagl
 import Hagl.Normal
