@@ -7,11 +7,13 @@ import Prelude hiding (showList)
 
 import Hagl.Core
 import Hagl.Game
-import Hagl.Accessor (game, playerIx)
+import Hagl.Accessor   (game, playerIx)
+import Hagl.GameTree   (GameTree(..))
+import Hagl.Searchable (Searchable(..))
 
 type Profile mv = ByPlayer mv -- pure strategy profile
 
--- A Normal form game (extends Game type class)
+-- A Normal form game
 class Game g => Norm g where
   numPlayers :: g -> Int
   pays       :: g -> Profile (Move g) -> Payoff
@@ -132,6 +134,13 @@ lookupPay mss ps ms = fromJust (lookup ms (payoffMap mss ps))
 zerosum :: [Float] -> [Payoff]
 zerosum vs = [fromList [v, -v] | v <- vs]
 
+buildTree :: Int -> ByPlayer [mv] -> [Payoff] -> GameTree mv
+buildTree np mss vs = head (level 1)
+  where level n | n > np    = map Payoff vs
+                | otherwise = let ms = mss `forPlayer` n
+                                  bs = chunk (length ms) (level (n+1))
+                              in map (Decision n . zip ms) bs
+
 ---------------
 -- Instances --
 ---------------
@@ -158,6 +167,14 @@ instance Eq mv => Norm (Matrix mv) where
   pays (Matrix ms ns ps) = lookupPay (fromList [ms,ns]) (zerosum ps)
   moves (Matrix ms _ _) 1 = ms
   moves (Matrix _ ms _) 2 = ms
+
+instance Eq mv => Searchable (Normal mv) where
+  gameTree (Normal np mss ps) _ = buildTree np mss ps
+  nextState _ _ _ = ()
+
+instance Eq mv => Searchable (Matrix mv) where
+  gameTree (Matrix ms ns ps) _ = buildTree 2 (ByPlayer [ms,ns]) (zerosum ps)
+  nextState _ _ _ = ()
 
 ---------------------
 -- Pretty Printing --
