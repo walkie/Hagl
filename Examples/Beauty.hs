@@ -4,6 +4,8 @@
 
 An implementation of the p-Beauty Contest.
 
+> execGame example ps (once >> printTranscript)
+
 -}
 module Examples.Beauty where
 
@@ -18,6 +20,10 @@ type Bids = ByPlayer Bid
 
 -- Args: maxBid, p
 data Beauty = Beauty Bid Float
+
+--------------------
+-- Game Execution --
+--------------------
 
 type BeautyM = ExecM Beauty
 
@@ -44,3 +50,15 @@ closest (ByPlayer bids)  = do
 
 wins :: PlayerIx -> BeautyM Payoff
 wins p = numPlayers >>= \np -> return (winner np p)
+
+--------------
+-- Examples --
+--------------
+
+-- The p-Beauty Contest example from the DSL'09 paper.
+example :: Beauty
+example = Beauty 100 0.5
+
+-- And some really simple players for it.
+ps :: [Player Beauty]
+ps = ["A" ::: return 5.0, "B" ::: return 5.0, "C" ::: return 0.0, "D" ::: return 2.0]
