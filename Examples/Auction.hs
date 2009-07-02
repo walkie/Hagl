@@ -41,7 +41,7 @@ bid p n = do
     update h p b
     bid (nextPlayer n p) n
   where update h p (Bid d) 
-          | d < highBid h = error "Bid is too low!"
+          | d < highBid h = fail "Bid is too low!"
           | otherwise = putGameState (HighBids p d (highBidder h) (highBid h))
         update h p Pass = return ()
 
