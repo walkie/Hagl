@@ -130,7 +130,7 @@ setListElem i a as = fromList (h ++ a : t)
   where (h, _:t) = splitAt i (toList as)
 
 dcons :: ByX f => a -> f a -> f a
-dcons a = inList (a:)
+dcons = inList . (:)
 
 dlength :: ByX f => f a -> Int
 dlength = length . toList

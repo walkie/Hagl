@@ -125,7 +125,7 @@ runNormal = do g <- game
                return (g `pays` ms)
 
 payoffMap :: ByPlayer [mv] -> [Payoff] -> [(Profile mv, Payoff)]
-payoffMap mss ps = zip (dcross mss) ps
+payoffMap = zip . dcross
 
 lookupPay :: Eq mv => ByPlayer [mv] -> [Payoff] -> Profile mv -> Payoff
 lookupPay mss ps ms = fromJust (lookup ms (payoffMap mss ps))
@@ -225,7 +225,7 @@ showPayoffGrid :: Show mv => [mv] -> [mv] -> [Payoff] -> String
 showPayoffGrid rs cs = showGrid rs cs . map toList
 
 toGrid :: [mv] -> [Payoff] -> [[Payoff]]
-toGrid cs = chunk (length cs)
+toGrid = chunk . length
 
 extractGrid :: Eq mv => ByPlayer [mv] -> [Payoff] -> [mv] -> [Payoff]
 extractGrid mss ps ms = [vs | (ByPlayer ms', vs) <- payoffMap mss ps, ms `isPrefixOf` ms']

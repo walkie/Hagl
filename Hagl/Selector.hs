@@ -43,7 +43,7 @@ our = liftM toList
 their :: GameM m g => m (ByPlayer a) -> m [a]
 their x = do ByPlayer as <- x
              i <- myIx
-             return $ (take i as) ++ (drop (i+1) as)
+             return (take i as ++ drop (i+1) as)
 
 -- ByGame Selection
 
