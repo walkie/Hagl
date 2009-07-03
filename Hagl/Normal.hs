@@ -3,7 +3,6 @@ module Hagl.Normal where
 
 import Data.List
 import Data.Maybe (fromJust)
-import Prelude hiding (showList)
 
 import Hagl.Core
 import Hagl.Game
@@ -194,17 +193,6 @@ maxLength = maximum . map length
 gridMax :: [[String]] -> Int
 gridMax = maximum . map maxLength
 
-showList :: [String] -> String
-showList = concat . intersperse ","
-
-showFloat :: Float -> String
-showFloat f | f == fromIntegral i = show i 
-            | otherwise           = show f
-  where i = floor f
-  
-showPayoff :: Payoff -> String
-showPayoff = showList . map showFloat . toList
-
 showRow :: [String] -> String
 showRow = concat . intersperse " | "
 
@@ -238,7 +226,7 @@ instance (Eq mv, Show mv) => Show (Normal mv) where
   
   -- TODO this is wrong
   show (Normal n mss vs) =
-      unlines ["Players 1 - " ++ show (n-2) ++ ": " ++ showList (map show ms) ++ "\n" ++ 
+      unlines ["Players 1 - " ++ show (n-2) ++ ": " ++ show ms ++ "\n" ++ 
                showGrid xs ys (extractGrid mss vs ms)
               | ms <- init]
     where init    = take (n-2) (toList mss)

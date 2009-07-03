@@ -10,6 +10,7 @@ module Hagl.Core (module Hagl.Core, module Hagl.List) where
 import Control.Monad.State hiding (State)
 import Data.Function (on)
 import Data.Maybe    (fromMaybe)
+import Data.List     (intersperse)
 
 import Hagl.List
 
@@ -146,3 +147,18 @@ instance Game g => GameM (StratM s g) g where
 
 debug :: MonadIO m => String -> m ()
 debug = liftIO . putStrLn
+
+---------------------
+-- Pretty Printing --
+---------------------
+
+showFloat :: Float -> String
+showFloat f | f == fromIntegral i = show i
+            | otherwise           = show f
+  where i = floor f
+
+showPayoff :: Payoff -> String
+showPayoff = concat . intersperse "," . map showFloat . toList
+
+showPayoffAsList :: Payoff -> String
+showPayoffAsList p = "[" ++ showPayoff p ++ "]"
