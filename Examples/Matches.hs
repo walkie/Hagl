@@ -14,7 +14,8 @@ Example experiments from GHCi:
 
 module Examples.Matches where
 
-import Data.List (find)
+import Control.Monad (liftM)
+import Data.List     (find)
 
 import Hagl hiding (moves, payoff, turn)
 
@@ -33,13 +34,13 @@ instance Game Matches where
 matches :: GameM m Matches => m Int
 matches = gameState
 
-draw n = updateGameState (subtract n)
+draw = updateGameState . subtract
 
 turn p = decide p >>= draw >> return p
           
-end = matches >>= return . (<= 0)
+end = liftM (<= 0) matches
 
-payoff p = numPlayers >>= return . flip loser p
+payoff p = liftM (flip loser p) numPlayers
 
 moves = do n <- matches
            (Matches _ ms) <- game
