@@ -46,7 +46,7 @@ printTranscriptOfGame n = do
     p <- payoff `forGameM` n
     this <- gameNumber
     if this == n then return ()
-                 else printStrLn $ "  Payoff: " ++ show (toList p)
+                 else printStrLn $ "  Payoff: " ++ showPayoffAsList p
 
 -- Print summary of the last game.
 printSummary :: (GameM m g, Show (Move g)) => m ()
@@ -81,4 +81,4 @@ printMaybePayoff (Just p) = printStrLn $ "  Payoff: " ++ show (toList p)
 -- Generate a string showing a set of players' scores.
 scoreString :: ByPlayer (Player g) -> Payoff -> String 
 scoreString (ByPlayer ps) (ByPlayer vs) = 
-    unlines ["  "++show p++": "++show v | (p,v) <- zip ps vs]
+    unlines ["  "++show p++": "++showFloat v | (p,v) <- zip ps vs]
