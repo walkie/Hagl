@@ -34,15 +34,15 @@ data Matrix mv = Matrix [mv] [mv] [Float] deriving Eq
 
 -- Smart constructor to build from bare lists.
 -- TODO should do some consistency checking
-normal :: Eq mv => Int -> [[mv]] -> [[Float]] -> Normal mv
+normal :: Int -> [[mv]] -> [[Float]] -> Normal mv
 normal np mss vs = Normal np (ByPlayer mss) (map ByPlayer vs)
 
 -- Construct a two-player game.
-bimatrix :: Eq mv => [[mv]] -> [[Float]] -> Normal mv
+bimatrix :: [[mv]] -> [[Float]] -> Normal mv
 bimatrix = normal 2
 
 -- Construct a two-player, symmetric game.
-symmetric :: Eq mv => [mv] -> [Float] -> Normal mv
+symmetric :: [mv] -> [Float] -> Normal mv
 symmetric ms vs = bimatrix [ms, ms] vs'
   where sym = concat (transpose (chunk (length ms) vs))
         vs' = zipWith (\a b -> [a,b]) vs sym
