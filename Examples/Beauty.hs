@@ -61,4 +61,4 @@ example = Beauty 100 0.5
 
 -- And some really simple players for it.
 ps :: [Player Beauty]
-ps = ["A" ::: return 5.0, "B" ::: return 5.0, "C" ::: return 0.0, "D" ::: return 2.0]
+ps = ["A" ::: return 5, "B" ::: return 5, "C" ::: return 0, "D" ::: return 2]
