@@ -74,8 +74,7 @@ step = gameTreeM >>= \t -> case t of
        putGameState s
        return Nothing
   Chance d ->
-    do (m, _) <- fromDist d
-       chanceMoved m
+    do m <- chance (moveDist d)
        s <- nextStateM m 
        putGameState s
        return Nothing

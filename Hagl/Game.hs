@@ -39,6 +39,11 @@ decide i = do startTurn i
               endTurn
               return m
 
+chance :: Game g => Dist (Move g) -> ExecM g (Move g)
+chance d = do m <- fromDist d
+              chanceMoved m
+              return m
+
 allPlayers :: Game g => (PlayerIx -> ExecM g a) -> ExecM g (ByPlayer a)
 allPlayers f = do n <- numPlayers
                   liftM ByPlayer (mapM f [1..n])

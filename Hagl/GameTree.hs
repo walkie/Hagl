@@ -51,6 +51,9 @@ maxPlayer t = foldl1 max $ map player (dfs t)
   where player (Decision p _) = p
         player _ = 0
 
+moveDist :: Dist (Edge mv) -> Dist mv
+moveDist d = [(p,m) | (p,(m,_)) <- d]
+
 ---------------
 -- Instances --
 ---------------
