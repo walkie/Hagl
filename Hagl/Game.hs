@@ -48,12 +48,12 @@ allPlayers :: Game g => (PlayerIx -> ExecM g a) -> ExecM g (ByPlayer a)
 allPlayers f = do n <- numPlayers
                   liftM ByPlayer (mapM f [1..n])
 
-takeTurns :: Game g => (PlayerIx -> ExecM g a) -> ExecM g Bool -> ExecM g a
+takeTurns :: Game g => (PlayerIx -> ExecM g a) -> ExecM g Bool -> ExecM g [a]
 takeTurns go until = turn 1
   where turn p = do a <- go p
                     b <- until
                     n <- numPlayers
-                    if b then return a else turn (nextPlayer n p)
+                    if b then return [a] else liftM (a:) (turn (nextPlayer n p))
                     
 
 marginal :: Game g => (Payoff -> Payoff) -> ExecM g Payoff
