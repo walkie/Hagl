@@ -17,7 +17,7 @@ module Examples.Matches where
 import Control.Monad (liftM)
 import Data.List     (find)
 
-import Hagl hiding (moves, payoff, turn)
+import Hagl hiding (last, moves, payoff, turn)
 
 -- Match game:
 --   * Number of matches at the beginning of the game.
@@ -29,7 +29,7 @@ instance Game Matches where
   type Move Matches = Int
   type State Matches = Int
   initState (Matches n _) = n
-  runGame = takeTurns turn end >>= payoff
+  runGame = takeTurns turn end >>= payoff . last
 
 matches :: GameM m Matches => m Int
 matches = gameState
