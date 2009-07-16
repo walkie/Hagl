@@ -93,7 +93,7 @@ preserver = "Preserver" :::
 
 -- Run an Axelrod-style tournament.
 axelrod :: [Player Dilemma] -> IO ()
-axelrod ps = roundRobin pd ps (times 1000 >> printScore)
+axelrod ps = roundRobin pd ps (times 200 >> printScore)
 
 {- Playing around with syntax...
 
