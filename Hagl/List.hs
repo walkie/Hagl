@@ -32,7 +32,7 @@ randomlyFrom as = liftM (as !!) (randomIndex as)
 -------------------
 -- Distributions --
 -------------------
--- Maybe replace with Martin's probability package?
+-- TODO: Maybe replace with Martin's probability package?
 
 type Dist a = [(Int, a)]
 
@@ -77,14 +77,17 @@ forTurn (ByTurn as) i = as !! (length as - i)
 forPlayer :: ByPlayer a -> Int -> a
 forPlayer (ByPlayer as) i = as !! (i-1)
 
+forM :: (Monad m, ByX d) => (d a -> Int -> a) -> m (d a) -> Int -> m a
+forM f l i = liftM (flip f i) l
+
 forGameM :: Monad m => m (ByGame a) -> Int -> m a
-forGameM l i = liftM (flip forGame i) l
+forGameM = forM forGame
 
 forTurnM :: Monad m => m (ByTurn a) -> Int -> m a
-forTurnM l i = liftM (flip forTurn i) l
+forTurnM = forM forTurn
 
 forPlayerM :: Monad m => m (ByPlayer a) -> Int -> m a
-forPlayerM l i = liftM (flip forPlayer i) l
+forPlayerM = forM forPlayer
 
 class ByX d => ByGameOrTurn d where
   forGameOrTurn  :: d a -> Int -> a
