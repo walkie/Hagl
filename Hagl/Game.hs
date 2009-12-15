@@ -54,7 +54,14 @@ takeTurns go until = turn 1
                     b <- until
                     n <- numPlayers
                     if b then return [a] else liftM (a:) (turn (nextPlayer n p))
-                    
+
+-- Like takeTurns, but only returned the last element.
+takeTurns_ :: Game g => (PlayerIx -> ExecM g a) -> ExecM g Bool -> ExecM g a
+takeTurns_ go until = turn 1
+  where turn p = do a <- go p
+                    b <- until
+                    n <- numPlayers
+                    if b then return a else turn (nextPlayer n p)
 
 marginal :: Game g => (Payoff -> Payoff) -> ExecM g Payoff
 marginal f = liftM f score

@@ -65,7 +65,7 @@ instance Game TicTacToe where
   runGame     = runTicTacToe
   
 runTicTacToe :: ExecM TicTacToe Payoff
-runTicTacToe = takeTurns turn (liftM end gameState)
+runTicTacToe = takeTurns_ turn (liftM end gameState)
   where turn p = do m <- decide p
                     b <- updateGameState (mark p m)
                     return (pay b)
