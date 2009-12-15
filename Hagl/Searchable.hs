@@ -82,3 +82,20 @@ step = gameTreeM >>= \t -> case t of
 
 finish :: (Searchable g, Eq (Move g), Show (Move g)) => ExecM g ()
 finish = once
+
+-----------------------
+-- Library Functions -- -- for easily making games Searchable
+-----------------------
+
+-- Build a tree for a state-based game.
+stateGameTree :: Game g => g                    -- ^ Game definition.
+              -> (State g -> PlayerIx)          -- ^ Whose turn is it?
+              -> (State g -> Bool)              -- ^ Is the game over?
+              -> (State g -> [Move g])          -- ^ Available moves.
+              -> (State g -> Move g -> State g) -- ^ Execute a move and return the new state.
+              -> (State g -> Payoff)            -- ^ Payoff for this (final) state.
+              -> State g                        -- ^ The current state.
+              -> GameTree (Move g)
+stateGameTree g who end moves exec pay init = tree init
+  where tree s | end s     = Payoff (pay s)
+               | otherwise = Decision (who s) [(m, tree (exec s m)) | m <- moves s]

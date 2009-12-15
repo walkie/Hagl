@@ -72,10 +72,8 @@ runTicTacToe = takeTurns_ turn (liftM end gameState)
 
 -- 
 -- Searchable instance.
--- TODO: Add library functions to make deriving trees easy, 
---       given helper funcions similar to above.
 -- 
 
 instance Searchable TicTacToe where
-  gameTree  _ b   = undefined
-  nextState _ b m = undefined
+  gameTree g = stateGameTree g who end markable (nextState g) pay
+  nextState _ b m = mark (who b) m b
