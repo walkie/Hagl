@@ -28,7 +28,7 @@ import Hagl.Normal
 ------------------------
 
 -- Game definition
-data Cooperation = C | D deriving (Show, Eq)
+data Cooperation = C | D deriving (Eq, Read, Show)
 type Dilemma = Normal Cooperation
 
 pd   = symmetric [C,D] [2,0,3,1]

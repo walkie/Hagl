@@ -1,7 +1,13 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Hagl.Strategy where
 
+import Control.Monad       (liftM)
+import Control.Monad.Trans (liftIO)
+import System.IO.Error     (isUserError)
+
 import Hagl.Core
-import Hagl.Accessor (numMoves)
+import Hagl.Accessor (numMoves, players)
 import Hagl.Selector (my)
 
 -----------------------
@@ -31,3 +37,12 @@ thereafter ss s = my numMoves >>= \n -> if n < length ss then ss !! n else s
 -- Play an initial strategy for the first move, then a primary strategy thereafter.
 atFirstThen :: Game g => Strategy s g -> Strategy s g -> Strategy s g
 atFirstThen s = thereafter [s]
+
+-- A human player, who enters moves on the console.
+human :: (Game g, Read (Move g)) => Strategy () g
+human = do n <- liftM name (my players)
+           liftIO (putStrLn ("*** " ++ n ++ "'s turn ***"))
+           liftIO getMove
+  where getMove = putStr "Enter a move: " >> catch readLn retry
+        retry e | isUserError e = putStrLn "Not a valid move... try again." >> getMove
+                | otherwise     = ioError e
