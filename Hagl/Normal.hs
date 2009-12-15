@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts, TypeFamilies #-}
 module Hagl.Normal where
 
+import Data.Function (on)
 import Data.List
 import Data.Maybe (fromJust)
 
@@ -62,8 +63,7 @@ square ms = Matrix ms ms
 nash :: (Norm g, Eq (Move g)) => g -> [Profile (Move g)]
 nash g = [s | s <- profiles g, stable s]
   where stable s = all (uni s) [1 .. numPlayers g]
-        uni s p = and [g `pays` s `forPlayer` p >= 
-                       g `pays` s' `forPlayer` p | s' <- change s p]
+        uni s p = and [on (>=) (forPlayer p . pays g) s s' | s' <- change s p]
         change (ByPlayer s) p = let (h,_:t) = splitAt (p-1) s 
                                 in [ByPlayer (h ++ e:t) | e <- moves g p]
 
@@ -71,8 +71,8 @@ nash g = [s | s <- profiles g, stable s]
 pareto :: (Norm g, Eq (Move g)) => g -> [Profile (Move g)]
 pareto g = [s | s <- profiles g, opt s]
   where opt s = not (any (imp s) (profiles g))
-        imp s s' = let p  = toList (g `pays` s)
-                       p' = toList (g `pays` s')
+        imp s s' = let p  = toList (pays g s)
+                       p' = toList (pays g s')
                    in or (zipWith (>) p' p) && and (zipWith (>=) p' p)
 
 -- Finds all pareto optimal, pure equilibriums.
@@ -82,7 +82,7 @@ paretoNash g = pareto g `intersect` nash g
 -- Finds all saddle points of a matrix game.
 saddle :: Eq mv => Matrix mv -> [Profile mv]
 saddle g = [p | p <- profiles g, v p == minimum (r p), v p == maximum (c p)]
-  where v p = pays g p `forPlayer` 1
+  where v = forPlayer 1 . pays g
         r (ByPlayer [m,_]) = row g (fromJust (elemIndex m (moves g 1)) + 1)
         c (ByPlayer [_,m]) = col g (fromJust (elemIndex m (moves g 2)) + 1)
 
@@ -121,7 +121,7 @@ profiles g = let np = numPlayers g
 runNormal :: Norm g => ExecM g Payoff
 runNormal = do g <- game
                ms <- allPlayers decide
-               return (g `pays` ms)
+               return (pays g ms)
 
 payoffMap :: ByPlayer [mv] -> [Payoff] -> [(Profile mv, Payoff)]
 payoffMap = zip . dcross
@@ -136,7 +136,7 @@ zerosum vs = [fromList [v, -v] | v <- vs]
 buildTree :: Int -> ByPlayer [mv] -> [Payoff] -> GameTree mv
 buildTree np mss vs = head (level 1)
   where level n | n > np    = map Payoff vs
-                | otherwise = let ms = mss `forPlayer` n
+                | otherwise = let ms = forPlayer n mss
                                   bs = chunk (length ms) (level (n+1))
                               in map (Decision n . zip ms) bs
 
@@ -153,7 +153,7 @@ instance Eq mv => Game (Normal mv) where
 instance Eq mv => Norm (Normal mv) where
   numPlayers (Normal np _ _) = np
   pays (Normal _ mss ps) = lookupPay mss ps
-  moves (Normal _ mss _) p = mss `forPlayer` p
+  moves (Normal _ mss _) p = forPlayer p mss
 
 instance Eq mv => Game (Matrix mv) where
   type Move (Matrix mv) = mv

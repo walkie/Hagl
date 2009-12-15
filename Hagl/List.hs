@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances, TypeFamilies #-}
 module Hagl.List where
 
 import Control.Monad       (liftM)
@@ -47,77 +48,9 @@ fromDist = randomlyFrom . expandDist
 -- Dimensioned Lists --
 -----------------------
 
-newtype ByGame a = ByGame [a] deriving (Eq, Show)
-newtype ByTurn a = ByTurn [a] deriving (Eq, Show)
-newtype ByPlayer a = ByPlayer [a] deriving (Eq, Show)
-
-instance Functor ByGame where
-  fmap f (ByGame as) = ByGame (map f as)
-instance Functor ByTurn where
-  fmap f (ByTurn as) = ByTurn (map f as)
-instance Functor ByPlayer where
-  fmap f (ByPlayer as) = ByPlayer (map f as)
-
-instance Monoid (ByGame a) where
-  mempty = ByGame []
-  mappend (ByGame as) (ByGame bs) = ByGame (as ++ bs)
-instance Monoid (ByTurn a) where
-  mempty = ByTurn []
-  mappend (ByTurn as) (ByTurn bs) = ByTurn (as ++ bs)
-instance Monoid (ByPlayer a) where
-  mempty = ByPlayer []
-  mappend (ByPlayer as) (ByPlayer bs) = ByPlayer (as ++ bs)
-
-forGame :: ByGame a -> Int -> a
-forGame (ByGame as) i = as !! (length as - i)
-
-forTurn :: ByTurn a -> Int -> a
-forTurn (ByTurn as) i = as !! (length as - i)
-
-forPlayer :: ByPlayer a -> Int -> a
-forPlayer (ByPlayer as) i = as !! (i-1)
-
-forM :: (Monad m, ByX d) => (d a -> Int -> a) -> m (d a) -> Int -> m a
-forM f l i = liftM (flip f i) l
-
-forGameM :: Monad m => m (ByGame a) -> Int -> m a
-forGameM = forM forGame
-
-forTurnM :: Monad m => m (ByTurn a) -> Int -> m a
-forTurnM = forM forTurn
-
-forPlayerM :: Monad m => m (ByPlayer a) -> Int -> m a
-forPlayerM = forM forPlayer
-
-class ByX d => ByGameOrTurn d where
-  forGameOrTurn  :: d a -> Int -> a
-  forGameOrTurnM :: Monad m => m (d a) -> Int -> m a
-instance ByGameOrTurn ByGame where
-  forGameOrTurn = forGame
-  forGameOrTurnM = forGameM
-instance ByGameOrTurn ByTurn where
-  forGameOrTurn = forTurn
-  forGameOrTurnM = forTurnM
-
-game's = undefined :: ByGame a
-games' = undefined :: ByGame a
-
-turn   = undefined :: ByTurn a
-turn's = undefined :: ByTurn a
-turns' = undefined :: ByTurn a
-
 class Functor d => ByX d where
   toList   :: d a -> [a]
   fromList :: [a] -> d a
-instance ByX ByGame where
-  toList (ByGame as) = as
-  fromList = ByGame
-instance ByX ByTurn where
-  toList (ByTurn as) = as
-  fromList = ByTurn
-instance ByX ByPlayer where
-  toList (ByPlayer as) = as
-  fromList = ByPlayer
 
 toList2 :: (ByX f, ByX g) => f (g a) -> [[a]]
 toList2 = map toList . toList
@@ -143,3 +76,73 @@ dcross = map fromList . cross . toList
 
 dzipWith :: ByX f => (a -> b -> c) -> f a -> f b -> f c
 dzipWith f as bs = fromList (zipWith f (toList as) (toList bs))
+
+-- ByGame, ByTurn, ByPlayer lists
+
+newtype ByGame a = ByGame [a] deriving (Eq, Show)
+newtype ByTurn a = ByTurn [a] deriving (Eq, Show)
+newtype ByPlayer a = ByPlayer [a] deriving (Eq, Show)
+
+forGame :: Int -> ByGame a -> a
+forGame i (ByGame as) = as !! (length as - i)
+
+forTurn :: Int -> ByTurn a -> a
+forTurn i (ByTurn as) = as !! (length as - i)
+
+forPlayer :: Int -> ByPlayer a -> a
+forPlayer i (ByPlayer as) = as !! (i-1)
+
+forGameM :: Monad m => Int -> m (ByGame a) -> m a
+forGameM = liftM . forGame
+
+forTurnM :: Monad m => Int -> m (ByTurn a) -> m a
+forTurnM = liftM . forTurn
+
+forPlayerM :: Monad m => Int -> m (ByPlayer a) -> m a
+forPlayerM = liftM . forPlayer
+
+class ByX d => ByGameOrTurn d where
+  forGameOrTurn  :: Int -> d a -> a
+instance ByGameOrTurn ByGame where
+  forGameOrTurn = forGame
+instance ByGameOrTurn ByTurn where
+  forGameOrTurn = forTurn
+
+forGameOrTurnM :: (Monad m, ByGameOrTurn d) => Int -> m (d a) -> m a
+forGameOrTurnM = liftM . forGameOrTurn
+
+game's = undefined :: ByGame a
+games' = undefined :: ByGame a
+
+turn   = undefined :: ByTurn a
+turn's = undefined :: ByTurn a
+turns' = undefined :: ByTurn a
+
+-- Instances
+
+instance Functor ByGame where
+  fmap f (ByGame as) = ByGame (map f as)
+instance Functor ByTurn where
+  fmap f (ByTurn as) = ByTurn (map f as)
+instance Functor ByPlayer where
+  fmap f (ByPlayer as) = ByPlayer (map f as)
+
+instance ByX ByGame where
+  toList (ByGame as) = as
+  fromList = ByGame
+instance ByX ByTurn where
+  toList (ByTurn as) = as
+  fromList = ByTurn
+instance ByX ByPlayer where
+  toList (ByPlayer as) = as
+  fromList = ByPlayer
+
+instance Monoid (ByGame a) where
+  mempty = ByGame []
+  mappend (ByGame as) (ByGame bs) = ByGame (as ++ bs)
+instance Monoid (ByTurn a) where
+  mempty = ByTurn []
+  mappend (ByTurn as) (ByTurn bs) = ByTurn (as ++ bs)
+instance Monoid (ByPlayer a) where
+  mempty = ByPlayer []
+  mappend (ByPlayer as) (ByPlayer bs) = ByPlayer (as ++ bs)

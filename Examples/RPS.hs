@@ -41,7 +41,7 @@ pavlov = "Pavlov" :::
 
 -- Play the move that will beat the move the opponent has played most.
 frequency = "Huckleberry" :::
-    do ms <- her `eachAnd` every games' move
+    do ms <- her `each` every games' move
        let r = length $ filter (Rock ==) ms
            p = length $ filter (Paper ==) ms
            s = length $ filter (Scissors ==) ms

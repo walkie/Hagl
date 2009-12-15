@@ -2,7 +2,7 @@
 
 module Hagl.Accessor where
 
-import Control.Monad (liftM)
+import Control.Monad (liftM, liftM2)
 import Data.List     (transpose)
 import Data.Maybe    (fromMaybe)
 
@@ -64,7 +64,7 @@ isFirstGame = liftM (>1) gameNumber
 
 -- The turn number of the current game, for the current player.
 turnNumber :: GameM m g => m Int
-turnNumber = myIx >>= liftM (1+) . forPlayerM numMoves
+turnNumber = liftM2 (forPlayer . (+1)) myIx numMoves
 
 -- Transcript of each game.
 transcripts :: GameM m g => m (ByGame (Transcript (Move g)))
@@ -101,7 +101,7 @@ instance MoveList ByGame ByPlayer where
             return $ ByGame [fmap (head . toList) m | m <- tail ms]
 instance MoveList ByPlayer ByTurn where
   move = liftM _moves summary
-            
+
 -- The total payoff for each player for each game.
 payoff :: GameM m g => m (ByGame Payoff)
 payoff = liftM (fmap _payoff) summaries

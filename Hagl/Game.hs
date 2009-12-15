@@ -83,7 +83,7 @@ playerMoved i m = do
     e  <- getExec
     ns <- numMoves
     put e { _transcript = (Just i, m) : _transcript e,
-            _numMoves = setListElem (i-1) (forPlayer ns i + 1) ns }
+            _numMoves = setListElem (i-1) (forPlayer i ns + 1) ns }
 
 --
 -- Getters and setters. (Also see Hagl.Accessor for basic getters.)
@@ -101,7 +101,7 @@ updateGameState f = gameState >>= \s ->
                     let s' = f s in putGameState s' >> return s'
 
 getPlayer :: Game g => PlayerIx -> ExecM g (Player g)
-getPlayer = forPlayerM players
+getPlayer i = forPlayerM i players
 
 setPlayer :: Game g => PlayerIx -> Player g -> ExecM g ()
 setPlayer i p = do e <- getExec

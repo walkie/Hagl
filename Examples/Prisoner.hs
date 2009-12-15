@@ -61,12 +61,12 @@ suspicious = "Suspicious Tit-for-Tat" ::: play D `atFirstThen` his (last game's 
 
 -- Tit-for-Tat that only defects after two defects in a row.
 titForTwoTats = "Tit-for-Two-Tats" :::
-    do ms <- his `eachAnd` lastN 2 games' move
+    do ms <- his `each` lastN 2 games' move
        return $ if ms == [D, D] then D else C
 
 -- The Grim Trigger: Cs until opponent defects, then defects forever.
 grim = "Grim Trigger" :::
-    do ms <- her `eachAnd` every games' move
+    do ms <- my `each` every games' move
        if D `elem` ms then play D else play C
 
 grim' = Player "Stately Grim" False $ 

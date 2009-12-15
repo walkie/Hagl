@@ -37,13 +37,13 @@ printTranscriptOfGame :: (GameM m g, Show (Move g)) => Int -> m ()
 printTranscriptOfGame n = do
     printStrLn $ "Game " ++ show n ++ ":"
     -- print the transcript
-    t  <- transcripts `forGameM` n
+    t  <- forGameM n transcripts
     ps <- players
-    let mv (Just i,  m) = "  " ++ show (ps `forPlayer` i) ++ "'s move: " ++ show m
+    let mv (Just i,  m) = "  " ++ show (forPlayer i ps) ++ "'s move: " ++ show m
         mv (Nothing, m) = "  Chance: " ++ show m
-     in (printStr . unlines . map mv) (reverse t)
+    (printStr . unlines . map mv) (reverse t)
     -- maybe print the payoff
-    p <- payoff `forGameM` n
+    p <- forGameM n payoff
     this <- gameNumber
     if this == n then return ()
                  else printStrLn $ "  Payoff: " ++ showPayoffAsList p
@@ -59,7 +59,7 @@ printSummaries = numGames >>= \n -> mapM_ printSummaryOfGame [1..n]
 -- Print the summary of the indicated game.
 printSummaryOfGame :: (GameM m g, Show (Move g)) => Int -> m ()
 printSummaryOfGame n = 
-    do (mss,pay) <- summaries `forGameM` n
+    do (mss,pay) <- forGameM n summaries
        ps <- players
        printStrLn $ "Summary of Game "++show n++":"
        printStr $ unlines ["  "++show p++" moves: "++show (reverse ms) 

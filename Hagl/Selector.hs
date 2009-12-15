@@ -1,6 +1,6 @@
 module Hagl.Selector where
 
-import Control.Monad (liftM)
+import Control.Monad (liftM, liftM2)
 
 import Hagl.Core
 import Hagl.Accessor
@@ -11,8 +11,8 @@ import Hagl.Game
 --------------------
 
 -- Apply selection to each element of a list.
-eachAnd :: GameM m g => (m a -> m b) -> m [a] -> m [b]
-eachAnd f xs = mapM (f . return) =<< xs
+each :: GameM m g => (m a -> m b) -> m [a] -> m [b]
+each f = (>>= mapM (f . return))
 
 -- Apply selectors in reverse order.
 inThe :: GameM m g => m a -> (m a -> m b) -> m b
@@ -22,14 +22,13 @@ inThe = flip ($)
 
 -- Select the element corresponding to the current player.
 my :: GameM m g => m (ByPlayer a) -> m a
-my x = myIx >>= forPlayerM x
+my = liftM2 forPlayer myIx
 
 -- Selects the element corresponding to the other player in a two-player game.
 his :: GameM m g => m (ByPlayer a) -> m a
-his x = do i  <- myIx
-           np <- numPlayers
+his x = do np <- numPlayers
            if np /= 2 then error "his/her can only be used in two player games"
-                      else x `forPlayerM` nextPlayer np i
+                      else liftM2 (forPlayer . nextPlayer np) myIx x
 
 -- Selects the element corresponding to the other player in a two-player game.
 her :: GameM m g => m (ByPlayer a) -> m a
@@ -49,7 +48,7 @@ their x = do ByPlayer as <- x
 
 -- Selects the element corresponding to the current game.
 this :: GameM m g => ByGame a -> m (ByGame a) -> m a
-this _ x = gameNumber >>= forGameOrTurnM x
+this _ = liftM2 forGameOrTurn gameNumber
 
 -- Selects the elements corresponding to completed games.
 completed :: GameM m g => ByGame a -> m (ByGame a) -> m [a]
@@ -64,20 +63,20 @@ every _ = liftM toList
 
 -- Selects the element corresponding to the first game or move.
 first :: (ByGameOrTurn d, GameM m g) => d a -> m (d a) -> m a
-first _ = flip forGameOrTurnM 1
+first _ = forGameOrTurnM 1
 
 -- Selects the element corresponding to the first n games or moves.
 firstN :: (ByGameOrTurn d, GameM m g) => Int -> d a -> m (d a) -> m [a]
-firstN n _ x = mapM (forGameOrTurnM x) [n, n-1 .. 1]
+firstN n _ x = sequence [forGameOrTurnM i x | i <- [n, n-1 .. 1]]
 
 -- Selects the element corresponding to the last game or move.
 last :: (Last d, GameM m g) => d a -> m (d a) -> m a
-last d x = lastGameOrTurn d >>= forGameOrTurnM x
+last d = liftM2 forGameOrTurn (lastGameOrTurn d)
 
 -- Selects the element corresponding to the last n games or moves.
 lastN :: (Last d, GameM m g) => Int -> d a -> m (d a) -> m [a]
 lastN n d x = do m <- lastGameOrTurn d
-                 mapM (forGameOrTurnM x) (take n [m, m-1 ..])
+                 sequence [forGameOrTurnM i x | i <- take n [m, m-1 ..]]
 
 --
 -- Utility stuff.

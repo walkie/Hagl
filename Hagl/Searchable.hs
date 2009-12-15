@@ -53,7 +53,7 @@ minimax = myIx >>= \me -> gameTreeM >>= \t ->
                                              else (a, min b v)
                    (alpha', beta') = foldl mm (alpha, beta) (children n)
                in if isMe p then alpha' else beta'
-        val _ _ (Payoff vs) = vs `forPlayer` me
+        val _ _ (Payoff vs) = forPlayer me vs
     in let vals = map (val (-infinity) infinity) (children t)
        in return $ movesFrom t !! maxIndex vals
   where infinity = 1/0 :: Float
