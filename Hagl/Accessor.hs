@@ -46,6 +46,10 @@ myIx :: GameM m g => m PlayerIx
 myIx = liftM (fromMaybe e) playerIx
   where e = error "Internal error: playerIx not set!"
 
+-- The currently active player.
+me :: GameM m g => m (Player g)
+me = liftM2 forPlayer myIx players
+
 -- The number of players playing the game.
 numPlayers :: GameM m g => m Int
 numPlayers = liftM dlength players
