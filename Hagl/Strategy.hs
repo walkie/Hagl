@@ -2,12 +2,11 @@
 
 module Hagl.Strategy where
 
-import Control.Monad       (liftM)
 import Control.Monad.Trans (liftIO)
 import System.IO.Error     (isUserError)
 
 import Hagl.Core
-import Hagl.Accessor (numMoves, players)
+import Hagl.Accessor (me, numMoves)
 import Hagl.Selector (my)
 
 -----------------------
@@ -40,9 +39,7 @@ atFirstThen s = thereafter [s]
 
 -- A human player, who enters moves on the console.
 human :: (Game g, Read (Move g)) => Strategy () g
-human = do n <- liftM name (my players)
-           liftIO (putStrLn ("*** " ++ n ++ "'s turn ***"))
-           liftIO getMove
-  where getMove = putStr "Enter a move: " >> catch readLn retry
-        retry e | isUserError e = putStrLn "Not a valid move... try again." >> getMove
-                | otherwise     = ioError e
+human = me >>= liftIO . getMove . name
+  where getMove n = putStr (n ++ "'s move: ") >> catch readLn (retry n)
+        retry n e | isUserError e = putStrLn "Not a valid move... try again." >> getMove n
+                  | otherwise     = ioError e
