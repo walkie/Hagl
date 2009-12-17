@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Hagl.Searchable where
 
+import Control.Monad (liftM2, liftM3)
 import Data.List  (elemIndex)
 import Data.Maybe (fromJust)
 
@@ -22,14 +23,10 @@ location :: (Searchable g, GameM m g) => m (GameTree (Move g))
 location = gameTreeM
 
 gameTreeM :: (Searchable g, GameM m g) => m (GameTree (Move g))
-gameTreeM = do g <- game
-               s <- gameState
-               return (gameTree g s)
+gameTreeM = liftM2 gameTree game gameState
 
 nextStateM :: (Searchable g, GameM m g) => Move g -> m (State g)
-nextStateM m = do g <- game
-                  s <- gameState
-                  return (nextState g s m)
+nextStateM = liftM3 nextState game gameState . return
 
 ----------------
 -- Strategies --
