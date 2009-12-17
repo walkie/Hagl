@@ -41,15 +41,14 @@ randomly = do t <- gameTreeM
 -- perfect information and no Chance nodes.
 minimax :: Searchable g => Strategy s g
 minimax = myIx >>= \me -> gameTreeM >>= \t -> 
-    let isMe = (me + 1 ==)
+    let ifMe p a b = if (me == p) then a else b
         val alpha beta n@(Decision p _)
-           | alpha >= beta = if isMe p then alpha else beta
+           | alpha >= beta = ifMe p alpha beta
            | otherwise =
                let mm (a,b) n = let v = val a b n
-                                in if isMe p then (max a v, b)
-                                             else (a, min b v)
+                                in ifMe p (max a v, b) (a, min b v)
                    (alpha', beta') = foldl mm (alpha, beta) (children n)
-               in if isMe p then alpha' else beta'
+               in ifMe p alpha' beta'
         val _ _ (Payoff vs) = forPlayer me vs
     in let vals = map (val (-infinity) infinity) (children t)
        in return $ movesFrom t !! maxIndex vals
