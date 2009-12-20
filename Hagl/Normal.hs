@@ -207,7 +207,7 @@ showGrid rs cs vs = showRows (colHead : zipWith (:) rowHead grid)
         n  = max (maxLength cs') (gridMax vs')
         colHead = padLeft n "" : map (pad n) cs'
         rowHead = map (padLeft n) rs'
-        grid    = (map . map) (pad n) vs'
+        grid    = (map . map) (padLeft n) vs'
 
 toGrid :: [mv] -> [Payoff] -> [[Payoff]]
 toGrid = chunk . length
