@@ -2,14 +2,15 @@
 module Hagl.Searchable where
 
 import Control.Monad (liftM2, liftM3)
-import Data.List  (elemIndex)
-import Data.Maybe (fromJust)
+import Data.Function (on)
+import Data.List     (maximumBy)
+import Data.Maybe    (fromJust)
 
 import Hagl.Core
 import Hagl.Accessor
 import Hagl.Game
 import Hagl.GameTree
-import Hagl.Exec (once)
+import Hagl.Exec (conclude)
 
 ----------------------
 -- Searchable Class --
@@ -34,26 +35,28 @@ nextStateM = liftM3 nextState game gameState . return
 
 -- Pick a move from the list of available moves randomly.
 randomly :: (Searchable g, Eq (Move g)) => Strategy s g
-randomly = do t <- gameTreeM
-              randomlyFrom (movesFrom t)
+randomly = gameTreeM >>= randomlyFrom . movesFrom
+
+-- Minimax strategy.
+minimax :: Searchable g => Strategy s g
+minimax = liftM2 minimax' myIx gameTreeM
 
 -- Minimax algorithm with alpha-beta pruning. Only defined for games with
 -- perfect information and no Chance nodes.
-minimax :: Searchable g => Strategy s g
-minimax = myIx >>= \me -> gameTreeM >>= \t -> 
-    let ifMe p a b = if (me == p) then a else b
-        val alpha beta n@(Decision p _)
-           | alpha >= beta = ifMe p alpha beta
-           | otherwise =
-               let mm (a,b) n = let v = val a b n
-                                in ifMe p (max a v, b) (a, min b v)
-                   (alpha', beta') = foldl mm (alpha, beta) (children n)
-               in ifMe p alpha' beta'
-        val _ _ (Payoff vs) = forPlayer me vs
-    in let vals = map (val (-infinity) infinity) (children t)
-       in return $ movesFrom t !! maxIndex vals
-  where infinity = 1/0 :: Float
-        maxIndex as = fromJust $ elemIndex (maximum as) as
+minimax' :: PlayerIx -> GameTree mv -> mv
+minimax' me t = fst $ maximumBy (compare `on` snd) (zip (movesFrom t) vals)
+  where inf  = 1/0 :: Float
+        vals = map (val me (-inf) inf) (children t)
+
+-- (used by minimax')
+val :: PlayerIx -> Float -> Float -> GameTree mv -> Float
+val me _ _   (Payoff vs)                = forPlayer me vs
+val me a b n@(Decision p _) | a >= b    = ifMe a  b
+                            | otherwise = ifMe a' b'
+  where ifMe a b   = if (me == p) then a else b
+        mm (a,b) n = let v = val me a b n
+                     in ifMe (max a v, b) (a, min b v)
+        (a',b')    = foldl mm (a,b) (children n)
 
 --------------------------
 -- Executing Game Trees --
@@ -64,20 +67,13 @@ runTree = step >>= maybe runTree return
 
 step :: (Searchable g, Eq (Move g), Show (Move g)) => ExecM g (Maybe Payoff)
 step = gameTreeM >>= \t -> case t of
-  Decision i es ->
-    do m <- decide i 
-       s <- nextStateM m
-       putGameState s
-       return Nothing
-  Chance d ->
-    do m <- chance (moveDist d)
-       s <- nextStateM m 
-       putGameState s
-       return Nothing
-  Payoff p -> return (Just p)
+    Decision i es -> perform (decide i)
+    Chance   d    -> perform (chance (moveDist d))
+    Payoff   p    -> return (Just p)
+  where perform x = x >>= nextStateM >>= putGameState >> return Nothing
 
 finish :: (Searchable g, Eq (Move g), Show (Move g)) => ExecM g ()
-finish = once
+finish = runTree >>= conclude
 
 -----------------------
 -- Library Functions -- -- for easily making games Searchable
