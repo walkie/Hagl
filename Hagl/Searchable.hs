@@ -2,8 +2,7 @@
 module Hagl.Searchable where
 
 import Control.Monad (liftM2, liftM3)
-import Data.Function (on)
-import Data.List     (maximumBy)
+import Data.List     (elemIndex)
 import Data.Maybe    (fromJust)
 
 import Hagl.Core
@@ -44,7 +43,7 @@ minimax = liftM2 minimax' myIx gameTreeM
 -- Minimax algorithm with alpha-beta pruning. Only defined for games with
 -- perfect information and no Chance nodes.
 minimax' :: PlayerIx -> GameTree mv -> mv
-minimax' me t = fst $ maximumBy (compare `on` snd) (zip (movesFrom t) vals)
+minimax' me t = movesFrom t !! fromJust (elemIndex (maximum vals) vals)
   where inf  = 1/0 :: Float
         vals = map (val me (-inf) inf) (children t)
 
