@@ -1,8 +1,9 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleContexts, TypeFamilies #-}
 module Examples.TicTacToe where
 
-import Control.Monad (liftM)
-import Data.List     (elemIndices, transpose)
+import Control.Monad.Trans (liftIO)
+import Data.List           (elemIndices, intersperse, transpose)
+import Text.Printf         (printf)
 
 import Hagl
 import Hagl.Searchable
@@ -11,7 +12,7 @@ import Hagl.Searchable
 -- Tic Tac Toe --
 -----------------
 
-data Square = X | O | E deriving (Eq, Show)
+data Square = X | O | E deriving Eq
 type Board = [Square]
 type Mark  = Int
 
@@ -54,26 +55,38 @@ pay b | win 1 b   = winner 2 1
       | win 2 b   = winner 2 2
       | otherwise = tie 2
 
+-- Play a game against minimax!
+challenge = execGame TicTacToe ["Puny Human" ::: human, "Minimax" ::: minimax]
+    (run >> printScore)
+  where run = printGame >> step >>= maybe run (\p -> printGame >> conclude p)
+
 --
--- Game instance.
+-- Game instances
 --
 
 instance Game TicTacToe where
   type Move TicTacToe = Mark
   type State TicTacToe = Board
   initState _ = start
-  runGame     = runTicTacToe
+  runGame     = runTree
   
-runTicTacToe :: ExecM TicTacToe Payoff
-runTicTacToe = takeTurns_ turn (liftM end gameState)
-  where turn p = do m <- decide p
-                    b <- updateGameState (mark p m)
-                    return (pay b)
-
--- 
--- Searchable instance.
--- 
-
 instance Searchable TicTacToe where
   gameTree g = stateGameTree g who end markable (nextState g) pay
   nextState _ b m = mark (who b) m b
+
+--
+-- Pretty printing
+--
+
+instance Show Square where
+  show X = "X"
+  show O = "O"
+  show E = " "
+
+showGame :: Board -> String
+showGame = concat . intersperse "\n" . intersperse line . map row . chunk 3 . map show
+  where row [a,b,c] = printf " %s | %s | %s " a b c
+        line = "-----------"
+
+printGame :: GameM m TicTacToe => m ()
+printGame = gameState >>= liftIO . putStrLn . showGame
