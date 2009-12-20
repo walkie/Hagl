@@ -19,15 +19,15 @@ data GameTree mv = Decision PlayerIx [Edge mv] -- decision made by a player
 
 -- The moves available from a node.
 movesFrom :: GameTree mv -> [mv]
-movesFrom (Decision _ es) = [m | (m,_) <- es]
-movesFrom (Chance d) = [m | (_,(m,_)) <- d]
-movesFrom _ = []
+movesFrom (Decision _ es) = map fst es
+movesFrom (Chance d)      = map (fst . snd) d
+movesFrom _               = []
 
 -- The immediate children of a node.
 children :: GameTree mv -> [GameTree mv]
-children (Decision _ es) = [n | (_,n) <- es]
-children (Chance d) = [n | (_,(_,n)) <- d]
-children _ = []
+children (Decision _ es) = map snd es
+children (Chance d)      = map (snd . snd) d
+children _               = []
 
 doMove :: (Eq mv, Show mv) => mv -> GameTree mv -> GameTree mv
 doMove m t = case t of
