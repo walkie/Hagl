@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleInstances, TypeFamilies #-}
 module Hagl.List where
 
 import Control.Monad       (liftM)
