@@ -75,10 +75,10 @@ finish :: (Searchable g, Eq (Move g), Show (Move g)) => ExecM g ()
 finish = runTree >>= conclude
 
 -----------------------
--- Library Functions -- -- for easily making games Searchable
+-- Library Functions --
 -----------------------
 
--- Build a tree for a state-based game.
+-- | Build a tree for a state-based game.
 stateGameTree :: Game g => g                    -- ^ Game definition.
               -> (State g -> PlayerIx)          -- ^ Whose turn is it?
               -> (State g -> Bool)              -- ^ Is the game over?
