@@ -1,71 +1,89 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE PatternGuards #-}
+
 module Hagl.GameTree where
 
-import Data.Maybe (fromMaybe)
-import Data.Tree  (Tree(..), drawTree)
+import Data.List  (intersperse)
+import qualified Data.Tree as DT (Tree(..), drawTree)
 
-import Hagl.Core
+import Hagl.List
 
 ----------------
 -- Game Trees --
 ----------------
 
-type Edge mv = (mv, GameTree mv)
+type PlayerIx  = Int
+type Payoff    = ByPlayer Float
+type Edge s mv = (mv, GameTree s mv)
 
-data GameTree mv = Decision PlayerIx [Edge mv] -- decision made by a player
-                 | Chance (Dist (Edge mv))     -- random move from distribution
-                 | Payoff Payoff               -- terminating payoff
-                 deriving Eq
+data GameTree s mv = Node s (Node mv) [Edge s mv] -- internal node
+                   | Payoff Payoff                -- terminating payoff
+                   deriving Eq
+
+data Node mv = Decision PlayerIx -- decision made by a player
+             | Chance (Dist mv)  -- random move from distribution
+             deriving Eq
 
 -- The moves available from a node.
-movesFrom :: GameTree mv -> [mv]
-movesFrom (Decision _ es) = map fst es
-movesFrom (Chance d)      = map (fst . snd) d
-movesFrom _               = []
+movesFrom :: GameTree s mv -> [mv]
+movesFrom (Node _ _ es) = map fst es
+movesFrom _             = []
 
 -- The immediate children of a node.
-children :: GameTree mv -> [GameTree mv]
-children (Decision _ es) = map snd es
-children (Chance d)      = map (snd . snd) d
-children _               = []
+children :: GameTree s mv -> [GameTree s mv]
+children (Node _ _ es) = map snd es
+children _             = []
 
-doMove :: (Eq mv, Show mv) => mv -> GameTree mv -> GameTree mv
-doMove m t = case t of
-    Decision _ es -> look es
-    Chance d      -> look (map snd d)
-  where look = fromMaybe (error ("move not found: " ++ show m)) . lookup m
+-- Get a particular child node by following the edge labeled with mv.
+child :: Eq mv => mv -> GameTree s mv -> GameTree s mv
+child mv (Node _ _ es) | Just t <- lookup mv es = t
+child _ _ = error "GameTree.child: invalid move"
+
+----------------
+-- Traversing --
+----------------
 
 -- Nodes in BFS order.
-bfs :: GameTree mv -> [GameTree mv]
-bfs t = let b [] = []
-            b ns = ns ++ b (concatMap children ns)
-        in b [t]
+bfs :: GameTree s mv -> [GameTree s mv]
+bfs t = bfs' [t]
+  where bfs' [] = []
+        bfs' ns = ns ++ bfs' (concatMap children ns)
 
 -- Nodes in DFS order.
-dfs :: GameTree mv -> [GameTree mv]
+dfs :: GameTree s mv -> [GameTree s mv]
 dfs t = t : concatMap dfs (children t)
 
 -- The highest numbered player in this finite game tree.
-maxPlayer :: GameTree mv -> Int
+maxPlayer :: GameTree s mv -> Int
 maxPlayer t = foldl1 max $ map player (dfs t)
-  where player (Decision p _) = p
-        player _ = 0
+  where player (Node _ (Decision p) _) = p
+        player _                       = 0
 
-moveDist :: Dist (Edge mv) -> Dist mv
-moveDist d = [(p,m) | (p,(m,_)) <- d]
+---------------------
+-- Pretty Printing --
+---------------------
 
----------------
--- Instances --
----------------
+showFloat :: Float -> String
+showFloat f | f == fromIntegral i = show i
+            | otherwise           = show f
+  where i = floor f
 
-instance Show mv => Show (GameTree mv) where
-  show t = condense (drawTree (tree "" t))
-    where str (Decision p es) = "Player " ++ show p
-          str (Chance d) = "Chance"
-          str (Payoff p) = showPayoffAsList p
-          sub (Decision p es) = [tree (show m ++ " -> ") t | (m,t) <- es]
-          sub (Chance d) = [tree (show i ++ " * " ++ show m ++ " -> ") t | (i,(m,t)) <- d]
-          sub (Payoff _) = []
-          tree pre t = Node (pre ++ str t) (sub t)
-          condense s = let empty = not . all (\c -> c == ' ' || c == '|')
-                       in unlines $ filter empty $ lines s
+showPayoff :: Payoff -> String
+showPayoff = concat . intersperse "," . map showFloat . toList
+
+showPayoffAsList :: Payoff -> String
+showPayoffAsList p = "[" ++ showPayoff p ++ "]"
+
+drawTree :: Show mv => GameTree s mv -> String
+drawTree = condense . DT.drawTree . tree ""
+  where condense = unlines . filter empty . lines
+        empty    = not . all (\c -> c == ' ' || c == '|')
+        tree s (Payoff p)    = DT.Node (showPayoffAsList p) []
+        tree s (Node _ n es) = DT.Node (s ++ show n)
+                                       [tree (show m ++ " -> ") t | (m,t) <- es]
+
+instance Show mv => Show (Node mv) where
+  show (Decision p) = "Player " ++ show p
+  show (Chance d)   = "Chance " ++ show d
+
+instance Show mv => Show (GameTree s mv) where
+  show = drawTree
