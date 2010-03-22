@@ -8,6 +8,17 @@ import Hagl.Game
 import Hagl.GameTree
 import Hagl.Searchable
 
+{- How it should be:
+ 
+-- Extensive form game
+data Extensive mv = Extensive (Info mv) (GameTree mv) 
+
+-- Information group
+data Info mv = Perfect
+             | Hidden
+             | Imperfect (GameTree mv -> [GameTree mv])
+-}
+
 -- Extensive form game
 data Extensive mv = Extensive Int (GameTree mv -> Info mv) (GameTree mv) 
 
