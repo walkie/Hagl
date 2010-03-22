@@ -14,8 +14,8 @@ module Hagl.Core (
 import Control.Monad.State hiding (State)
 import Data.Function (on)
 
-import Hagl.List
 import Hagl.GameTree
+import Hagl.List
 
 ---------------------
 -- Game Definition --
@@ -24,11 +24,15 @@ import Hagl.GameTree
 class Game g where
   type Move g
   type State g
-  gameTree  :: g -> GameTree (State g) (Move g)
+  gameTree  :: g -> Int -> GameTree (State g) (Move g)
 
 ---------------------
 -- Execution State --
 ---------------------
+
+-- Transcripts
+type Moved mv      = (Maybe PlayerIx, mv)
+type Transcript mv = [Moved mv]
 
 -- Game Execution State
 data Exec g = Exec {
@@ -39,13 +43,14 @@ data Exec g = Exec {
   _numMoves   :: ByPlayer Int                 -- number of moves played by each player
 }
 
-initExec :: Game g => g -> [Player g] -> Exec g
-initExec g ps = Exec g (ByPlayer ps) (gameTree g) [] ms
-  where ms = ByPlayer (replicate (length ps) 0)
+moved :: Decision mv -> mv -> Moved mv
+moved (Decision p) mv = (Just p,  mv)
+moved (Chance   _) mv = (Nothing, mv)
 
--- Transcripts
-type Moved mv      = (Maybe PlayerIx, mv)
-type Transcript mv = [Moved mv]
+initExec :: Game g => g -> [Player g] -> Exec g
+initExec g ps = Exec g (ByPlayer ps) (gameTree g np) [] ms
+  where ms = ByPlayer (replicate np 0)
+        np = length ps
 
 -------------
 -- Players --

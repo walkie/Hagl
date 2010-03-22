@@ -15,28 +15,32 @@ type PlayerIx  = Int
 type Payoff    = ByPlayer Float
 type Edge s mv = (mv, GameTree s mv)
 
-data GameTree s mv = Node s (Node mv) [Edge s mv] -- internal node
-                   | Payoff Payoff                -- terminating payoff
+data GameTree s mv = GameTree s (NodeType s mv) deriving Eq
+
+data NodeType s mv = Internal (Decision mv) [Edge s mv] -- internal node
+                   | Payoff Payoff                      -- terminating payoff
                    deriving Eq
 
-data Node mv = Decision PlayerIx -- decision made by a player
-             | Chance (Dist mv)  -- random move from distribution
-             deriving Eq
+data Decision mv = Decision PlayerIx -- decision made by a player
+                 | Chance (Dist mv)  -- decision based on a random distribution
+                 deriving Eq
+
+edgesFrom :: GameTree s mv -> [Edge s mv]
+edgesFrom (GameTree _ (Internal _ es)) = es
+edgesFrom _                            = []
 
 -- The moves available from a node.
 movesFrom :: GameTree s mv -> [mv]
-movesFrom (Node _ _ es) = map fst es
-movesFrom _             = []
+movesFrom = map fst . edgesFrom
 
 -- The immediate children of a node.
 children :: GameTree s mv -> [GameTree s mv]
-children (Node _ _ es) = map snd es
-children _             = []
+children = map snd . edgesFrom
 
 -- Get a particular child node by following the edge labeled with mv.
 child :: Eq mv => mv -> GameTree s mv -> GameTree s mv
-child mv (Node _ _ es) | Just t <- lookup mv es = t
-child _ _ = error "GameTree.child: invalid move"
+child mv t | Just t' <- lookup mv (edgesFrom t) = t'
+child _  _ = error "GameTree.child: invalid move"
 
 ----------------
 -- Traversing --
@@ -55,8 +59,8 @@ dfs t = t : concatMap dfs (children t)
 -- The highest numbered player in this finite game tree.
 maxPlayer :: GameTree s mv -> Int
 maxPlayer t = foldl1 max $ map player (dfs t)
-  where player (Node _ (Decision p) _) = p
-        player _                       = 0
+  where player (GameTree _ (Internal (Decision p) _)) = p
+        player _                                      = 0
 
 ---------------------
 -- Pretty Printing --
@@ -75,15 +79,20 @@ showPayoffAsList p = "[" ++ showPayoff p ++ "]"
 
 drawTree :: Show mv => GameTree s mv -> String
 drawTree = condense . DT.drawTree . tree ""
-  where condense = unlines . filter empty . lines
-        empty    = not . all (\c -> c == ' ' || c == '|')
-        tree s (Payoff p)    = DT.Node (showPayoffAsList p) []
-        tree s (Node _ n es) = DT.Node (s ++ show n)
-                                       [tree (show m ++ " -> ") t | (m,t) <- es]
-
-instance Show mv => Show (Node mv) where
-  show (Decision p) = "Player " ++ show p
-  show (Chance d)   = "Chance " ++ show d
+  where
+    condense = unlines . filter empty . lines
+    empty    = not . all (\c -> c == ' ' || c == '|')
+    tree s t@(GameTree _ n) = DT.Node (s ++ show n)
+                              [tree (show m ++ " -> ") t | (m,t) <- edgesFrom t]
 
 instance Show mv => Show (GameTree s mv) where
   show = drawTree
+
+instance Show mv => Show (NodeType s mv) where
+  show (Internal d _) = show d
+  show (Payoff p)     = showPayoffAsList p
+
+instance Show mv => Show (Decision mv) where
+  show (Decision p) = "Player " ++ show p
+  show (Chance d)   = "Chance " ++ show d
+
