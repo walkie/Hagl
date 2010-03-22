@@ -7,8 +7,24 @@ import Data.List (transpose)
 
 import Hagl.Core
 
+--------------------
+-- Representation --
+--------------------
+
 data Iterated g = Finite Int g
                 | Infinite g
+
+uniterated :: Iterated g -> g
+uniterated (Finite _ g) = g
+uniterated (Infinite g) = g
+
+endAfter :: Iterated g -> Maybe Int
+endAfter (Finite n _) = Just n
+endAfter _            = Nothing
+
+---------------------
+-- Execution State --
+---------------------
 
 type MoveSummary mv = ByPlayer (ByTurn mv)
 type Summary mv     = (MoveSummary mv, Maybe Payoff)
@@ -20,18 +36,6 @@ data Iter s mv = Iter {
   _gameTranscript :: Transcript mv, -- the transcript of the current iteration
   _gameState      :: s              -- the state of the current game iteration
 }
-
-endAfter :: Iterated g -> Maybe Int
-endAfter (Finite n _) = Just n
-endAfter _            = Nothing
-
-uniterated :: Iterated g -> g
-uniterated (Finite _ g) = g
-uniterated (Infinite g) = g
-
-iterations :: Iterated g -> Maybe Int
-iterations (Finite n _) = Just n
-iterations _            = Nothing
 
 initIter :: s -> Iter s mv
 initIter = Iter 1 (ByGame []) []
@@ -51,6 +55,10 @@ _payoff = fromMaybe e . snd
 
 _score :: History mv -> Payoff
 _score = ByPlayer . map sum . transpose . toList2 . fmap _payoff . _summaries
+
+----------------------
+-- Helper Functions --
+----------------------
 
 summarize :: Int -> Transcript mv -> MoveSummary mv
 summarize np t = ByPlayer [ByTurn [mv | (mi,mv) <- t, mi == Just p] | p <- [1..np]]
@@ -72,15 +80,17 @@ buildIT g np f (GameTree s nt) = case nt of
   where i@(Iter n h t _) = f s
         end = maybe False (n >=) (endAfter g)
 
--- Game Instance
+---------------
+-- Instances --
+---------------
 
+-- Game Instance
 instance Game g => Game (Iterated g) where
   type Move  (Iterated g) = Move g
   type State (Iterated g) = Iter (State g) (Move g)
   gameTree = iterGameTree 
 
 -- Show Instances
-
 instance Show g => Show (Iterated g) where
   show (Finite n g) = "(Iterated " ++ show n ++ " times)" ++ show g
   show (Infinite g) = "(Iterated)" ++ show g
