@@ -25,6 +25,9 @@ data Decision mv = Decision PlayerIx -- decision made by a player
                  | Chance (Dist mv)  -- decision based on a random distribution
                  deriving Eq
 
+nodeState :: GameTree s mv -> s
+nodeState (GameTree s _) = s
+
 edgesFrom :: GameTree s mv -> [Edge s mv]
 edgesFrom (GameTree _ (Internal _ es)) = es
 edgesFrom _                            = []

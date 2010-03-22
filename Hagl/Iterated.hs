@@ -1,6 +1,12 @@
-{-# LANGUAGE PatternGuards,TypeFamilies #-}
+{-# LANGUAGE FlexibleInstances,
+             FunctionalDependencies,
+             MultiParamTypeClasses,
+             PatternGuards,
+             TypeFamilies #-}
 
 module Hagl.Iterated where
+
+import Control.Monad (liftM)
 
 import Data.Maybe (fromMaybe)
 import Data.List (transpose)
@@ -13,6 +19,9 @@ import Hagl.Core
 
 data Iterated g = Finite Int g
                 | Infinite g
+
+class IterGame i g | i -> g where
+  getIter :: GameM m i => m (Iter (State g) (Move g))
 
 uniterated :: Iterated g -> g
 uniterated (Finite _ g) = g
@@ -56,6 +65,41 @@ _payoff = fromMaybe e . snd
 _score :: History mv -> Payoff
 _score = ByPlayer . map sum . transpose . toList2 . fmap _payoff . _summaries
 
+---------------
+-- Accessors --
+---------------
+
+gameNumber :: (GameM m i, IterGame i g) => m Int
+gameNumber = liftM _gameNumber getIter
+
+history :: (GameM m i, IterGame i g) => m (History (Move g))
+history = liftM _history getIter
+
+gameTranscript :: (GameM m i, IterGame i g) => m (Transcript (Move g))
+gameTranscript = liftM _gameTranscript getIter
+
+gameState :: (GameM m i, IterGame i g) => m (State g)
+gameState = liftM _gameState getIter
+
+transcripts :: (GameM m i, IterGame i g) => m (ByGame (Transcript (Move g)))
+transcripts = liftM _transcripts history
+
+summaries :: (GameM m i, IterGame i g) => m (ByGame (Summary (Move g)))
+summaries = liftM _summaries history
+
+-- would be better/easiest to write this with lastGame... in Selector
+summary :: (GameM m i, IterGame i g) => m (Summary (Move g))
+summary = liftM (head . toList) summaries
+
+moves :: (GameM m i, IterGame i g) => m (MoveSummary (Move g))
+moves = liftM _moves summary
+
+payoff :: (GameM m i, IterGame i g) => m Payoff
+payoff = liftM _payoff summary
+
+score :: (GameM m i, IterGame i g) => m Payoff
+score = liftM _score history
+
 ----------------------
 -- Helper Functions --
 ----------------------
@@ -89,6 +133,9 @@ instance Game g => Game (Iterated g) where
   type Move  (Iterated g) = Move g
   type State (Iterated g) = Iter (State g) (Move g)
   gameTree = iterGameTree 
+
+instance IterGame (Iterated g) g where
+  getIter = getExec >>= return . nodeState . _location
 
 -- Show Instances
 instance Show g => Show (Iterated g) where
