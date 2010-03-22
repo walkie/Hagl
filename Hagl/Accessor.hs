@@ -22,17 +22,11 @@ game = liftM _game getExec
 players :: GameM m g => m (ByPlayer (Player g))
 players = liftM _players getExec
 
-gameState :: GameM m g => m (State g)
-gameState = liftM _gameState getExec
-
-playerIx :: GameM m g => m (Maybe PlayerIx)
-playerIx = liftM _playerIx getExec
+location :: GameM m g => m (GameTree (State g) (Move g))
+location = liftM _location getExec
 
 transcript :: GameM m g => m (Transcript (Move g))
 transcript = liftM _transcript getExec
-
-history :: GameM m g => m (History (Move g))
-history = liftM _history getExec
 
 numMoves :: GameM m g => m (ByPlayer Int)
 numMoves = liftM _numMoves getExec
@@ -40,6 +34,11 @@ numMoves = liftM _numMoves getExec
 --
 -- Other accesssors
 --
+
+playerIx :: GameM m g => m (Maybe PlayerIx)
+playerIx = location >>= return . ix
+  where ix (GameTree _ (Internal (Decision p) _) = Just p
+        ix _                                     = Nothing
 
 -- The index of the currently active player.
 myIx :: GameM m g => m PlayerIx
