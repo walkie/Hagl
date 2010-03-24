@@ -1,33 +1,10 @@
-module Hagl.List where
+module Hagl.Base.List where
 
 import Control.Monad       (liftM)
 import Control.Monad.Trans (MonadIO(..))
-import Data.List           (nub, sort)
 import Data.Monoid         (Monoid(..))
-import System.Random       (randomRIO)
 
-----------------------------
--- List Utility Functions --
-----------------------------
-
-cross :: [[a]] -> [[a]]
-cross (xs:xss) = [y:ys | y <- xs, ys <- cross xss]
-cross [] = [[]]
-
-ucross :: (Ord a) => [[a]] -> [[a]]
-ucross = nub . map sort . cross
-
--- Break a list into n-sized chunks.
-chunk :: Int -> [a] -> [[a]]
-chunk _ [] = []
-chunk n l = take n l : chunk n (drop n l)
-
-randomIndex :: MonadIO m => [a] -> m Int
-randomIndex as = liftIO $ randomRIO (0, length as - 1)
-
--- Pick an element randomly from a list.
-randomlyFrom :: MonadIO m => [a] -> m a
-randomlyFrom as = liftM (as !!) (randomIndex as)
+import Hagl.Base.Util
 
 -------------------
 -- Distributions --
@@ -42,6 +19,7 @@ expandDist d = concat [replicate i a | (i, a) <- d]
 -- Pick an element randomly from a distribution
 fromDist :: MonadIO m => Dist a -> m a
 fromDist = randomlyFrom . expandDist
+
 
 -----------------------
 -- Dimensioned Lists --

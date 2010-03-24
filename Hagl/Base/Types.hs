@@ -5,17 +5,39 @@
              TypeFamilies #-}
 
 -- This module contains stuff that almost every Hagl file will need to import.
-module Hagl.Core (
-  module Hagl.Core,
-  module Hagl.GameTree,
-  module Hagl.List
+module Hagl.Base.Types (
+  module Hagl.Base.Types,
+  module Hagl.Base.List
 ) where
 
 import Control.Monad.State hiding (State)
 import Data.Function (on)
 
-import Hagl.GameTree
-import Hagl.List
+import Hagl.Base.List
+
+----------------
+-- Game Trees --
+----------------
+
+type PlayerIx  = Int
+type Payoff    = ByPlayer Float
+type Edge s mv = (mv, GameTree s mv)
+
+data GameTree s mv = GameTree s (Node s mv) deriving Eq
+
+data Node s mv = Internal (Decision mv) [Edge s mv] -- internal node
+               | Payoff Payoff                      -- terminating payoff
+               deriving Eq
+
+data Decision mv = Decision PlayerIx -- decision made by a player
+                 | Chance (Dist mv)  -- decision based on a random distribution
+                 deriving Eq
+
+treeNode :: GameTree s mv -> Node s mv
+treeNode (GameTree _ n) = n
+
+treeState :: GameTree s mv -> s
+treeState (GameTree s _) = s
 
 ---------------------
 -- Game Definition --
@@ -34,6 +56,10 @@ class Game g where
 type Moved mv      = (Maybe PlayerIx, mv)
 type Transcript mv = [Moved mv]
 
+moved :: Decision mv -> mv -> Moved mv
+moved (Decision p) mv = (Just p,  mv)
+moved (Chance   _) mv = (Nothing, mv)
+
 -- Game Execution State
 data Exec g = Exec {
   _game       :: g,                           -- game definition
@@ -42,10 +68,6 @@ data Exec g = Exec {
   _transcript :: Transcript (Move g),         -- moves played so far (newest at head)
   _numMoves   :: ByPlayer Int                 -- number of moves played by each player
 }
-
-moved :: Decision mv -> mv -> Moved mv
-moved (Decision p) mv = (Just p,  mv)
-moved (Chance   _) mv = (Nothing, mv)
 
 initExec :: Game g => g -> [Player g] -> Exec g
 initExec g ps = Exec g (ByPlayer ps) (gameTree g np) [] ms
@@ -92,20 +114,12 @@ execGame :: Game g => g -> [Player g] -> ExecM g a -> IO (Exec g)
 execGame g ps f = execStateT (unE f) (initExec g ps)
 
 runStrategy :: Player g -> ExecM g (Move g, Player g)
-runStrategy p@(n ::: m)    = do mv <- evalStateT (unS m) ()
-                                return (mv, p)
-runStrategy (Player n s f) = do (m, s') <- runStateT (unS f) s
-                                return (m, Player n s' f)
-
-----------------------------
--- Other Useful Functions --
-----------------------------
-
-debug :: MonadIO m => String -> m ()
-debug = liftIO . putStrLn
-
-update :: MonadState s m => (s -> s) -> m s
-update f = modify f >> get
+runStrategy p@(n ::: m) = do 
+    mv <- evalStateT (unS m) ()
+    return (mv, p)
+runStrategy (Player n s f) = do 
+    (m, s') <- runStateT (unS f) s
+    return (m, Player n s' f)
 
 ---------------
 -- Instances --
@@ -140,4 +154,3 @@ instance MonadIO (StratM s g) where
 
 instance Game g => GameM (StratM s g) g where
   getExec = StratM (lift getExec)
-
