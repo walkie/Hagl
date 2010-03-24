@@ -11,7 +11,6 @@ module Hagl.Iterated.Types
     _transcripts,_summaries,_moves,_payoff,_score
   ) where
 
-import Control.Monad (liftM)
 import Data.Maybe    (fromMaybe)
 import Data.List     (transpose)
 

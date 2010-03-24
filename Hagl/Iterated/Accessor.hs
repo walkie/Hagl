@@ -1,5 +1,8 @@
 module Hagl.Iterated.Accessor where
 
+import Control.Monad (liftM)
+
+import Hagl.Base.Types
 import Hagl.Iterated.Types
 
 -----------------------------
