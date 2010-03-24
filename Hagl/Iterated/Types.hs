@@ -14,7 +14,7 @@ module Hagl.Iterated.Types
 import Data.Maybe    (fromMaybe)
 import Data.List     (transpose)
 
-import Hagl.Base.Types
+import Hagl.Base
 
 --------------------
 -- Representation --
