@@ -15,18 +15,21 @@ type PlayerIx  = Int
 type Payoff    = ByPlayer Float
 type Edge s mv = (mv, GameTree s mv)
 
-data GameTree s mv = GameTree s (NodeType s mv) deriving Eq
+data GameTree s mv = GameTree s (Node s mv) deriving Eq
 
-data NodeType s mv = Internal (Decision mv) [Edge s mv] -- internal node
-                   | Payoff Payoff                      -- terminating payoff
-                   deriving Eq
+data Node s mv = Internal (Decision mv) [Edge s mv] -- internal node
+               | Payoff Payoff                      -- terminating payoff
+               deriving Eq
 
 data Decision mv = Decision PlayerIx -- decision made by a player
                  | Chance (Dist mv)  -- decision based on a random distribution
                  deriving Eq
 
-nodeState :: GameTree s mv -> s
-nodeState (GameTree s _) = s
+treeNode :: GameTree s mv -> Node s mv
+treeNode (GameTree _ n) = n
+
+treeState :: GameTree s mv -> s
+treeState (GameTree s _) = s
 
 edgesFrom :: GameTree s mv -> [Edge s mv]
 edgesFrom (GameTree _ (Internal _ es)) = es
@@ -91,7 +94,7 @@ drawTree = condense . DT.drawTree . tree ""
 instance Show mv => Show (GameTree s mv) where
   show = drawTree
 
-instance Show mv => Show (NodeType s mv) where
+instance Show mv => Show (Node s mv) where
   show (Internal d _) = show d
   show (Payoff p)     = showPayoffAsList p
 
