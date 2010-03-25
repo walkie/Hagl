@@ -1,5 +1,6 @@
 module Hagl.Base
   ( module Hagl.Base.List,
+    module Hagl.Base.Pretty,
     module Hagl.Base.Types,
     module Hagl.Base.Util,
     --module Hagl.Base.Accessor,
@@ -7,6 +8,7 @@ module Hagl.Base
   ) where
 
 import Hagl.Base.List
+import Hagl.Base.Pretty
 import Hagl.Base.Types
 import Hagl.Base.Util
 --import Hagl.Base.Accessor
