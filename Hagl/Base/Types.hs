@@ -36,6 +36,10 @@ treeNode (GameTree _ n) = n
 treeState :: GameTree s mv -> s
 treeState (GameTree s _) = s
 
+edges :: GameTree s mv -> [Edge s mv]
+edges (GameTree _ (Internal _ es)) = es
+edges _                            = []
+
 ---------------------
 -- Game Definition --
 ---------------------
