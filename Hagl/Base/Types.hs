@@ -47,7 +47,7 @@ edges _                            = []
 class Game g where
   type Move g
   type State g
-  gameTree  :: g -> Int -> GameTree (State g) (Move g)
+  gameTree :: g -> Int -> GameTree (State g) (Move g)
 
 ---------------------
 -- Execution State --

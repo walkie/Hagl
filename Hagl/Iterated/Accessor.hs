@@ -3,6 +3,7 @@ module Hagl.Iterated.Accessor where
 import Control.Monad (liftM)
 
 import Hagl.Base
+import Hagl.Iterated.List
 import Hagl.Iterated.Types
 
 -----------------------------
@@ -27,7 +28,7 @@ transcripts = liftM _transcripts history
 summaries :: (GameM m i, IterGame i g) => m (ByGame (Summary (Move g)))
 summaries = liftM _summaries history
 
--- would be better/easiest to write this with lastGame... in Selector
+-- TODO would be better/easiest to write this with lastGame... in Selector
 summary :: (GameM m i, IterGame i g) => m (Summary (Move g))
 summary = liftM (head . toList) summaries
 

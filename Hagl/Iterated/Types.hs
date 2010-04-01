@@ -11,10 +11,11 @@ module Hagl.Iterated.Types
     _transcripts,_summaries,_moves,_payoff,_score
   ) where
 
-import Data.Maybe    (fromMaybe)
-import Data.List     (transpose)
+import Data.Maybe (fromMaybe)
+import Data.List  (transpose)
 
 import Hagl.Base
+import Hagl.Iterated.List
 
 --------------------
 -- Representation --
