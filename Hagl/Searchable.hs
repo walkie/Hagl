@@ -79,14 +79,13 @@ finish = runTree >>= conclude
 -----------------------
 
 -- | Build a tree for a state-based game.
-stateGameTree :: Game g => g                    -- ^ Game definition.
-              -> (State g -> PlayerIx)          -- ^ Whose turn is it?
-              -> (State g -> Bool)              -- ^ Is the game over?
-              -> (State g -> [Move g])          -- ^ Available moves.
-              -> (State g -> Move g -> State g) -- ^ Execute a move and return the new state.
-              -> (State g -> Payoff)            -- ^ Payoff for this (final) state.
-              -> State g                        -- ^ The current state.
-              -> GameTree (Move g)
-stateGameTree g who end moves exec pay init = tree init
+stateGameTree :: (s -> PlayerIx) -- ^ Whose turn is it?
+              -> (s -> Bool)     -- ^ Is the game over?
+              -> (s -> [mv])     -- ^ Available moves.
+              -> (s -> mv -> s)  -- ^ Execute a move and return the new state.
+              -> (s -> Payoff)   -- ^ Payoff for this (final) state.
+              -> s               -- ^ The current state.
+              -> GameTree mv
+stateGameTree who end moves exec pay init = tree init
   where tree s | end s     = Payoff (pay s)
                | otherwise = Decision (who s) [(m, tree (exec s m)) | m <- moves s]
