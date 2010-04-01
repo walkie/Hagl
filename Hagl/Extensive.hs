@@ -3,29 +3,21 @@ module Hagl.Extensive (module Hagl.Extensive, module Hagl.Searchable) where
 
 import Data.List
 
-import Hagl.Core
-import Hagl.Game
+import Hagl.Base
 import Hagl.GameTree
-import Hagl.Searchable
 
-{- How it should be:
- 
--- Extensive form game
-data Extensive mv = Extensive (Info mv) (GameTree mv) 
-
--- Information group
-data Info mv = Perfect
-             | Hidden
-             | Imperfect (GameTree mv -> [GameTree mv])
--}
+-----------
+-- Types --
+-----------
 
 -- Extensive form game
-data Extensive mv = Extensive Int (GameTree mv -> Info mv) (GameTree mv) 
+data Extensive s mv = Extensive Int (Info s mv) (GameTree s mv) 
 
 -- Information group
-data Info mv = Perfect (GameTree mv)
-             | Imperfect [GameTree mv]
-             | Simultaneous
+data Info s mv = Perfect
+               | Hidden
+               | Imperfect (GameTree s mv -> [GameTree s mv])
+
 
 -- The number of players that play this game.
 numPlayers :: Extensive mv -> Int
