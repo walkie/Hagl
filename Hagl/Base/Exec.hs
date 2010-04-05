@@ -1,53 +1,17 @@
 {-# LANGUAGE ExistentialQuantification, 
              FlexibleInstances, 
              FunctionalDependencies,
-             MultiParamTypeClasses, 
-             TypeFamilies #-}
+             MultiParamTypeClasses #-}
 
 -- This module contains stuff that almost every Hagl file will need to import.
-module Hagl.Base.Types where
+module Hagl.Base.Exec where
 
 import Control.Monad.State hiding (State)
 import Data.Function (on)
 
 import Hagl.Base.List
+import Hagl.Base.Game
 
-----------------
--- Game Trees --
-----------------
-
-type PlayerIx  = Int
-type Payoff    = ByPlayer Float
-type Edge s mv = (mv, GameTree s mv)
-
-data GameTree s mv = GameTree s (Node s mv) deriving Eq
-
-data Node s mv = Internal (Decision mv) [Edge s mv] -- internal node
-               | Payoff Payoff                      -- terminating payoff
-               deriving Eq
-
-data Decision mv = Decision PlayerIx -- decision made by a player
-                 | Chance (Dist mv)  -- decision based on a random distribution
-                 deriving Eq
-
-treeNode :: GameTree s mv -> Node s mv
-treeNode (GameTree _ n) = n
-
-treeState :: GameTree s mv -> s
-treeState (GameTree s _) = s
-
-edges :: GameTree s mv -> [Edge s mv]
-edges (GameTree _ (Internal _ es)) = es
-edges _                            = []
-
----------------------
--- Game Definition --
----------------------
-
-class Game g where
-  type Move g
-  type State g
-  gameTree :: g -> Int -> GameTree (State g) (Move g)
 
 ---------------------
 -- Execution State --
@@ -79,6 +43,7 @@ initExec g ps = Exec g (ByPlayer ps) (gameTree g np) [] ms
   where ms = ByPlayer (replicate np 0)
         np = length ps
 
+
 -------------
 -- Players --
 -------------
@@ -101,13 +66,14 @@ instance Eq (Player g) where
 instance Ord (Player g) where
   compare = compare `on` name
 
+
 -----------------------------------
 -- Execution and Strategy Monads --
 -----------------------------------
 
-data ExecM g a = ExecM { unE :: StateT (Exec g) IO a }
-data StratM s g a = StratM { unS :: StateT s (ExecM g) a }
-type Strategy s g = StratM s g (Move g)
+data ExecM      g a = ExecM  { unE :: StateT (Exec g) IO a }
+data StratM   s g a = StratM { unS :: StateT s (ExecM g) a }
+type Strategy s g   = StratM s g (Move g)
 
 class (Game g, Monad m, MonadIO m) => GameM m g | m -> g where
   getExec :: m (Exec g)
@@ -126,36 +92,31 @@ runStrategy (Player n s f) = do
     (m, s') <- runStateT (unS f) s
     return (m, Player n s' f)
 
+
 ---------------
 -- Instances --
 ---------------
 
--- ExecM instances
 instance Monad (ExecM g) where
   return = ExecM . return
   (ExecM x) >>= f = ExecM (x >>= unE . f)
-
-instance MonadState (Exec g) (ExecM g) where
-  get = ExecM get
-  put = ExecM . put
-
-instance MonadIO (ExecM g) where
-  liftIO = ExecM . liftIO
-
-instance Game g => GameM (ExecM g) g where
-  getExec = ExecM get
-
--- StratM instances
 instance Monad (StratM s g) where
   return = StratM . return
   (StratM x) >>= f = StratM (x >>= unS . f)
 
+instance MonadState (Exec g) (ExecM g) where
+  get = ExecM get
+  put = ExecM . put
 instance MonadState s (StratM s g) where
   get = StratM get
   put = StratM . put
 
+instance MonadIO (ExecM g) where
+  liftIO = ExecM . liftIO
 instance MonadIO (StratM s g) where
   liftIO = StratM . liftIO
 
+instance Game g => GameM (ExecM g) g where
+  getExec = ExecM get
 instance Game g => GameM (StratM s g) g where
   getExec = StratM (lift getExec)
