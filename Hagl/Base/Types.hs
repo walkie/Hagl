@@ -54,12 +54,16 @@ class Game g where
 ---------------------
 
 -- Transcripts
-type Moved mv      = (Maybe PlayerIx, mv)
-type Transcript mv = [Moved mv]
+type Moved mv       = (Maybe PlayerIx, mv)
+type Transcript mv  = [Moved mv]
+type MoveSummary mv = ByPlayer (ByTurn mv)
 
 moved :: Decision mv -> mv -> Moved mv
 moved (Decision p) mv = (Just p,  mv)
 moved (Chance   _) mv = (Nothing, mv)
+
+summarize :: Int -> Transcript mv -> MoveSummary mv
+summarize np t = ByPlayer [ByTurn [mv | (mi,mv) <- t, mi == Just p] | p <- [1..np]]
 
 -- Game Execution State
 data Exec g = Exec {

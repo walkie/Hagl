@@ -39,15 +39,14 @@ endAfter _            = Nothing
 -- Execution State --
 ---------------------
 
-type MoveSummary mv = ByPlayer (ByTurn mv)
 type Summary mv     = (MoveSummary mv, Maybe Payoff)
 type History mv     = ByGame (Transcript mv, Summary mv)
 
 data Iter s mv = Iter {
-  _gameNumber     :: Int,           -- True if this node is the start of a new iteration
+  _iterNumber     :: Int,           -- the current iteration number
   _history        :: History mv,    -- history of all completed game iterations
-  _gameTranscript :: Transcript mv, -- the transcript of the current iteration
-  _gameState      :: s              -- the state of the current game iteration
+  _iterTranscript :: Transcript mv, -- the transcript of the current iteration
+  _iterState      :: s              -- the state of the current game iteration
 }
 
 initIter :: s -> Iter s mv
@@ -72,9 +71,6 @@ _score = ByPlayer . map sum . transpose . toList2 . fmap _payoff . _summaries
 ----------------------
 -- Helper Functions --
 ----------------------
-
-summarize :: Int -> Transcript mv -> MoveSummary mv
-summarize np t = ByPlayer [ByTurn [mv | (mi,mv) <- t, mi == Just p] | p <- [1..np]]
 
 iterGameTree :: Game g => Iterated g -> Int -> GameTree (Iter (State g) (Move g)) (Move g)
 iterGameTree g np = buildIT g np initIter (gameTree (uniterated g) np)

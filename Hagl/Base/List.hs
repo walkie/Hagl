@@ -54,25 +54,45 @@ dcross = map fromList . cross . toList
 dzipWith :: ByX f => (a -> b -> c) -> f a -> f b -> f c
 dzipWith f as bs = fromList (zipWith f (toList as) (toList bs))
 
--- ByPlayer lists
+-- ByPlayer and ByTurn lists
 
 newtype ByPlayer a = ByPlayer [a] deriving (Eq, Show)
+newtype ByTurn   a = ByTurn   [a] deriving (Eq, Show)
 
 forPlayer :: Int -> ByPlayer a -> a
 forPlayer i (ByPlayer as) = as !! (i-1)
 
+forTurn :: Int -> ByTurn a -> a
+forTurn i (ByTurn as) = as !! (length as - i)
+
 forPlayerM :: Monad m => Int -> m (ByPlayer a) -> m a
 forPlayerM = liftM . forPlayer
+
+forTurnM :: Monad m => Int -> m (ByTurn a) -> m a
+forTurnM = liftM . forTurn
+
+turn   = undefined :: ByTurn a
+turn's = undefined :: ByTurn a
+turns' = undefined :: ByTurn a
+
 
 -- Instances
 
 instance Functor ByPlayer where
   fmap f (ByPlayer as) = ByPlayer (map f as)
+instance Functor ByTurn where
+  fmap f (ByTurn as) = ByTurn (map f as)
 
 instance ByX ByPlayer where
   toList (ByPlayer as) = as
   fromList = ByPlayer
+instance ByX ByTurn where
+  toList (ByTurn as) = as
+  fromList = ByTurn
 
 instance Monoid (ByPlayer a) where
   mempty = ByPlayer []
   mappend (ByPlayer as) (ByPlayer bs) = ByPlayer (as ++ bs)
+instance Monoid (ByTurn a) where
+  mempty = ByTurn []
+  mappend (ByTurn as) (ByTurn bs) = ByTurn (as ++ bs)
