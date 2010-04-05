@@ -1,7 +1,7 @@
 module Hagl.Base.Util where
 
 import Control.Monad.State
-import Data.List     (nub, sort)
+import Data.List     (nub,sort)
 import System.Random (randomRIO)
 
 ----------------------------

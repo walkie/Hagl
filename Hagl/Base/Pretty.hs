@@ -3,11 +3,11 @@
 --
 module Hagl.Base.Pretty where
 
-import Data.List  (intersperse)
+import Data.List (intersperse)
 import qualified Data.Tree as DT (Tree(..), drawTree)
 
 import Hagl.Base.List
-import Hagl.Base.Types
+import Hagl.Base.Game
 
 ----------------------
 -- Helper Functions --
