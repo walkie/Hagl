@@ -40,5 +40,11 @@ treeState :: GameTree s mv -> s
 treeState (GameTree s _) = s
 
 edges :: GameTree s mv -> [Edge s mv]
-edges (GameTree _ (Internal _ es)) = es
-edges _                            = []
+edges = e . treeNode
+  where e (Internal _ es) = es
+        e _               = []
+
+playerIx :: GameTree s mv -> Maybe PlayerIx
+playerIx = ix . treeNode
+  where ix (Internal (Decision p) _) = Just p
+        ix _                         = Nothing
