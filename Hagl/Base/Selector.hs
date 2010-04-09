@@ -4,6 +4,7 @@ import Control.Monad (liftM, liftM2)
 
 import Hagl.Base.Accessor
 import Hagl.Base.Exec
+import Hagl.Base.Game
 import Hagl.Base.List
 
 
@@ -30,10 +31,8 @@ my = liftM2 forPlayer myIx
 
 -- | Selects the element corresponding to the other player in a two-player game.
 his :: GameM m g => m (ByPlayer a) -> m a
-his x = check >> liftM2 (forPlayer . next) myIx x 
-  where next 1 = 2
-        next 2 = 1
-        check = numPlayers >>= \np -> if np == 2 then return ()
+his x = check >> liftM2 (forPlayer . nextPlayer 2) myIx x
+  where check = numPlayers >>= \np -> if np == 2 then return ()
                 else fail "his/her can only be used in two player games."
                               
 -- | Selects the element corresponding to the other player in a two-player game.
