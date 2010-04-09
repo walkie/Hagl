@@ -1,42 +1,55 @@
+{-# LANGUAGE TupleSections #-}
 module Hagl.Iterated.Accessor where
 
 import Control.Monad (liftM)
 
 import Hagl.Base
 import Hagl.Iterated.List
-import Hagl.Iterated.Types
+import Hagl.Iterated.Game
+import Hagl.Iterated.Exec
 
 -----------------------------
 -- Iterated Game Accessors --
 -----------------------------
 
+-- | The current iteration number (i.e. completed iterations +1).
 gameNumber :: (GameM m i, IterGame i g) => m Int
 gameNumber = liftM _gameNumber getIter
 
-history :: (GameM m i, IterGame i g) => m (History (Move g))
-history = liftM _history getIter
-
-gameTranscript :: (GameM m i, IterGame i g) => m (Transcript (Move g))
-gameTranscript = liftM _gameTranscript getIter
-
+-- | The state of the current game iteration.
 gameState :: (GameM m i, IterGame i g) => m (State g)
 gameState = liftM _gameState getIter
 
-transcripts :: (GameM m i, IterGame i g) => m (ByGame (Transcript (Move g)))
-transcripts = liftM _transcripts history
+-- | Record of all completed game iterations.
+history :: (GameM m i, IterGame i g) => m (History (Move g))
+history = liftM _history getIter
 
-summaries :: (GameM m i, IterGame i g) => m (ByGame (Summary (Move g)))
-summaries = liftM _summaries history
+-- | Transcript of each iteration, including the current one.
+gameTranscript :: (GameM m i, IterGame i g) => m (ByGame (Transcript (Move g)))
+gameTranscript = do t  <- liftM _gameTranscript getIter
+                    ts <- liftM _transcripts history
+                    return (t `dcons` ts)
 
--- TODO would be better/easiest to write this with lastGame... in Selector
-summary :: (GameM m i, IterGame i g) => m (Summary (Move g))
-summary = liftM (head . toList) summaries
+-- | Summary of each iteration, including the current one.
+summary :: (GameM m i, IterGame i g) => m (ByGame (Summary (Move g)))
+summary = do t  <- liftM _gameTranscript getIter
+             ms <- liftM (flip summarize t) numPlayers 
+             ss <- liftM _summaries history
+             return ((ms,Nothing) `dcons` ss)
 
-moves :: (GameM m i, IterGame i g) => m (MoveSummary (Move g))
-moves = liftM _moves summary
+-- | Summary of the moves of each iteration, including the current one.
+moves :: (GameM m i, IterGame i g) => m (ByGame (MoveSummary (Move g)))
+moves = liftM (fmap _moveSummary) summary
 
-payoff :: (GameM m i, IterGame i g) => m Payoff
-payoff = liftM _payoff summary
+-- | The first move of every iteration, including the current one 
+--   (which may be undefined for some players).
+onlyMove :: (GameM m i, IterGame i g) => m (ByGame (ByPlayer (Move g)))
+onlyMove = liftM ((fmap . fmap) (head . toList)) moves
 
+-- | Payoff of each iteration.  The payoff of the current game is undefined.
+payoff :: (GameM m i, IterGame i g) => m (ByGame Payoff)
+payoff = liftM (fmap _payoff) summary
+
+-- | Current score.  The sum of previous iterations' payoffs.
 score :: (GameM m i, IterGame i g) => m Payoff
 score = liftM _score history

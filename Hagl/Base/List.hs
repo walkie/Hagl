@@ -65,16 +65,19 @@ forPlayer i (ByPlayer as) = as !! (i-1)
 forTurn :: Int -> ByTurn a -> a
 forTurn i (ByTurn as) = as !! (length as - i)
 
-forPlayerM :: Monad m => Int -> m (ByPlayer a) -> m a
-forPlayerM = liftM . forPlayer
+firstTurn :: ByTurn a -> a
+firstTurn (ByTurn []) = error "firstTurn: Empty turn list."
+firstTurn (ByTurn as) = last as
 
-forTurnM :: Monad m => Int -> m (ByTurn a) -> m a
-forTurnM = liftM . forTurn
+lastTurn :: ByTurn a -> a
+lastTurn (ByTurn []) = error "lastTurn: Empty turn list."
+lastTurn (ByTurn as) = head as
 
-turn   = undefined :: ByTurn a
-turn's = undefined :: ByTurn a
-turns' = undefined :: ByTurn a
-
+lastNTurns :: Int -> ByTurn a -> [a]
+lastNTurns i (ByTurn as)
+    | length as' == i = as'
+    | otherwise       = error "lastNTurns: Not enough turns."
+  where as' = take i as
 
 -- Instances
 

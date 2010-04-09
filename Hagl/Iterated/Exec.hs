@@ -18,10 +18,10 @@ type Summary mv = (MoveSummary mv, Maybe Payoff)
 type History mv = ByGame (Transcript mv, Summary mv)
 
 data Iter s mv = Iter {
-  _iterNumber     :: Int,           -- the current iteration number
+  _gameNumber     :: Int,           -- the current iteration number
   _history        :: History mv,    -- history of all completed game iterations
-  _iterTranscript :: Transcript mv, -- the transcript of the current iteration
-  _iterState      :: s              -- the state of the current game iteration
+  _gameTranscript :: Transcript mv, -- the transcript of the current iteration
+  _gameState      :: s              -- the state of the current game iteration
 }
 
 initIter :: s -> Iter s mv
