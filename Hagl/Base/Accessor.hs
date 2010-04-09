@@ -3,9 +3,9 @@ module Hagl.Base.Accessor where
 import Control.Monad (liftM, liftM2)
 import Data.Maybe    (fromMaybe)
 
-import Hagl.Base.Exec
 import Hagl.Base.Game
 import Hagl.Base.List
+import Hagl.Base.Monad
 
 --------------------
 -- Data Accessors --

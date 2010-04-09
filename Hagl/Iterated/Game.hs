@@ -5,7 +5,7 @@
 module Hagl.Iterated.Game where
 
 import Hagl.Base
-import Hagl.Iterated.Exec
+import Hagl.Iterated.State
 
 
 --------------------

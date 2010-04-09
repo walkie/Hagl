@@ -1,7 +1,7 @@
 {-# LANGUAGE FunctionalDependencies,
              MultiParamTypeClasses #-}
 
-module Hagl.Iterated.Exec where
+module Hagl.Iterated.State where
 
 import Data.Maybe (fromMaybe)
 import Data.List  (transpose)

@@ -6,7 +6,7 @@ import Control.Monad (liftM)
 import Hagl.Base
 import Hagl.Iterated.List
 import Hagl.Iterated.Game
-import Hagl.Iterated.Exec
+import Hagl.Iterated.State
 
 -----------------------------
 -- Iterated Game Accessors --

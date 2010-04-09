@@ -4,7 +4,7 @@
              MultiParamTypeClasses #-}
 
 -- This module contains stuff that almost every Hagl file will need to import.
-module Hagl.Base.Exec where
+module Hagl.Base.Monad where
 
 import Control.Monad.State hiding (State)
 import Data.Function (on)
