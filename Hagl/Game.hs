@@ -6,27 +6,6 @@ import Hagl.Core
 import Hagl.Accessor
 
 --
--- Non-monadic functions used in defining games.
---
-
--- Payoff where player w wins (1) and all other players, out of np, lose (-1).
-winner :: Int -> PlayerIx -> Payoff
-winner np w = ByPlayer $ replicate (w-1) (-1) ++ (fromIntegral np - 1) : replicate (np - w) (-1)
-
--- Payoff where player w loses (-1) and all other players, out of np, win (1).
-loser :: Int -> PlayerIx -> Payoff
-loser np l = ByPlayer $ replicate (l-1) 1 ++ (1 - fromIntegral np) : replicate (np - l) 1
-
--- All players, out of np, tie (0).
-tie :: Int -> Payoff
-tie np = ByPlayer $ replicate np 0
-
--- The next player index out of np players.
-nextPlayer :: Int -> PlayerIx -> PlayerIx
-nextPlayer np p | p == np   = 1
-                | otherwise = p + 1
-
---
 -- High-level monadic functions for defining games.
 --
 
