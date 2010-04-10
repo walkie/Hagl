@@ -1,6 +1,6 @@
 module Hagl.Base
   ( module Hagl.Base.Accessor,
-    --module Hagl.Base.Exec,
+    module Hagl.Base.Execution,
     module Hagl.Base.Game,
     module Hagl.Base.List,
     module Hagl.Base.Monad,
@@ -10,7 +10,7 @@ module Hagl.Base
   ) where
 
 import Hagl.Base.Accessor
---import Hagl.Base.Exec
+import Hagl.Base.Execution
 import Hagl.Base.Game
 import Hagl.Base.List
 import Hagl.Base.Monad
