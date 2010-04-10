@@ -40,5 +40,6 @@ roundRobin g np ps = runGames g (ucross (replicate np ps))
 
 -- | Print the results of a tournament.
 printResults :: Results -> IO ()
-printResults r = do putStrLn "Tournament Results:"
-                    putStr $ unlines ["  " ++ n ++ showFloat s | (n,s) <- r]
+printResults r = do
+    putStrLn "Tournament Results:"
+    putStr $ unlines ["  " ++ n ++ ": " ++ showFloat s | (n,s) <- r]
