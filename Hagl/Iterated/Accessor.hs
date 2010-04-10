@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts, TupleSections #-}
---{-# LANGUAGE TupleSections #-}
+
 module Hagl.Iterated.Accessor where
 
 import Control.Monad (liftM)
@@ -7,8 +7,6 @@ import Control.Monad (liftM)
 import Hagl.Base
 import Hagl.Iterated.List
 import Hagl.Iterated.Game
-import Hagl.Iterated.State
-
 
 -----------------------------
 -- Iterated Game Accessors --
