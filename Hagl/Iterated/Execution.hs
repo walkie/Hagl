@@ -14,7 +14,7 @@ import Hagl.Iterated.Accessor
 once :: (Game g, Eq (Move g)) => ExecM (Iterated g) Payoff
 once = step >> gamePayoff >>= maybe once return
 
--- | Execute n game iterations, returning the cummulative score.
+-- | Execute n game iterations, returning the cumulative score.
 times :: (Game g, Eq (Move g)) => Int -> ExecM (Iterated g) Payoff
 times n = numPlayers >>= go n . tie
   where go n p | n <= 0    = return p
