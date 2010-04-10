@@ -23,6 +23,10 @@ players = liftM _players getExec
 location :: GameM m g => m (GameTree (State g) (Move g))
 location = liftM _location getExec
 
+-- | The current game state.
+state :: GameM m g => m (State g)
+state = liftM treeState location
+
 -- | Transcript of all moves so far.
 transcript :: GameM m g => m (Transcript (Move g))
 transcript = liftM _transcript getExec
