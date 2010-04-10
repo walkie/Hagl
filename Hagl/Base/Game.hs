@@ -49,6 +49,9 @@ edges = e . treeNode
   where e (Internal _ es) = es
         e _               = []
 
+movesFrom :: GameTree s mv -> [mv]
+movesFrom = map fst . edges
+
 playerIx :: GameTree s mv -> Maybe PlayerIx
 playerIx = ix . treeNode
   where ix (Internal (Decision p) _) = Just p
