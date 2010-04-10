@@ -41,13 +41,14 @@ type History mv = ByGame (Transcript mv, Summary mv)
 
 data Iter s mv = Iter {
   _gameNumber     :: Int,           -- the current iteration number
+  _gamePayoff     :: Maybe Payoff,  -- payoff for a just completed iteration
   _history        :: History mv,    -- history of all completed game iterations
   _gameTranscript :: Transcript mv, -- the transcript of the current iteration
   _gameState      :: s              -- the state of the current game iteration
 }
 
 initIter :: s -> Iter s mv
-initIter = Iter 1 (ByGame []) []
+initIter = Iter 1 Nothing (ByGame []) []
 
 _transcripts :: History mv -> ByGame (Transcript mv)
 _transcripts = fmap fst
@@ -80,11 +81,11 @@ iterGameTree l np orig = build initIter orig
   where 
     build f (GameTree s node) = case node of
         Internal d es -> GameTree i $ Internal d [(m, next m t) | (m,t) <- es]
-          where next m = build (Iter n hist ((moved d m):tran))
-        Payoff p | reached n l -> GameTree (Iter n h' [] s) (Payoff (_score h'))
-                 | otherwise   -> build (Iter (n+1) h' []) orig
+          where next m = build (Iter n Nothing hist ((moved d m):tran))
+        Payoff p | reached n l -> GameTree (Iter n (Just p) h' [] s) (Payoff (_score h'))
+                 | otherwise   -> build (Iter (n+1) (Just p) h' []) orig
           where h' = (tran, (summarize np tran, Just p)) `dcons` hist
-      where i@(Iter n hist tran _) = f s
+      where i@(Iter n _ hist tran _) = f s
 
 
 ---------------

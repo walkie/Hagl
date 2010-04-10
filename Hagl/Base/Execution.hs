@@ -67,23 +67,6 @@ setLocation l = do e <- getExec
                    put e { _location = l }
 
 {-
-once :: Game g => ExecM g ()
-once = runGame >>= conclude
-
-times :: Game g => Int -> ExecM g ()
-times 0 = return ()
-times n = once >> times (n-1)
-
-conclude :: Game g => Payoff -> ExecM g ()
-conclude p = do
-    e <- getExec
-    g <- game
-    t <- transcript
-    h <- history
-    ms <- moveSummary
-    put e { _gameState = initState g,
-            _transcript = [],
-            _history = (t, (ms, Just p)) `dcons` h }
 
 --------------------------
 -- Tournament Execution --

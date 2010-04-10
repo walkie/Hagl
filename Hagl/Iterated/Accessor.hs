@@ -16,6 +16,11 @@ import Hagl.Iterated.Game
 gameNumber :: GameM m (Iterated g) => m Int
 gameNumber = liftM _gameNumber state
 
+-- | Payoff for a just completed game iteration.
+--   Nothing if an iteration has not just completed.
+gamePayoff :: GameM m (Iterated g) => m (Maybe Payoff)
+gamePayoff = liftM _gamePayoff state
+
 -- | The state of the current game iteration.
 gameState :: GameM m (Iterated g) => m (State g)
 gameState = liftM _gameState state
