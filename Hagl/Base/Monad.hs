@@ -78,9 +78,13 @@ type Strategy s g   = StratM s g (Move g)
 class (Game g, Monad m, MonadIO m) => GameM m g | m -> g where
   getExec :: m (Exec g)
 
+-- | Evaluate a command in the game monad, for a given game and players,
+--   returning the result.
 evalGame :: Game g => g -> [Player g] -> ExecM g a -> IO a
 evalGame g ps f = evalStateT (unE f) (initExec g ps)
 
+-- | Execute a command in the game monad, for a given game and players,
+--   returning the execution state.
 execGame :: Game g => g -> [Player g] -> ExecM g a -> IO (Exec g)
 execGame g ps f = execStateT (unE f) (initExec g ps)
 
@@ -89,8 +93,8 @@ runStrategy p@(n ::: m) = do
     mv <- evalStateT (unS m) ()
     return (mv, p)
 runStrategy (Player n s f) = do 
-    (m, s') <- runStateT (unS f) s
-    return (m, Player n s' f)
+    (mv, s') <- runStateT (unS f) s
+    return (mv, Player n s' f)
 
 
 ---------------
