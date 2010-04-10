@@ -3,7 +3,6 @@ module Hagl.Tournament where
 
 import Control.Monad (liftM)
 import Data.List     (nub)
-import Data.Function (on)
 
 import Hagl.Base
 
