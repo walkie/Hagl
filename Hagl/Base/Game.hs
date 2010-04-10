@@ -71,6 +71,10 @@ nextPlayer n p | p >= n    = 1
 allBut :: Int -> PlayerIx -> Float -> Float -> Payoff
 allBut n p a b = ByPlayer $ replicate (p-1) a ++ b : replicate (n-p) a
 
+-- | Add two payoffs.
+addPayoffs :: Payoff -> Payoff -> Payoff
+addPayoffs = dzipWith (+)
+
 --
 -- Zero-sum payoffs
 --
