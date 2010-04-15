@@ -8,8 +8,9 @@ import System.IO.Error     (isUserError)
 import Hagl.Base.Game
 import Hagl.Base.List
 import Hagl.Base.Monad
-import Hagl.Base.Accessor (me,numMoves)
-import Hagl.Base.Selector (my)
+import Hagl.Base.Accessor
+import Hagl.Base.Selector
+import Hagl.Base.Util
 
 -----------------------
 -- Common Strategies --
@@ -30,6 +31,10 @@ mixed = fromDist
 -- | Perform some pattern of moves periodically.
 periodic :: Game g => [Move g] -> Strategy s g
 periodic ms = my numMoves >>= \n -> return $ ms !! mod n (length ms)
+
+-- | Select a move randomly.
+randomly :: Game g => Strategy s g
+randomly = availMoves >>= randomlyFrom
 
 -- | Play a list of initial strategies, then a primary strategy thereafter.
 thereafter :: Game g => [Strategy s g] -> Strategy s g -> Strategy s g

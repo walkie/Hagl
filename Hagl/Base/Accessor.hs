@@ -27,6 +27,10 @@ location = liftM _location getExec
 state :: GameM m g => m (State g)
 state = liftM treeState location
 
+-- | Currently available moves.
+availMoves :: GameM m g => m [Move g]
+availMoves = liftM movesFrom location
+
 -- | Transcript of all moves so far.
 transcript :: GameM m g => m (Transcript (Move g))
 transcript = liftM _transcript getExec
