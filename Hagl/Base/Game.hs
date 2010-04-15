@@ -58,9 +58,32 @@ playerIx = ix . treeNode
         ix _                         = Nothing
 
 
------------------------
--- Game Construction --
------------------------
+------------------------
+-- Smart Constructors --
+------------------------
+
+-- | Decision node for a stateless game tree.
+decision :: PlayerIx -> [Edge () mv] -> GameTree () mv
+decision p = GameTree () . Internal (Decision p)
+
+-- | Chance node for a stateless game tree.
+chance :: Dist mv -> [Edge () mv] -> GameTree () mv
+chance d = GameTree () . Internal (Chance d)
+
+-- | Payoff node for a stateless game tree.
+payoff :: Payoff -> GameTree () mv
+payoff = GameTree () . Payoff
+
+-- | Build a stateless game tree in which multiple players choose in turn.
+decisions :: [(PlayerIx,[mv])] -> ([mv] -> GameTree () mv) -> GameTree () mv
+decisions ps f = d ps []
+  where d []          ns = f (reverse ns)
+        d ((p,ms):ps) ns = decision p [(m, d ps (m:ns)) | m <- ms]
+
+
+--------------------------
+-- Constructing Payoffs --
+--------------------------
 
 -- | The next player index out of n players.
 nextPlayer :: Int -> PlayerIx -> PlayerIx
@@ -74,10 +97,6 @@ allBut n p a b = ByPlayer $ replicate (p-1) a ++ b : replicate (n-p) a
 -- | Add two payoffs.
 addPayoffs :: Payoff -> Payoff -> Payoff
 addPayoffs = dzipWith (+)
-
---
--- Zero-sum payoffs
---
 
 -- | Zero-sum payoff where player w wins (scoring n-1) 
 --   and all other players lose (scoring -1).
