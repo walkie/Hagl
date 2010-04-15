@@ -41,7 +41,7 @@ numMoves = liftM _numMoves getExec
 
 -- | The index of the currently active player.
 myIx :: GameM m g => m PlayerIx
-myIx = location >>= return . (fromMaybe e) . playerIx
+myIx = location >>= return . fromMaybe e . playerIx
   where e = error "Internal error: myIx on non-decision node!"
 
 -- | The currently active player.

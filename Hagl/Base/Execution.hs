@@ -13,7 +13,7 @@ import Hagl.Base.Monad
 
 -- | Process one node in the game tree.
 step :: (Game g, Eq (Move g)) => ExecM g (Maybe Payoff)
-step = liftM treeNode location >>= processNode
+step = location >>= processNode . treeNode
 
 -- | Run the game to completion.
 finish :: (Game g, Eq (Move g)) => ExecM g Payoff
