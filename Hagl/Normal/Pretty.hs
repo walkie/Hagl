@@ -1,8 +1,22 @@
--- export showNormal and instances only
+module Hagl.Normal.Pretty () where
 
----------------------
--- Pretty Printing --
----------------------
+import Data.List (intersperse,isPrefixOf)
+
+import Hagl.Base hiding (numPlayers)
+import Hagl.Normal.Game
+
+
+---------------
+-- Instances --
+---------------
+
+instance (Eq mv,Show mv) => Show (Normal mv) where show = showNormal
+instance (Eq mv,Show mv) => Show (Matrix mv) where show = showMatrix
+
+
+----------------------
+-- Helper Functions --
+----------------------
 
 padLeft :: Int -> String -> String
 padLeft n s = replicate (n - length s) ' ' ++ s
@@ -40,8 +54,14 @@ toGrid = chunk . length
 extractGrid :: Eq mv => ByPlayer [mv] -> [Payoff] -> [mv] -> [Payoff]
 extractGrid mss ps ms = [vs | (ByPlayer ms', vs) <- payoffMap mss ps, ms `isPrefixOf` ms']
 
-showNormal :: Normal -> String
+showMatrix :: Show mv => Matrix mv -> String
+showMatrix (Matrix ms ns vs) = showGrid ms ns (map (fromList . (:[])) vs)
+
+showNormal :: (Eq mv,Show mv) => Normal mv -> String
 showNormal (Normal 2 (ByPlayer [ms,ns]) vs) = showGrid ms ns vs
+showNormal g = show (gameTree g (numPlayers g))
+
+{- TODO
 showNormal (Normal 3 mss@(ByPlayer [ms,xs,ys]) vs) = 
     unlines ["Player 1: " ++ show m ++ "\n" ++
              showGrid xs ys (extractGrid mss vs [m])
@@ -52,9 +72,4 @@ showNormal (Normal n mss vs) =
             | ms <- init]
   where init    = take (n-2) (toList mss)
         [xs,ys] = drop (n-2) (toList mss)
-
-
-instance (Eq mv, Show mv) => Show (Normal mv) where
-  
-instance Show mv => Show (Matrix mv) where
-  show (Matrix ms ns vs) = showGrid ms ns (map (fromList . (:[])) vs)
+-}
