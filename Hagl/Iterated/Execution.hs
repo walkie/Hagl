@@ -12,7 +12,7 @@ import Hagl.Iterated.Accessor
 
 -- | Execute a single game iteration, returning the payoff.
 once :: (Game g, Eq (Move g)) => ExecM (Iterated g) Payoff
-once = step >> gamePayoff >>= maybe once return
+once = step >> state >>= maybe once return . _gamePayoff
 
 -- | Execute n game iterations, returning the cumulative score.
 times :: (Game g, Eq (Move g)) => Int -> ExecM (Iterated g) Payoff

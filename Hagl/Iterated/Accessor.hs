@@ -4,7 +4,7 @@ module Hagl.Iterated.Accessor where
 
 import Control.Monad (liftM)
 
-import Hagl.Base
+import Hagl.Base hiding (payoff,transcript)
 import Hagl.Iterated.List
 import Hagl.Iterated.Game
 
@@ -16,11 +16,6 @@ import Hagl.Iterated.Game
 gameNumber :: GameM m (Iterated g) => m Int
 gameNumber = liftM _gameNumber state
 
--- | Payoff for a just completed game iteration.
---   Nothing if an iteration has not just completed.
-gamePayoff :: GameM m (Iterated g) => m (Maybe Payoff)
-gamePayoff = liftM _gamePayoff state
-
 -- | The state of the current game iteration.
 gameState :: GameM m (Iterated g) => m (State g)
 gameState = liftM _gameState state
@@ -30,10 +25,10 @@ history :: GameM m (Iterated g) => m (History (Move g))
 history = liftM _history state
 
 -- | Transcript of each iteration, including the current one.
-gameTranscript :: GameM m (Iterated g) => m (ByGame (Transcript (Move g)))
-gameTranscript = do t  <- liftM _gameTranscript state
-                    ts <- liftM _transcripts history
-                    return (t `dcons` ts)
+transcript :: GameM m (Iterated g) => m (ByGame (Transcript (Move g)))
+transcript = do t  <- liftM _gameTranscript state
+                ts <- liftM _transcripts history
+                return (t `dcons` ts)
 
 -- | Summary of each iteration, including the current one.
 summary :: GameM m (Iterated g) => m (ByGame (Summary (Move g)))
