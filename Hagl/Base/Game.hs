@@ -80,6 +80,17 @@ decisions ps f = d ps []
   where d []          ns = f (reverse ns)
         d ((p,ms):ps) ns = decision p [(m, d ps (m:ns)) | m <- ms]
 
+-- | Build a tree for a state-based game.
+stateGameTree :: (s -> PlayerIx) -- ^ Whose turn is it?
+              -> (s -> Bool)     -- ^ Is the game over?
+              -> (s -> [mv])     -- ^ Available moves.
+              -> (s -> mv -> s)  -- ^ Execute a move and return the new state.
+              -> (s -> Payoff)   -- ^ Payoff for this (final) state.
+              -> s               -- ^ The current state.
+              -> GameTree s mv
+stateGameTree who end moves exec pay init = tree init
+  where tree s | end s     = GameTree s $ Payoff (pay s)
+               | otherwise = GameTree s $ Internal (Decision (who s)) [(m, tree (exec s m)) | m <- moves s]
 
 --------------------------
 -- Constructing Payoffs --
