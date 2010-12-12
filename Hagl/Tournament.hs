@@ -2,7 +2,8 @@
 module Hagl.Tournament where
 
 import Control.Monad (liftM)
-import Data.List     (nub)
+import Data.Function (on)
+import Data.List     (nub,sortBy)
 
 import Hagl.Base
 
@@ -42,4 +43,5 @@ roundRobin g np ps = runGames g (ucross (replicate np ps))
 printResults :: Results -> IO ()
 printResults r = do
     putStrLn "Tournament Results:"
-    putStr $ unlines ["  " ++ n ++ ": " ++ showFloat s | (n,s) <- r]
+    putStr $ unlines ["  " ++ n ++ ": " ++ showFloat s | (n,s) <- r']
+  where r' = reverse $ sortBy (compare `on` snd) r
