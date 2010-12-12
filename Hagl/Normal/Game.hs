@@ -1,4 +1,8 @@
-{-# LANGUAGE FlexibleContexts, PatternGuards, TypeFamilies #-}
+{-# LANGUAGE FlexibleInstances,
+             FunctionalDependencies,
+             MultiParamTypeClasses,
+             PatternGuards,
+             TypeFamilies #-}
 
 module Hagl.Normal.Game where
 
@@ -15,10 +19,8 @@ import Hagl.Base hiding (numPlayers)
 type Profile mv = ByPlayer mv
 
 -- | Normal form game type class.
-class Game g => Norm g where
-  numPlayers :: g -> Int
-  pays       :: g -> Profile (Move g) -> Payoff
-  moves      :: g -> PlayerIx -> [Move g]
+class Norm g mv | g -> mv where
+  toNormal :: g -> Normal mv
   
 -- | A general normal form game.
 data Normal mv = Normal Int (ByPlayer [mv]) [Payoff] deriving Eq
@@ -59,6 +61,18 @@ square ms = Matrix ms ms
 -- Utility Functions --
 -----------------------
 
+-- | The number of players that can play this game.
+numPlayers :: Normal mv -> Int
+numPlayers (Normal np _ _) = np
+
+-- | Get the payoff for a particular strategy profile.
+getPayoff :: Eq mv => Normal mv -> Profile mv -> Payoff
+getPayoff (Normal _ ms ps) m = lookupPay m (payoffMap ms ps)
+
+-- | Get the moves for a particular player.
+getMoves :: Normal mv -> PlayerIx -> [mv]
+getMoves (Normal _ ms _) p = forPlayer p ms
+
 -- | Get a particular row of the payoff matrix.
 row :: Matrix mv -> Int -> [Float]
 row (Matrix _ ms ps) i = chunk (length ms) ps !! (i-1)
@@ -68,14 +82,12 @@ col :: Matrix mv -> Int -> [Float]
 col (Matrix _ ms ps) i = transpose (chunk (length ms) ps) !! (i-1)
 
 -- | The dimensions of the payoff matrix.
-dimensions :: Norm g => g -> [Int]
-dimensions g = let np = numPlayers g
-               in [length (moves g i) | i <- [1..np]]
+dimensions :: Normal mv -> ByPlayer Int
+dimensions (Normal _ mss _) = fmap length mss
 
 -- | A list of all pure strategy profiles.
-profiles :: Norm g => g -> [Profile (Move g)]
-profiles g = let np = numPlayers g
-             in dcross (fromList [moves g i | i <- [1..np]])
+profiles :: Normal mv -> [Profile mv]
+profiles (Normal _ mss _) = dcross mss
 
 -- | Construct a zero-sum payoff grid.
 zerosum :: [Float] -> [Payoff]
@@ -98,13 +110,13 @@ lookupPay p m | Just v <- lookup p m = v
               | otherwise            = error "Invalid strategy profile."
 
 -- | Build the game tree for a normal form game.
-buildTree :: Norm g => g -> GameTree () (Move g)
-buildTree g = decisions ms pay
-  where ms  = [(p, moves g p) | p <- [1 .. numPlayers g]]
-        pay = payoff . pays g . fromList
+buildTree :: Eq mv => Normal mv -> GameTree () mv
+buildTree g@(Normal _ mss ps) = decisions ms pay
+  where ms  = zip [1..] (toList mss)
+        pay = GameTree () . Payoff . getPayoff g . fromList
 
 -- | Variant of `buildTree` with the type needed for the `Game` type class.
-buildTree' :: Norm g => g -> Int -> GameTree () (Move g)
+buildTree' :: Eq mv => Normal mv -> Int -> GameTree () mv
 buildTree' g np | np == numPlayers g = buildTree g
                 | otherwise          = error "Incorrect number of players."
 
@@ -113,23 +125,18 @@ buildTree' g np | np == numPlayers g = buildTree g
 -- Instances --
 ---------------
 
+instance Norm (Normal mv) mv where
+  toNormal = id
+
+instance Norm (Matrix mv) mv where
+  toNormal (Matrix ms ns vs) = Normal 2 (ByPlayer [ms,ns]) (zerosum vs)
+
 instance Eq mv => Game (Normal mv) where
   type Move  (Normal mv) = mv
   type State (Normal mv) = ()
   gameTree = buildTree'
 
-instance Eq mv => Norm (Normal mv) where
-  numPlayers (Normal np _   _ )    = np
-  pays       (Normal _  mss ps) ms = lookupPay ms (payoffMap mss ps)
-  moves      (Normal _  mss _ ) p  = forPlayer p mss
-
 instance Eq mv => Game (Matrix mv) where
   type Move  (Matrix mv) = mv
   type State (Matrix mv) = ()
-  gameTree = buildTree'
-
-instance Eq mv => Norm (Matrix mv) where
-  numPlayers _ = 2
-  pays  (Matrix ms ns vs) os = lookupPay os (payoffMap (fromList [ms,ns]) (zerosum vs))
-  moves (Matrix ms _  _ ) 1  = ms
-  moves (Matrix _  ms _ ) 2  = ms
+  gameTree = buildTree' . toNormal
