@@ -17,6 +17,9 @@ data Limit = Finite Int | Infinite deriving Eq
 
 data Iterated g = Iterated Limit g
 
+iterated :: g -> Iterated g
+iterated = Iterated Infinite
+
 uniterated :: Iterated g -> g
 uniterated (Iterated _ g) = g
 
