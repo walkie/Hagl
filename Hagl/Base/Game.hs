@@ -71,8 +71,8 @@ chance :: Dist mv -> [Edge () mv] -> GameTree () mv
 chance d = GameTree () . Internal (Chance d)
 
 -- | Payoff node for a stateless game tree.
-payoff :: Payoff -> GameTree () mv
-payoff = GameTree () . Payoff
+payoff :: [Float] -> GameTree () mv
+payoff = GameTree () . Payoff . fromList
 
 -- | Build a stateless game tree in which multiple players choose in turn.
 decisions :: [(PlayerIx,[mv])] -> ([mv] -> GameTree () mv) -> GameTree () mv
