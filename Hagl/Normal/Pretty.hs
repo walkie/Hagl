@@ -10,8 +10,10 @@ import Hagl.Normal.Game
 -- Instances --
 ---------------
 
-instance (Eq mv,Show mv) => Show (Normal mv) where show = showNormal
-instance (Eq mv,Show mv) => Show (Matrix mv) where show = showMatrix
+instance (Eq mv,Show mv) => Show (Normal mv) where
+  show = showNormal
+instance (Eq mv,Show mv) => Show (Matrix mv) where
+  show = showMatrix
 
 
 ----------------------

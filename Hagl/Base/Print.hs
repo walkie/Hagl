@@ -1,11 +1,17 @@
 {-# LANGUAGE FlexibleContexts #-}
-module Hagl.Print where
+module Hagl.Base.Print where
 
-import Control.Monad       (liftM, liftM2)
+import Control.Applicative ((<*>))
+import Control.Monad       (ap,liftM,liftM2)
 import Control.Monad.Trans (MonadIO(..))
 
-import Hagl.Core
-import Hagl.Accessor
+import Hagl.Base.Game
+import Hagl.Base.List
+import Hagl.Base.Monad
+import Hagl.Base.Accessor
+import Hagl.Base.Pretty
+import Hagl.Base.Selector
+import Hagl.Base.Util
 
 ------------------------
 -- Printing Functions --
@@ -23,32 +29,17 @@ printStr = liftIO . putStr
 printStrLn :: MonadIO m => String -> m ()
 printStrLn = liftIO . putStrLn
 
--- Print transcript of the last game.
+-- | Print the transcript of this game, and the payoff if the game is complete.
 printTranscript :: (GameM m g, Show (Move g)) => m ()
-printTranscript = numGames >>= printTranscriptOfGame
-
--- Print transcripts of completed games.
-printTranscripts :: (GameM m g, Show (Move g)) => m ()
-printTranscripts = do n <- numGames
-                      mapM_ printTranscriptOfGame [1..n]
-
--- Print Transcript of the given game.
-printTranscriptOfGame :: (GameM m g, Show (Move g)) => Int -> m ()
-printTranscriptOfGame n = do
-    printStrLn $ "Game " ++ show n ++ ":"
-    -- print the transcript
-    t  <- forGameM n transcripts
+printTranscript = do
     ps <- players
-    let mv (Just i,  m) = "  " ++ show (forPlayer i ps) ++ "'s move: " ++ show m
-        mv (Nothing, m) = "  Chance: " ++ show m
-    (printStr . unlines . map mv) (reverse t)
-    -- maybe print the payoff
-    p <- forGameM n payoff
-    this <- gameNumber
-    if this == n then return ()
-                 else printStrLn $ "  Payoff: " ++ showPayoffAsList p
+    t  <- transcript
+    fp <- finalPayoff
+    printStr (showTranscript ps t)
+    printStr (showPayoffLine fp)
 
--- Print summary of the last game.
+{-
+-- | Print summary of the last game.
 printSummary :: (GameM m g, Show (Move g)) => m ()
 printSummary = numGames >>= printSummaryOfGame
 
@@ -69,6 +60,7 @@ printSummaryOfGame n =
 printScore :: (GameM m g, Show (Move g)) => m ()
 printScore = do printStrLn "Score:"
                 printStr =<< liftM2 scoreString players score
+-}
 
 -----------------------
 -- Utility functions --

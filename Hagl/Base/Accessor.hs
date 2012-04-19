@@ -1,7 +1,7 @@
 module Hagl.Base.Accessor where
 
-import Control.Monad (liftM, liftM2)
-import Data.Maybe    (fromMaybe)
+import Control.Monad (liftM,liftM2)
+import Data.Maybe    (fromMaybe,isJust)
 
 import Hagl.Base.Game
 import Hagl.Base.List
@@ -34,7 +34,15 @@ availMoves = liftM movesFrom location
 -- | Transcript of all moves so far.
 transcript :: GameM m g => m (Transcript (Move g))
 transcript = liftM _transcript getExec
+
+-- | The final payoff, if the game is complete.
+finalPayoff :: GameM m g => m (Maybe Payoff)
+finalPayoff = liftM _finalPayoff getExec
   
+-- | Is the game complete?
+isComplete :: GameM m g => m Bool
+isComplete = liftM isJust finalPayoff
+
 -- | Transcript of moves so far, separated by player.
 move :: GameM m g => m (MoveSummary (Move g))
 move = liftM2 summarize numPlayers transcript

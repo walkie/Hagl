@@ -33,6 +33,11 @@ data Decision mv = Decision PlayerIx -- decision made by a player
                  | Chance (Dist mv)  -- decision based on a random distribution
                  deriving Eq
 
+instance Game (GameTree s mv) where
+  type Move (GameTree s mv) = mv
+  type State (GameTree s mv) = s
+  gameTree g _ = g
+
 
 --------------------------
 -- Game Tree Navigation --

@@ -29,7 +29,7 @@ runGame g ps = evalGame g ps finish
 ----------------------
 
 processNode :: (Game g, Eq (Move g)) => Node (State g) (Move g) -> ExecM g (Maybe Payoff)
-processNode (Payoff p)      = return (Just p)
+processNode (Payoff p)      = givePayoff p
 processNode (Internal d es) = do m <- decide d
                                  performMove m es
                                  recordMove d m
@@ -52,6 +52,11 @@ recordMove d m = do e <- getExec
                           , _numMoves   = numMoves' d (_numMoves e) }
   where numMoves' (Decision p) nm = setListElem (p-1) (forPlayer p nm + 1) nm
         numMoves' _            nm = nm
+
+givePayoff :: Game g => Payoff -> ExecM g (Maybe Payoff)
+givePayoff p = do e <- getExec
+                  put e { _finalPayoff = Just p }
+                  return (Just p)
 
 -- setters
 

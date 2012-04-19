@@ -63,8 +63,8 @@ instance Eq mv => Eq (Extensive mv) where
   (Extensive n1 _ t1) == (Extensive n2 _ t2) = n1 == n2 && t1 == t2
 
 instance Eq mv => Eq (Info mv) where
-  (Perfect t1) == (Perfect t2) = t1 == t2
-  (Imperfect t1) == (Imperfect t2) = all (flip elem t2) t1
+  Perfect t1 == Perfect t2 = t1 == t2
+  Imperfect t1 == Imperfect t2 = all (flip elem t2) t1
   Simultaneous == Simultaneous = True
   _ == _ = False
 

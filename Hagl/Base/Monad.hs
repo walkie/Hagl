@@ -31,15 +31,16 @@ summarize np t = ByPlayer [ByTurn [mv | (mi,mv) <- t, mi == Just p] | p <- [1..n
 
 -- Game Execution State
 data Exec g = Exec {
-  _game       :: g,                           -- game definition
-  _players    :: ByPlayer (Player g),         -- players active in game
-  _location   :: GameTree (State g) (Move g), -- the current location in the game tree
-  _transcript :: Transcript (Move g),         -- moves played so far (newest at head)
-  _numMoves   :: ByPlayer Int                 -- number of moves played by each player
+  _game        :: g,                           -- game definition
+  _players     :: ByPlayer (Player g),         -- players active in game
+  _location    :: GameTree (State g) (Move g), -- the current location in the game tree
+  _numMoves    :: ByPlayer Int,                -- number of moves played by each player
+  _transcript  :: Transcript (Move g),         -- moves played so far (newest at head)
+  _finalPayoff :: Maybe Payoff                 -- final payoff, once the game is completed
 }
 
 initExec :: Game g => g -> [Player g] -> Exec g
-initExec g ps = Exec g (ByPlayer ps) (gameTree g np) [] ms
+initExec g ps = Exec g (ByPlayer ps) (gameTree g np) ms [] Nothing
   where ms = ByPlayer (replicate np 0)
         np = length ps
 
