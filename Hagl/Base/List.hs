@@ -28,6 +28,7 @@ fromDist = randomlyFrom . expandDist
 class Functor d => ByX d where
   toList   :: d a -> [a]
   fromList :: [a] -> d a
+  forX     :: Int -> d a -> a
 
 toList2 :: (ByX f, ByX g) => f (g a) -> [[a]]
 toList2 = map toList . toList
@@ -60,10 +61,10 @@ newtype ByPlayer a = ByPlayer [a] deriving (Eq, Show)
 newtype ByTurn   a = ByTurn   [a] deriving (Eq, Show)
 
 forPlayer :: Int -> ByPlayer a -> a
-forPlayer i (ByPlayer as) = as !! (i-1)
+forPlayer = forX
 
 forTurn :: Int -> ByTurn a -> a
-forTurn i (ByTurn as) = as !! (length as - i)
+forTurn = forX
 
 firstTurn :: ByTurn a -> a
 firstTurn (ByTurn []) = error "firstTurn: Empty turn list."
@@ -87,11 +88,13 @@ instance Functor ByTurn where
   fmap f (ByTurn as) = ByTurn (map f as)
 
 instance ByX ByPlayer where
-  toList (ByPlayer as) = as
   fromList = ByPlayer
+  toList (ByPlayer as) = as
+  forX i (ByPlayer as) = as !! (i-1)
 instance ByX ByTurn where
-  toList (ByTurn as) = as
   fromList = ByTurn
+  toList (ByTurn as) = as
+  forX i (ByTurn as) = as !! (length as - i)
 
 instance Monoid (ByPlayer a) where
   mempty = ByPlayer []

@@ -11,7 +11,7 @@ import Hagl.Base
 newtype ByGame a = ByGame [a] deriving (Eq, Show)
 
 forGame :: Int -> ByGame a -> a
-forGame i (ByGame as) = as !! (length as - i)
+forGame = forX
 
 firstGame :: ByGame a -> a
 firstGame (ByGame []) = error "firstGame: Empty game list."
@@ -43,8 +43,9 @@ instance Functor ByGame where
   fmap f (ByGame as) = ByGame (map f as)
 
 instance ByX ByGame where
-  toList (ByGame as) = as
   fromList = ByGame
+  toList (ByGame as) = as
+  forX i (ByGame as) = as !! (length as - i)
 
 instance Monoid (ByGame a) where
   mempty = ByGame []
