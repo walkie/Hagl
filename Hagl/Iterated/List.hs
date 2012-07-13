@@ -1,35 +1,45 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
+-- | Adds 'ByGame' dimensioned-lists.
 module Hagl.Iterated.List where
 
-import Control.Monad       (liftM)
-import Control.Monad.Trans (MonadIO(..))
-import Data.Monoid         (Monoid(..))
+import Hagl.Base.List (ByX(..))
 
-import Hagl.Base
 
--- ByGame lists
+-- ** ByGame Lists
+--
 
-newtype ByGame a = ByGame [a] deriving (Eq, Show)
+-- | A list where each element corresponds to one played iteration of
+--   an iterated game.
+newtype ByGame a = ByGame [a] deriving (Eq,Show,Functor)
 
+-- | Return the element corresponding to the given iteration number.
 forGame :: Int -> ByGame a -> a
-forGame = forX
+forGame i (ByGame as) = as !! (length as - i)
 
+-- | Return the element corresponding to the first iteration.
 firstGame :: ByGame a -> a
 firstGame (ByGame []) = error "firstGame: Empty game list."
 firstGame (ByGame as) = last as
 
+-- | Return the element corresponding to the current iteration.
 thisGame :: ByGame a -> a
 thisGame (ByGame []) = error "thisGame: Empty game list."
 thisGame (ByGame as) = head as
 
+-- | Return the elements corresponding to all completed iterations.
 completedGames :: ByGame a -> [a]
 completedGames (ByGame []) = error "completedGames: Empty game list."
 completedGames (ByGame as) = tail as
 
+-- | Return the element corresponding to the most recently completed iteration.
 lastGame :: ByGame a -> a
 lastGame (ByGame [])      = error "lastGame: Empty game list."
 lastGame (ByGame [a])     = error "lastGame: No completed games."
 lastGame (ByGame (_:a:_)) = a
 
+-- | Return the elements corresponding to the most recently completed n
+--   iterations of the game.
 lastNGames :: Int -> ByGame a -> [a]
 lastNGames _ (ByGame []) = error "lastNGames: Empty game list."
 lastNGames i (ByGame (_:as))
@@ -39,14 +49,6 @@ lastNGames i (ByGame (_:as))
 
 -- Instances
 
-instance Functor ByGame where
-  fmap f (ByGame as) = ByGame (map f as)
-
 instance ByX ByGame where
   fromList = ByGame
   toList (ByGame as) = as
-  forX i (ByGame as) = as !! (length as - i)
-
-instance Monoid (ByGame a) where
-  mempty = ByGame []
-  mappend (ByGame as) (ByGame bs) = ByGame (as ++ bs)

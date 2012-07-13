@@ -1,50 +1,97 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
+-- | This module contains specialized list representations used within Hagl.
 module Hagl.Base.List where
 
-import Control.Monad       (liftM)
-import Control.Monad.Trans (MonadIO(..))
-import Data.Monoid         (Monoid(..))
+import Data.List     (elemIndex)
+import System.Random (RandomGen)
 
 import Hagl.Base.Util
 
--------------------
--- Distributions --
--------------------
+--
+-- * Probability Distributions
+--
+
 -- TODO: Maybe replace with Martin's probability package?
 
-type Dist a = [(Int, a)]
+-- | A probability distribution.  The integer coefficients indicate the
+--   relative likelihood of each element of type 'a'.  For example,
+--   given distribution @[(3,True),(1,False)]@, @True@ is three times as
+--   likely as @False@.
+type Dist a = [(Int,a)]
 
+-- | Expand a distribution into a list of values according to their
+--   relative likelihoods.
+--
+--   >>> expandDist [(3,True),(1,False)]
+--   [True,True,True,False]
 expandDist :: Dist a -> [a]
 expandDist d = concat [replicate i a | (i, a) <- d]
 
--- Pick an element randomly from a distribution
-fromDist :: MonadIO m => Dist a -> m a
+-- | Pick an element randomly from a distribution.
+fromDist :: RandomGen g => Dist a -> g -> (a, g)
 fromDist = randomlyFrom . expandDist
 
 
------------------------
--- Dimensioned Lists --
------------------------
+--
+-- * Dimensioned Lists
+--
 
+-- | A class for finite integer-indexed lists where each integer
+--   corresponds to an element in a set X.
+--   Minimum definition is @toList@, @fromList@, @indexes@.
+--   The others can be overridden for efficiency.
 class Functor d => ByX d where
-  toList   :: d a -> [a]
+  
+  -- | The underlying plain list.
+  toList :: d a -> [a]
+  
+  -- | Convert from a plain list.
   fromList :: [a] -> d a
-  forX     :: Int -> d a -> a
+  
+{-
+  -- | List of indexes corresponding to the underlying plain list.
+  indexes :: d a -> [Int]
+  
+  -- | Get the element corresponding to the given index.
+  forX :: Int -> d a -> a
+  forX i d = maybe err (toList d !!) (elemIndex i (indexes d))
+    where err = error $ "forX: invalid index: " ++ show i
+          
+  -- | Set the element at the given index.
+  setX :: Int -> a -> d a -> d a 
+  setX i a d = maybe err (fromList . setAt) (elemIndex i (indexes d))
+    where err = error $ "setX: invalid index: " ++ show i
+          setAt j = let (h,_:t) = splitAt j (toList d) in (h ++ a:t)
 
+  -- | Get the element corresponding to the minimum index in the list.
+  minX :: d a -> a
+  minX d | null ixs  = error $ "minX: empty list"
+         | otherwise = forX (minimum ixs) d
+    where ixs = indexes d
+  
+  -- | Get the element corresponding to the maximum index in the list.
+  maxX :: d a -> a
+  maxX d | null ixs  = error $ "maxX: empty list"
+         | otherwise = forX (maximum ixs) d
+    where ixs = indexes d
+-}
+
+-- | Convert a nested dimensioned list into a nested plain list.
 toList2 :: (ByX f, ByX g) => f (g a) -> [[a]]
 toList2 = map toList . toList
 
+-- | Convert a nested dimensioned list into a nested plain list.
 toList3 :: (ByX f, ByX g, ByX h) => f (g (h a)) -> [[[a]]]
 toList3 = map toList2 . toList
 
-inList :: ByX f => ([a] -> [b]) -> f a -> f b
-inList f = fromList . f . toList
+-- | Apply some function to the underlying plain list.
+onList :: ByX f => ([a] -> [b]) -> f a -> f b
+onList f = fromList . f . toList
 
-setListElem :: ByX f => Int -> a -> f a -> f a
-setListElem i a as = fromList (h ++ a : t)
-  where (h, _:t) = splitAt i (toList as)
-
+{-
 dcons :: ByX f => a -> f a -> f a
-dcons = inList . (:)
+dcons = onList . (:)
 
 dlength :: ByX f => f a -> Int
 dlength = length . toList
@@ -54,51 +101,55 @@ dcross = map fromList . cross . toList
 
 dzipWith :: ByX f => (a -> b -> c) -> f a -> f b -> f c
 dzipWith f as bs = fromList (zipWith f (toList as) (toList bs))
+-}
 
--- ByPlayer and ByTurn lists
+-- ** ByPlayer Lists
+--
 
-newtype ByPlayer a = ByPlayer [a] deriving (Eq, Show)
-newtype ByTurn   a = ByTurn   [a] deriving (Eq, Show)
+-- | A player ID is used to index a `ByPlayer` list.
+type PlayerID = Int
 
-forPlayer :: Int -> ByPlayer a -> a
-forPlayer = forX
+-- | A list where each element corresponds to a particular player.
+newtype ByPlayer a = ByPlayer [a] deriving (Eq,Show,Functor)
 
+-- | Return the element corresponding to the given `PlayerID`.
+forPlayer :: PlayerID -> ByPlayer a -> a
+forPlayer i (ByPlayer as) = as !! (i-1)
+
+
+-- ** ByTurn Lists
+--
+
+-- | A list where each element corresponds to a played turn in a game.
+newtype ByTurn a = ByTurn [a] deriving (Eq,Show,Functor)
+
+-- | Return the element corresponding to the given turn number.
 forTurn :: Int -> ByTurn a -> a
-forTurn = forX
+forTurn i (ByTurn as) = as !! (length as - i)
 
+-- | Return the element corresponding to the first turn of the game.
 firstTurn :: ByTurn a -> a
 firstTurn (ByTurn []) = error "firstTurn: Empty turn list."
 firstTurn (ByTurn as) = last as
 
+-- | Return the element corresponding to the most recently played turn.
 lastTurn :: ByTurn a -> a
 lastTurn (ByTurn []) = error "lastTurn: Empty turn list."
 lastTurn (ByTurn as) = head as
 
+-- | Return the elements corresponding to the most recently played n
+--   turns of the game.
 lastNTurns :: Int -> ByTurn a -> [a]
-lastNTurns i (ByTurn as)
-    | length as' == i = as'
-    | otherwise       = error "lastNTurns: Not enough turns."
-  where as' = take i as
+lastNTurns n (ByTurn as)
+    | length as' == n = as'
+    | otherwise       = error $ "lastNTurns: Not enough turns: " ++ show n
+  where as' = take n as
 
 -- Instances
-
-instance Functor ByPlayer where
-  fmap f (ByPlayer as) = ByPlayer (map f as)
-instance Functor ByTurn where
-  fmap f (ByTurn as) = ByTurn (map f as)
 
 instance ByX ByPlayer where
   fromList = ByPlayer
   toList (ByPlayer as) = as
-  forX i (ByPlayer as) = as !! (i-1)
 instance ByX ByTurn where
   fromList = ByTurn
   toList (ByTurn as) = as
-  forX i (ByTurn as) = as !! (length as - i)
-
-instance Monoid (ByPlayer a) where
-  mempty = ByPlayer []
-  mappend (ByPlayer as) (ByPlayer bs) = ByPlayer (as ++ bs)
-instance Monoid (ByTurn a) where
-  mempty = ByTurn []
-  mappend (ByTurn as) (ByTurn bs) = ByTurn (as ++ bs)
