@@ -89,19 +89,22 @@ toList3 = map toList2 . toList
 onList :: ByX f => ([a] -> [b]) -> f a -> f b
 onList f = fromList . f . toList
 
-{-
+-- | Prepend an element to a dimensioned list.
 dcons :: ByX f => a -> f a -> f a
 dcons = onList . (:)
 
+-- | Length of a dimensioned list.
 dlength :: ByX f => f a -> Int
 dlength = length . toList
 
+-- | Apply `cross` to a dimensioned list of lists.
 dcross :: ByX f => f [a] -> [f a]
 dcross = map fromList . cross . toList
 
+-- | Apply zipWith to two like-dimensioned lists.
 dzipWith :: ByX f => (a -> b -> c) -> f a -> f b -> f c
 dzipWith f as bs = fromList (zipWith f (toList as) (toList bs))
--}
+
 
 -- ** ByPlayer Lists
 --
@@ -115,6 +118,11 @@ newtype ByPlayer a = ByPlayer [a] deriving (Eq,Show,Functor)
 -- | Return the element corresponding to the given `PlayerID`.
 forPlayer :: PlayerID -> ByPlayer a -> a
 forPlayer i (ByPlayer as) = as !! (i-1)
+
+-- | The next player ID out of @n@ players.
+nextPlayer :: Int -> PlayerID -> PlayerID
+nextPlayer n p | p >= n    = 1
+               | otherwise = p + 1
 
 
 -- ** ByTurn Lists
