@@ -1,94 +1,87 @@
+{-# LANGUAGE TypeFamilies #-}
+
+-- | This module describes an abstract representation of games in terms
+--   of transitions between nodes.  Each node consists of a game state
+--   and an action to perform (e.g. a player must make a decision).
+--   Transitions are determined by moves and games end when a payoff
+--   node is reached.
 module Hagl.Game where
 
-import Control.Monad.State (liftM, put)
-
-import Hagl.Core
-import Hagl.Accessor
+import Hagl.Base.List
 
 --
--- High-level monadic functions for defining games.
+-- * Abstract Game Representation
 --
 
-decide :: Game g => PlayerIx -> ExecM g (Move g)
-decide i = do startTurn i
-              p <- getPlayer i
-              (m, p') <- runStrategy p
-              setPlayer i p'
-              playerMoved i m
-              endTurn
-              return m
+-- | A node consists of a game state and an action to perform.
+type Node s mv = (s, Action mv)
 
-chance :: Game g => Dist (Move g) -> ExecM g (Move g)
-chance d = do m <- fromDist d
-              chanceMoved m
-              return m
+-- | The action to perform at a given node.
+data Action mv =
+    Decision PlayerID -- ^ A decision by the indicated player.
+  | Chance (Dist mv)  -- ^ A move based on a probability distribution.
+  | Payoff Payoff     -- ^ A terminating payoff node.
+  deriving Eq
 
-allPlayers :: Game g => (PlayerIx -> ExecM g a) -> ExecM g (ByPlayer a)
-allPlayers f = do n <- numPlayers
-                  liftM ByPlayer (mapM f [1..n])
 
-takeTurns :: Game g => (PlayerIx -> ExecM g a) -> ExecM g Bool -> ExecM g [a]
-takeTurns go until = turn 1
-  where turn p = do a <- go p
-                    b <- until
-                    n <- numPlayers
-                    if b then return [a] else liftM (a:) (turn (nextPlayer n p))
+-- | The most general class of games. Movement between nodes is captured
+--   by a transition function. This supports discrete and continuous, 
+--   finite and infinite games.
+class Game g where
+  
+  -- | The type of state maintained throughout the game (use @()@ for stateless games).
+  type State g
 
--- Like takeTurns, but only returned the last element.
-takeTurns_ :: Game g => (PlayerIx -> ExecM g a) -> ExecM g Bool -> ExecM g a
-takeTurns_ go until = turn 1
-  where turn p = do a <- go p
-                    b <- until
-                    n <- numPlayers
-                    if b then return a else turn (nextPlayer n p)
+  -- | The type of moves that may be played during the game.
+  type Move g
+  
+  -- | The initial node.
+  start :: g -> Node (State g) (Move g)
+  
+  -- | The transition function.
+  transition :: g -> Node (State g) (Move g) -> Move g -> Node (State g) (Move g)
 
-marginal :: Game g => (Payoff -> Payoff) -> ExecM g Payoff
-marginal f = liftM f score
 
 --
--- Lower-level monadic functions.
+-- * Discrete Games
 --
 
--- Player turns
+-- | Discrete games have a discrete set of moves available at each node.
+--   Note that discrete games may still be inifinite.
+class Game g => DiscreteGame g where
+  
+  -- | The available moves from a given node.
+  movesFrom :: g -> Node (State g) (Move g) -> [Move g]
 
-startTurn :: Game g => PlayerIx -> ExecM g ()
-startTurn = setPlayerIx . Just
-
-endTurn :: Game g => ExecM g ()
-endTurn = setPlayerIx Nothing
-
--- Tracking moves
-
-chanceMoved :: Game g => Move g -> ExecM g ()
-chanceMoved m = do 
-    e <- getExec
-    put e { _transcript = (Nothing, m) : _transcript e }
-
-playerMoved :: Game g => PlayerIx -> Move g -> ExecM g ()
-playerMoved i m = do 
-    e  <- getExec
-    ns <- numMoves
-    put e { _transcript = (Just i, m) : _transcript e,
-            _numMoves = setListElem (i-1) (forPlayer i ns + 1) ns }
 
 --
--- Getters and setters. (Also see Hagl.Accessor for basic getters.)
+-- * Payoffs
 --
 
-setPlayerIx :: Game g => Maybe PlayerIx -> ExecM g ()
-setPlayerIx i = do exec <- getExec
-                   put exec { _playerIx = i }
+-- | Payoffs are represented as a list of `Float` values
+--   where each value corresponds to a particular player.  While the type
+--   of payoffs could be generalized, this representation supports both
+--   cardinal and ordinal payoffs while being easy to work with.
+type Payoff = ByPlayer Float
 
-putGameState :: Game g => State g -> ExecM g ()
-putGameState s = getExec >>= \e -> put e { _gameState = s }
+-- | Payoff where all players out of n score payoff a, except player p, who scores b.
+allBut :: Int -> PlayerID -> Float -> Float -> Payoff
+allBut n p a b = ByPlayer $ replicate (p-1) a ++ b : replicate (n-p) a
 
-updateGameState :: Game g => (State g -> State g) -> ExecM g (State g)
-updateGameState f = gameState >>= \s -> 
-                    let s' = f s in putGameState s' >> return s'
+-- | Add two payoffs.
+addPayoffs :: Payoff -> Payoff -> Payoff
+addPayoffs = dzipWith (+)
 
-getPlayer :: Game g => PlayerIx -> ExecM g (Player g)
-getPlayer i = forPlayerM i players
+-- | Zero-sum payoff where player w wins (scoring n-1) 
+--   and all other players lose (scoring -1).
+winner :: Int -> PlayerID -> Payoff
+winner n w = allBut n w (-1) (fromIntegral n - 1)
 
-setPlayer :: Game g => PlayerIx -> Player g -> ExecM g ()
-setPlayer i p = do e <- getExec
-                   put e { _players = setListElem (i-1) p (_players e) }
+-- | Zero-sum payoff where player w loses (scoring -n+1)
+--   and all other players, out of np, win (scoring 1).
+loser :: Int -> PlayerID -> Payoff
+loser n l = allBut n l 1 (1 - fromIntegral n)
+
+-- | Zero-sum payoff where all players tie.  Each player scores 0.
+tie :: Int -> Payoff
+tie n = ByPlayer (replicate n 0)
