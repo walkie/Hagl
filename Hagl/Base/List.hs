@@ -12,8 +12,6 @@ import Hagl.Base.Util
 -- * Probability Distributions
 --
 
--- TODO: Maybe replace with Martin's probability package?
-
 -- | A probability distribution.  The integer coefficients indicate the
 --   relative likelihood of each element of type 'a'.  For example,
 --   given distribution @[(3,True),(1,False)]@, @True@ is three times as
@@ -40,7 +38,7 @@ fromDist = randomlyFrom . expandDist
 -- | A class for finite integer-indexed lists where each integer
 --   corresponds to an element in a set X.
 --   Minimum definition is @toList@, @fromList@, @indexes@.
---   The others can be overridden for efficiency.
+--   Others can be overridden for efficiency.
 class Functor d => ByX d where
   
   -- | The underlying plain list.

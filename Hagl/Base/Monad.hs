@@ -18,7 +18,7 @@ import Hagl.Base.Game
 ---------------------
 
 -- Transcripts
-type Moved mv       = (Maybe PlayerIx, mv)
+type Moved mv       = (Maybe PlayerID, mv)
 type Transcript mv  = [Moved mv]
 type MoveSummary mv = ByPlayer (ByTurn mv)
 
@@ -31,12 +31,12 @@ summarize np t = ByPlayer [ByTurn [mv | (mi,mv) <- t, mi == Just p] | p <- [1..n
 
 -- Game Execution State
 data Exec g = Exec {
-  _game        :: g,                           -- game definition
-  _players     :: ByPlayer (Player g),         -- players active in game
-  _location    :: GameTree (State g) (Move g), -- the current location in the game tree
-  _numMoves    :: ByPlayer Int,                -- number of moves played by each player
-  _transcript  :: Transcript (Move g),         -- moves played so far (newest at head)
-  _finalPayoff :: Maybe Payoff                 -- final payoff, once the game is completed
+  _game        :: g,                           -- ^ Game definition.
+  _players     :: ByPlayer (Player g),         -- ^ Players active in the game.
+  _location    :: GameTree (State g) (Move g), -- ^ The current location in the game tree.
+  _numMoves    :: ByPlayer Int,                -- ^ Number of moves played by each player
+  _transcript  :: Transcript (Move g),         -- ^ Moves played so far (newest at head)
+  _finalPayoff :: Maybe Payoff                 -- ^ Final payoff, once the game is completed
 }
 
 initExec :: Game g => g -> [Player g] -> Exec g
