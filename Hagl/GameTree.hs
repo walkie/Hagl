@@ -91,15 +91,15 @@ playerID :: GameTree mv -> Maybe PlayerID
 playerID (GameTree (Decision p) _) = Just p
 playerID _                         = Nothing
 
--- The highest numbered player in this finite game tree.
+-- | The highest numbered player in this finite game tree.
 maxPlayer :: GameTree mv -> Int
 maxPlayer t = foldl1 max $ map (fromMaybe 0 . playerID) (dfs t)
 
--- The immediate children of a node.
+-- | The immediate children of a node.
 children :: GameTree mv -> [GameTree mv]
 children = map snd . edges
 
--- Get a particular child node by following the edge labeled with mv.
+-- | Get a particular child node by following the edge labeled with mv.
 child :: Eq mv => mv -> GameTree mv -> GameTree mv
 child mv t | Just t' <- lookup mv (edges t) = t'
 child _  _ = error "GameTree.child: invalid move"
@@ -109,12 +109,12 @@ child _  _ = error "GameTree.child: invalid move"
 -- ** Traversals
 --
 
--- Nodes in BFS order.
+-- | Nodes in BFS order.
 bfs :: GameTree mv -> [GameTree mv]
 bfs t = bfs' [t]
   where bfs' [] = []
         bfs' ns = ns ++ bfs' (concatMap children ns)
 
--- Nodes in DFS order.
+-- | Nodes in DFS order.
 dfs :: GameTree mv -> [GameTree mv]
 dfs t = t : concatMap dfs (children t)
