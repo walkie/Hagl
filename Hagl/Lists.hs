@@ -1,12 +1,12 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
--- | This module describes specialized list representations used within Hagl.
+-- | This module provides list utility functions and specialized list
+--   representations used within Hagl.
 module Hagl.Lists where
 
-import Data.List     (elemIndex)
-import System.Random (RandomGen)
+import Data.List     (elemIndex,nub,sort)
+import System.Random (RandomGen,randomR)
 
-import Hagl.Base.Util
 
 --
 -- * Probability Distributions
@@ -159,3 +159,41 @@ instance ByX ByPlayer where
 instance ByX ByTurn where
   fromList = ByTurn
   toList (ByTurn as) = as
+
+
+--
+-- * List Utility Functions
+--
+
+-- | Produce a list of all ordered combinations of elements drawn from each
+--   sublist of the argument.  Probably best demonstrated by example.
+--
+--   >>> cross [[1,2],[3,4],[5,6]]
+--   [[1,3,5],[1,3,6],[1,4,5],[1,4,6],[2,3,5],[2,3,6],[2,4,5],[2,4,6]] 
+-- 
+--   >>> cross [[1,2],[2,2,1]]
+--   [[1,2],[1,2],[1,1],[2,2],[2,2],[2,1]]
+cross :: [[a]] -> [[a]]
+cross (xs:xss) = [y:ys | y <- xs, ys <- cross xss]
+cross [] = [[]]
+
+-- | Similar to 'cross' but does not preserve the ordering elements in the
+--   argument list and returns only unique combinations.
+--
+--   >>> ucross [[1,2],[2,2,1]]
+--   [[1,2],[1,1],[2,2]]
+ucross :: (Ord a) => [[a]] -> [[a]]
+ucross = nub . map sort . cross
+
+-- | Break a list into n-sized chunks.
+--
+--   >>> chunk 4 [1..9]
+--   [[1,2,3,4],[5,6,7,8],[9]]
+chunk :: Int -> [a] -> [[a]]
+chunk _ [] = []
+chunk n l = take n l : chunk n (drop n l)
+
+-- | Pick an element randomly from a list.
+randomlyFrom :: RandomGen g => [a] -> g -> (a, g)
+randomlyFrom as g = (as !! i, g')
+  where (i,g') = randomR (0, length as - 1) g
