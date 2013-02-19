@@ -7,7 +7,7 @@
 --   node is reached.
 module Hagl.Game where
 
-import Hagl.Base.List
+import Hagl.Lists
 
 --
 -- * Abstract Game Representation

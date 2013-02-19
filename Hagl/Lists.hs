@@ -1,7 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
--- | This module contains specialized list representations used within Hagl.
-module Hagl.Base.List where
+-- | This module describes specialized list representations used within Hagl.
+module Hagl.Lists where
 
 import Data.List     (elemIndex)
 import System.Random (RandomGen)
