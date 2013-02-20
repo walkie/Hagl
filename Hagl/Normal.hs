@@ -161,17 +161,6 @@ lookupPay :: Eq mv => Profile mv -> PayoffMap mv -> Payoff
 lookupPay p m | Just v <- lookup p m = v
               | otherwise            = error "Invalid strategy profile."
 
--- | Build the game tree for a normal form game.
-buildTree :: Eq mv => Normal mv -> GameTree mv
-buildTree g@(Normal _ (ByPlayer mss) ps) = decisions ms pay
-  where ms  = zip [1..] mss
-        pay ms = GameTree (Payoff (getPayoff g (ByPlayer ms))) []
-
--- | Variant of `buildTree` with the type needed for the `Game` type class.
-buildTree' :: Eq mv => Normal mv -> Int -> GameTree mv
-buildTree' g np | np == numPlayers g = buildTree g
-                | otherwise          = error "Incorrect number of players."
-
 
 --
 -- * Instances
