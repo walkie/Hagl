@@ -5,9 +5,8 @@ module Hagl.GameTree where
 
 import Data.Maybe (fromMaybe)
 
-import Hagl.Base.List
-import Hagl.Base.Payoff
-import Hagl.Base.Game
+import Hagl.Lists
+import Hagl.Game
 
 --
 -- * Game Trees
@@ -60,7 +59,7 @@ chance = GameTree . Chance
 
 -- | Payoff node.
 payoff :: [Float] -> GameTree mv
-payoff fs = GameTree (Payoff (fromList fs)) []
+payoff fs = GameTree (Payoff (ByPlayer fs)) []
 
 -- | Begin a game tree in which multiple players decide in turn. The given
 --   function defines the branch resulting from each possible sequence of moves.
