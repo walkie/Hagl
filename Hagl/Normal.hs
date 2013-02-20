@@ -17,10 +17,7 @@ import Hagl.Game
 import Hagl.GameTree
 
 --
--- * Normal Form Game Representations
---
-
--- ** Types
+-- * Representation
 --
 
 -- | Pure strategy profile; one move per player.
@@ -37,7 +34,8 @@ data Normal mv = Normal Int (ByPlayer [mv]) [Payoff] deriving Eq
 data Matrix mv = Matrix [mv] [mv] [Float] deriving Eq
 
 
--- ** Smart Constructors
+--
+-- * Smart constructors
 --
 
 -- | Smart constructor to build a normal form game from bare lists.
@@ -65,7 +63,7 @@ square ms = Matrix ms ms
 
 
 --
--- * Basic Functions
+-- * Basic functions
 --
 
 -- TODO generalize Normal mv ---> Norm g mv => g ?
@@ -104,7 +102,7 @@ zerosum vs = [ByPlayer [v, -v] | v <- vs]
 
 
 --
--- * Equilibrium Solutions
+-- * Equilibrium solutions
 --
 
 -- | All pure Nash equilibrium solutions.
@@ -141,7 +139,7 @@ saddle g = [p | p <- profiles n, v p == minimum (r p), v p == maximum (c p)]
 
 
 --
--- * Helper Stuff
+-- * Helper stuff
 --
 
 -- | A mapping from strategy profiles to payoffs.
@@ -163,7 +161,7 @@ lookupPay p m | Just v <- lookup p m = v
 
 
 --
--- * Instances
+-- Instances
 --
 
 instance Norm (Normal mv) mv where

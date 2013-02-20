@@ -12,7 +12,7 @@ import System.Random (randomRIO)
 
 
 --
--- * Probability Distributions
+-- * Probability distributions
 --
 
 -- | A probability distribution.  The integer coefficients indicate the
@@ -35,7 +35,7 @@ fromDist = randomlyFrom . expandDist
 
 
 --
--- * Dimensioned Lists
+-- * Dimensioned lists
 --
 
 -- | A class for finite integer-indexed lists where each integer
@@ -65,7 +65,7 @@ class Functor d => ByX d where
     where ixs = map fst (toAssocList l)
 
 
--- ** ByPlayer Lists
+-- ** ByPlayer lists
 --
 
 -- | A player ID is used to index a `ByPlayer` list.
@@ -97,7 +97,7 @@ instance ByX ByPlayer where
   toAssocList (ByPlayer l) = zip [1 ..] l
 
 
--- ** ByTurn Lists
+-- ** ByTurn lists
 --
 
 -- | A list where each element corresponds to a played turn in a game.
@@ -138,8 +138,7 @@ instance ByX ByTurn where
   maxX = lastTurn
 
 
---
--- * List Utility Functions
+-- * List utility functions
 --
 
 -- | Produce a list of all ordered combinations of elements drawn from each

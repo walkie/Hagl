@@ -10,7 +10,7 @@ import Hagl.Lists
 import Hagl.Game
 
 --
--- * Game Trees
+-- * Representation
 --
 
 -- | An edge represents a single transition from one location in a game tree
@@ -30,8 +30,7 @@ toGameTree g = build (start g)
   where build n@(_,a) = GameTree a [(m, build (transition g n m)) | m <- movesFrom g n]
 
 
--- ** Instances
---
+-- Instances
 
 instance Eq mv => Game (GameTree mv) where
   type State (GameTree mv) = [Edge mv]
@@ -45,7 +44,7 @@ instance Eq mv => DiscreteGame (GameTree mv) where
   movesFrom _ (es,_) = map fst es
 
 
--- ** Smart Constructors
+-- * Smart constructors
 --
 
 -- | Decision node.
@@ -80,7 +79,8 @@ stateGameTree who end moves exec pay init = tree init
                | otherwise = GameTree (Decision (who s)) [(m, tree (exec s m)) | m <- moves s]
 
 
--- ** Simple Queries
+--
+-- * Simple queries
 --
 
 -- | Get the PlayerID corresponding to a decision node.
@@ -102,7 +102,8 @@ child mv t | Just t' <- lookup mv (edges t) = t'
 child _  _ = error "GameTree.child: invalid move"
 
 
--- ** Traversals
+--
+-- * Traversals
 --
 
 -- | Nodes in BFS order.
@@ -116,7 +117,8 @@ dfs :: GameTree mv -> [GameTree mv]
 dfs t = t : concatMap dfs (children t)
 
 
--- ** Pretty Printing
+--
+-- * Pretty printing
 --
 
 -- | A nice string representation of a game tree.

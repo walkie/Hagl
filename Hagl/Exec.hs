@@ -19,10 +19,10 @@ import Hagl.Game
 
 
 --
--- * Game Execution
+-- * Game execution
 --
 
--- ** Game Execution State
+-- ** Game execution state
 --
 
 -- | A record of a single move event.
@@ -60,7 +60,7 @@ initExec g ps = Exec g (ByPlayer ps) (start g) ms [] Nothing
         np = length ps
 
 
--- ** Game Execution Monad
+-- ** Game execution monad
 --
 
 -- | The game execution monad.  A state monad transformer that maintains the
@@ -84,7 +84,7 @@ execGame :: Game g => g -> [Player g] -> ExecM g a -> IO (Exec g)
 execGame g ps f = execStateT (unE f) (initExec g ps)
 
 
--- ** Execution State Accessors
+-- ** Execution state accessors
 --
 
 -- | The game being played.
@@ -143,7 +143,7 @@ numPlayers :: GameM m g => m Int
 numPlayers = liftM (length . toAssocList) players
 
 
--- ** Executing Games
+-- * Executing games
 --
 
 -- | Process one node in the game tree.
@@ -189,10 +189,7 @@ runGame g ps = evalGame g ps finish
 
 
 --
--- * Players and Strategies
---
-
--- ** Players
+-- * Players
 --
 
 -- | The name of the player.
@@ -218,7 +215,7 @@ instance Ord (Player g) where
   compare = compare `on` name
 
 
--- * Strategy Monad
+-- * Strategy monad
 --
 
 -- | The strategy monad.  A state monad transformer that maintains the personal

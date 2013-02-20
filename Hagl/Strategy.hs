@@ -16,12 +16,8 @@ import Hagl.Game
 import Hagl.Exec
 
 --
--- * Common Strategies
+-- * Some common strategies
 --
-
--- | Play a move.
-play :: Move g -> Strategy s g
-play = return
 
 -- | A pure strategy. Always plays the same move.
 pure :: Move g -> Strategy s g
@@ -39,14 +35,6 @@ periodic ms = my numMoves >>= \n -> return $ ms !! mod n (length ms)
 randomly :: DiscreteGame g => Strategy s g
 randomly = availMoves >>= randomlyFrom
 
--- | Play a list of initial strategies, then a primary strategy thereafter.
-thereafter :: Game g => [Strategy s g] -> Strategy s g -> Strategy s g
-thereafter ss s = my numMoves >>= \n -> if n < length ss then ss !! n else s
-
--- | Play an initial strategy for the first move, then a primary strategy thereafter.
-atFirstThen :: Game g => Strategy s g -> Strategy s g -> Strategy s g
-atFirstThen s = thereafter [s]
-
 -- | A human player, who enters moves on the console.
 human :: (Game g, Read (Move g)) => Strategy () g
 human = me >>= liftIO . getMove . name
@@ -56,10 +44,24 @@ human = me >>= liftIO . getMove . name
 
 
 --
--- * Selectors
+-- * Strategy components
 --
 
--- ** Combinators
+-- | Play a move.
+play :: Move g -> Strategy s g
+play = return
+
+-- | Play a list of initial strategies, then a primary strategy thereafter.
+thereafter :: Game g => [Strategy s g] -> Strategy s g -> Strategy s g
+thereafter ss s = my numMoves >>= \n -> if n < length ss then ss !! n else s
+
+-- | Play an initial strategy for the first move, then a primary strategy thereafter.
+atFirstThen :: Game g => Strategy s g -> Strategy s g -> Strategy s g
+atFirstThen s = thereafter [s]
+
+
+--
+-- * Selector combinators
 --
 
 -- | Apply selector to each element of a list.
@@ -71,7 +73,11 @@ inThe :: GameM m g => m a -> (m a -> m b) -> m b
 inThe = flip ($)
 
 
--- ** ByPlayer Selection
+--
+-- * Selectors
+--
+
+-- ** ByPlayer selection
 --
 
 -- | Select the element corresponding to the current player.
@@ -99,7 +105,7 @@ their x = do ByPlayer as <- x
              return (take i as ++ drop (i+1) as)
 
 
--- ** ByTurn Selection
+-- ** ByTurn selection
 --
 
 everyTurn's :: GameM m g => m (ByTurn a) -> m [a]

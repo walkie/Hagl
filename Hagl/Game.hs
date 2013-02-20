@@ -12,7 +12,7 @@ import Data.List (intersperse)
 import Hagl.Lists
 
 --
--- * Abstract Game Representation
+-- * Game graphs
 --
 
 -- | A node consists of a game state and an action to perform.
@@ -44,8 +44,8 @@ class Game g where
   transition :: g -> Node (State g) (Move g) -> Move g -> Node (State g) (Move g)
 
 
---
--- * Discrete Games
+-- 
+-- * Discrete games
 --
 
 -- | Discrete games have a discrete set of moves available at each node.
@@ -56,7 +56,6 @@ class Game g => DiscreteGame g where
   movesFrom :: g -> Node (State g) (Move g) -> [Move g]
 
 
---
 -- * Payoffs
 --
 
@@ -65,6 +64,9 @@ class Game g => DiscreteGame g where
 --   of payoffs could be generalized, this representation supports both
 --   cardinal and ordinal payoffs while being easy to work with.
 type Payoff = ByPlayer Float
+
+-- ** Smart constructors
+--
 
 -- | Payoff where all players out of n score payoff a, except player p, who scores b.
 allBut :: Int -> PlayerID -> Float -> Float -> Payoff
@@ -89,8 +91,8 @@ tie :: Int -> Payoff
 tie n = ByPlayer (replicate n 0)
 
 
+-- ** Pretty printing
 --
--- * Pretty printing
 
 -- | Concatenate a sequence of elements, separated by commas.
 showSeq :: [String] -> String
