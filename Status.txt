@@ -1,0 +1,13 @@
+
+Modules fully refactored:
+  - Lists
+  - Game
+  - GameTree
+  - Normal
+
+Modules TODO:
+  - Monad and Execution!
+  - merge some constructors for incrementally building game trees 
+    from Extensive into GameTree and cut the rest?
+  - merge Accessors, Selectors, and Strategy into a single Strategy module
+  - merge all iterated stuff into a single module
