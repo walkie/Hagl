@@ -7,6 +7,8 @@
 --   node is reached.
 module Hagl.Game where
 
+import Data.List (intersperse)
+
 import Hagl.Lists
 
 --
@@ -85,3 +87,30 @@ loser n l = allBut n l 1 (1 - fromIntegral n)
 -- | Zero-sum payoff where all players tie.  Each player scores 0.
 tie :: Int -> Payoff
 tie n = ByPlayer (replicate n 0)
+
+
+--
+-- * Pretty printing
+
+-- | Concatenate a sequence of elements, separated by commas.
+showSeq :: [String] -> String
+showSeq = concat . intersperse ","
+
+-- | Pretty print floats as integers, when possible.
+showFloat :: Float -> String
+showFloat f | f == fromIntegral i = show i
+            | otherwise           = show f
+  where i = floor f
+
+-- | String representation of a Payoff.
+showPayoff :: Payoff -> String
+showPayoff (ByPlayer vs) = showSeq (map showFloat vs)
+
+-- | Bracketed string representation of a Payoff.
+showPayoffAsList :: Payoff -> String
+showPayoffAsList p = "[" ++ showPayoff p ++ "]"
+
+instance Show mv => Show (Action mv) where
+  show (Decision p) = "Player " ++ show p
+  show (Chance d)   = "Chance " ++ show d
+  show (Payoff p)   = showPayoffAsList p

@@ -4,6 +4,7 @@
 module Hagl.GameTree where
 
 import Data.Maybe (fromMaybe)
+import qualified Data.Tree as DT (Tree(..), drawTree)
 
 import Hagl.Lists
 import Hagl.Game
@@ -29,7 +30,6 @@ toGameTree g = build (start g)
   where build n@(_,a) = GameTree a [(m, build (transition g n m)) | m <- movesFrom g n]
 
 
---
 -- ** Instances
 --
 
@@ -45,7 +45,6 @@ instance Eq mv => DiscreteGame (GameTree mv) where
   movesFrom _ (es,_) = map fst es
 
 
---
 -- ** Smart Constructors
 --
 
@@ -81,7 +80,6 @@ stateGameTree who end moves exec pay init = tree init
                | otherwise = GameTree (Decision (who s)) [(m, tree (exec s m)) | m <- moves s]
 
 
---
 -- ** Simple Queries
 --
 
@@ -104,7 +102,6 @@ child mv t | Just t' <- lookup mv (edges t) = t'
 child _  _ = error "GameTree.child: invalid move"
 
 
---
 -- ** Traversals
 --
 
@@ -117,3 +114,19 @@ bfs t = bfs' [t]
 -- | Nodes in DFS order.
 dfs :: GameTree mv -> [GameTree mv]
 dfs t = t : concatMap dfs (children t)
+
+
+-- ** Pretty Printing
+--
+
+-- | A nice string representation of a game tree.
+drawTree :: Show mv => GameTree mv -> String
+drawTree = condense . DT.drawTree . tree ""
+  where
+    condense = unlines . filter empty . lines
+    empty    = not . all (\c -> c == ' ' || c == '|')
+    tree s t@(GameTree a _) = DT.Node (s ++ show a)
+                              [tree (show m ++ " -> ") t | (m,t) <- edges t]
+
+instance Show mv => Show (GameTree mv) where
+  show = drawTree

@@ -16,21 +16,6 @@ import Hagl.Base.Monad
 -- Helper Functions --
 ----------------------
 
-showSeq :: [String] -> String
-showSeq = concat . intersperse ","
-
-showFloat :: Float -> String
-showFloat f | f == fromIntegral i = show i
-            | otherwise           = show f
-  where i = floor f
-
--- | String representation of a Payoff.
-showPayoff :: Payoff -> String
-showPayoff = showSeq . map showFloat . toList
-
-showPayoffAsList :: Payoff -> String
-showPayoffAsList p = "[" ++ showPayoff p ++ "]"
-
 showPayoffLine :: Maybe Payoff -> String
 showPayoffLine (Just p) = "  Payoff: " ++ showPayoffAsList p
 showPayoffLine Nothing  = ""
@@ -51,17 +36,6 @@ showMoveSummary ps mss = (unlines . map row) (zip (toList ps) (toList2 mss))
 ---------------
 -- GameTrees --
 ---------------
-
-drawTree :: Show mv => GameTree s mv -> String
-drawTree = condense . DT.drawTree . tree ""
-  where
-    condense = unlines . filter empty . lines
-    empty    = not . all (\c -> c == ' ' || c == '|')
-    tree s t@(GameTree _ n) = DT.Node (s ++ show n)
-                              [tree (show m ++ " -> ") t | (m,t) <- edges t]
-
-instance Show mv => Show (GameTree s mv) where
-  show = drawTree
 
 instance Show mv => Show (Node s mv) where
   show (Internal d _) = show d
