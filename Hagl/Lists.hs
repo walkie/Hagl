@@ -4,9 +4,11 @@
 --   representations used within Hagl.
 module Hagl.Lists where
 
+import Control.Monad.IO.Class
+
 import Data.List     (elemIndex,nub,sort)
 import Data.Maybe    (fromJust)
-import System.Random (RandomGen,randomR)
+import System.Random (randomRIO)
 
 
 --
@@ -28,7 +30,7 @@ expandDist :: Dist a -> [a]
 expandDist d = concat [replicate i a | (i, a) <- d]
 
 -- | Pick an element randomly from a distribution.
-fromDist :: RandomGen g => Dist a -> g -> (a, g)
+fromDist :: MonadIO m => Dist a -> m a
 fromDist = randomlyFrom . expandDist
 
 
@@ -61,8 +63,8 @@ class Functor d => ByX d where
   maxX l | null ixs  = error $ "maxX: empty list"
          | otherwise = fromJust $ forX (maximum ixs) l
     where ixs = map fst (toAssocList l)
-  
-  
+
+
 -- ** ByPlayer Lists
 --
 
@@ -80,6 +82,11 @@ forPlayer i (ByPlayer as) = as !! (i-1)
 nextPlayer :: Int -> PlayerID -> PlayerID
 nextPlayer n p | p >= n    = 1
                | otherwise = p + 1
+
+-- | Set the element corresponding to a the given player ID.
+setForPlayer :: PlayerID -> a -> ByPlayer a -> ByPlayer a
+setForPlayer p a (ByPlayer l) = ByPlayer (h ++ a:t)
+  where (h,_:t) = splitAt (p-1) l
 
 instance ByX ByPlayer where
   toAssocList (ByPlayer l) = zip [1 ..] l
@@ -154,6 +161,7 @@ chunk _ [] = []
 chunk n l = take n l : chunk n (drop n l)
 
 -- | Pick an element randomly from a list.
-randomlyFrom :: RandomGen g => [a] -> g -> (a, g)
-randomlyFrom as g = (as !! i, g')
-  where (i,g') = randomR (0, length as - 1) g
+randomlyFrom :: MonadIO m => [a] -> m a
+randomlyFrom as = do
+  i <- liftIO $ randomRIO (0, length as -1) 
+  return (as !! i)
