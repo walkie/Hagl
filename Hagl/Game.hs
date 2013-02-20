@@ -70,7 +70,7 @@ allBut n p a b = ByPlayer $ replicate (p-1) a ++ b : replicate (n-p) a
 
 -- | Add two payoffs.
 addPayoffs :: Payoff -> Payoff -> Payoff
-addPayoffs = dzipWith (+)
+addPayoffs (ByPlayer as) (ByPlayer bs) = ByPlayer (zipWith (+) as bs)
 
 -- | Zero-sum payoff where player w wins (scoring n-1) 
 --   and all other players lose (scoring -1).
