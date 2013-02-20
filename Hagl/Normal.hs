@@ -184,13 +184,18 @@ instance Eq mv => Game (Normal mv) where
 
 instance Eq mv => DiscreteGame (Normal mv) where
   movesFrom g (_, Decision p) = getMoves g p
-  movesFrom g _               = []
+  movesFrom _ _ = []
 
 instance Eq mv => Game (Matrix mv) where
   type State (Matrix mv) = [mv]
   type Move  (Matrix mv) = mv
   start      = start      . toNormal
   transition = transition . toNormal
+
+instance Eq mv => DiscreteGame (Matrix mv) where
+  movesFrom (Matrix ms _ _) (_, Decision 1) = ms
+  movesFrom (Matrix _ ms _) (_, Decision 2) = ms
+  movesFrom _ _ = []
 
 instance (Eq mv,Show mv) => Show (Normal mv) where
   show = showNormal
