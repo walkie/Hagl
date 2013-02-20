@@ -78,6 +78,11 @@ newtype ByPlayer a = ByPlayer [a] deriving (Eq,Show,Functor)
 forPlayer :: PlayerID -> ByPlayer a -> a
 forPlayer i (ByPlayer as) = as !! (i-1)
 
+-- | Return the elements corresponding to every player (all elements as
+--   a plain list).
+everyPlayer :: ByPlayer a -> [a]
+everyPlayer (ByPlayer as) = as
+
 -- | The next player ID out of @n@ players.
 nextPlayer :: Int -> PlayerID -> PlayerID
 nextPlayer n p | p >= n    = 1
@@ -101,6 +106,11 @@ newtype ByTurn a = ByTurn [a] deriving (Eq,Show,Functor)
 -- | Return the element corresponding to the given turn number.
 forTurn :: Int -> ByTurn a -> a
 forTurn i (ByTurn as) = as !! (length as - i)
+
+-- | Return the elements corresponding to every turn (all elements as
+--   a plain list).
+everyTurn :: ByTurn a -> [a]
+everyTurn (ByTurn as) = as
 
 -- | Return the element corresponding to the first turn of the game.
 firstTurn :: ByTurn a -> a
