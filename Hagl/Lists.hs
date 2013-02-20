@@ -5,6 +5,7 @@
 module Hagl.Lists where
 
 import Data.List     (elemIndex,nub,sort)
+import Data.Maybe    (fromJust)
 import System.Random (RandomGen,randomR)
 
 
@@ -40,70 +41,28 @@ fromDist = randomlyFrom . expandDist
 --   Minimum definition is @toList@, @fromList@, @indexes@.
 --   Others can be overridden for efficiency.
 class Functor d => ByX d where
-  
-  -- | The underlying plain list.
-  toList :: d a -> [a]
-  
-  -- | Convert from a plain list.
-  fromList :: [a] -> d a
-  
-{-
-  -- | List of indexes corresponding to the underlying plain list.
-  indexes :: d a -> [Int]
-  
+
+  -- | Convert the dimensioned list into an association list from
+  --   indexes to values.
+  toAssocList :: d a -> [(Int, a)]
+
   -- | Get the element corresponding to the given index.
-  forX :: Int -> d a -> a
-  forX i d = maybe err (toList d !!) (elemIndex i (indexes d))
-    where err = error $ "forX: invalid index: " ++ show i
-          
-  -- | Set the element at the given index.
-  setX :: Int -> a -> d a -> d a 
-  setX i a d = maybe err (fromList . setAt) (elemIndex i (indexes d))
-    where err = error $ "setX: invalid index: " ++ show i
-          setAt j = let (h,_:t) = splitAt j (toList d) in (h ++ a:t)
+  forX :: Int -> d a -> Maybe a
+  forX i = lookup i . toAssocList
 
-  -- | Get the element corresponding to the minimum index in the list.
+  -- | Get the element corresponding to the smallest index in the list.
   minX :: d a -> a
-  minX d | null ixs  = error $ "minX: empty list"
-         | otherwise = forX (minimum ixs) d
-    where ixs = indexes d
+  minX l | null ixs  = error $ "minX: empty list"
+         | otherwise = fromJust $ forX (minimum ixs) l
+    where ixs = map fst (toAssocList l)
   
-  -- | Get the element corresponding to the maximum index in the list.
+  -- | Get the element corresponding to the largest index in the list.
   maxX :: d a -> a
-  maxX d | null ixs  = error $ "maxX: empty list"
-         | otherwise = forX (maximum ixs) d
-    where ixs = indexes d
--}
-
--- | Convert a nested dimensioned list into a nested plain list.
-toList2 :: (ByX f, ByX g) => f (g a) -> [[a]]
-toList2 = map toList . toList
-
--- | Convert a nested dimensioned list into a nested plain list.
-toList3 :: (ByX f, ByX g, ByX h) => f (g (h a)) -> [[[a]]]
-toList3 = map toList2 . toList
-
--- | Apply some function to the underlying plain list.
-onList :: ByX f => ([a] -> [b]) -> f a -> f b
-onList f = fromList . f . toList
-
--- | Prepend an element to a dimensioned list.
-dcons :: ByX f => a -> f a -> f a
-dcons = onList . (:)
-
--- | Length of a dimensioned list.
-dlength :: ByX f => f a -> Int
-dlength = length . toList
-
--- | Apply `cross` to a dimensioned list of lists.
-dcross :: ByX f => f [a] -> [f a]
-dcross = map fromList . cross . toList
-
--- | Apply zipWith to two like-dimensioned lists.
-dzipWith :: ByX f => (a -> b -> c) -> f a -> f b -> f c
-dzipWith f as bs = fromList (zipWith f (toList as) (toList bs))
-
-
+  maxX l | null ixs  = error $ "maxX: empty list"
+         | otherwise = fromJust $ forX (maximum ixs) l
+    where ixs = map fst (toAssocList l)
+  
+  
 -- ** ByPlayer Lists
 --
 
@@ -121,6 +80,9 @@ forPlayer i (ByPlayer as) = as !! (i-1)
 nextPlayer :: Int -> PlayerID -> PlayerID
 nextPlayer n p | p >= n    = 1
                | otherwise = p + 1
+
+instance ByX ByPlayer where
+  toAssocList (ByPlayer l) = zip [1 ..] l
 
 
 -- ** ByTurn Lists
@@ -153,12 +115,10 @@ lastNTurns n (ByTurn as)
 
 -- Instances
 
-instance ByX ByPlayer where
-  fromList = ByPlayer
-  toList (ByPlayer as) = as
 instance ByX ByTurn where
-  fromList = ByTurn
-  toList (ByTurn as) = as
+  toAssocList (ByTurn l) = zip [length l ..] l
+  minX = firstTurn
+  maxX = lastTurn
 
 
 --
