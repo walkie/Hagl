@@ -108,14 +108,18 @@ their x = do ByPlayer as <- x
 -- ** ByTurn selection
 --
 
+-- | Selects the elements corresponding to all turns (i.e. all elements).
 everyTurn's :: GameM m g => m (ByTurn a) -> m [a]
 everyTurn's = liftM everyTurn
 
+-- | Selects the elements corresponding to the first turn of the game.
 firstTurn's :: GameM m g => m (ByTurn a) -> m a
 firstTurn's = liftM firstTurn
 
+-- | Selects the element corresponding to the most recently played term.
 lastTurn's :: GameM m g => m (ByTurn a) -> m a
 lastTurn's = liftM lastTurn
 
+-- | Selects the elements corresponding to the last `n` turns of the game.
 lastNTurns' :: GameM m g => Int -> m (ByTurn a) -> m [a]
 lastNTurns' i = liftM (lastNTurns i)
