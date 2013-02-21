@@ -169,8 +169,7 @@ instance Game g => Game (Iterated g) where
       case transition g (s,a) m of
         (s',Payoff p) | reached n l -> (Iter n h' [] s', Payoff (_score h'))
                       | otherwise   -> (Iter (n+1) h' [] (startState g), startAction g)
-          where np = length (toAssocList p)
-                h' = addForNewGame (t', (summarize np t', Just p)) h
+          where h' = addForNewGame (t', (summarize (dlength p) t', Just p)) h
         (s',a') -> (Iter n h t' s', a')
     where t' = moveEvent a m : t
 

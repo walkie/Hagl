@@ -140,7 +140,7 @@ me = liftM2 forPlayer myIx players
 
 -- | The number of players playing the game.
 numPlayers :: GameM m g => m Int
-numPlayers = liftM (length . toAssocList) players
+numPlayers = liftM dlength players
 
 
 -- * Executing games

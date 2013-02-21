@@ -64,6 +64,14 @@ class Functor d => ByX d where
          | otherwise = fromJust $ forX (maximum ixs) l
     where ixs = map fst (toAssocList l)
 
+-- | Length of a dimensioned list.
+dlength :: ByX d => d a -> Int
+dlength = length . toAssocList
+
+-- | Is this dimensioned list empty?
+dnull :: ByX d => d a -> Bool
+dnull = null . toAssocList
+
 
 -- ** ByPlayer lists
 --
