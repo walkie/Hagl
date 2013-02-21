@@ -4,7 +4,7 @@
 --   iterated games.
 module Hagl.Iterated where
 
-import Control.Monad (liftM)
+import Control.Monad (liftM,liftM2)
 import Data.Maybe    (fromMaybe)
 import Data.List     (transpose)
 
@@ -114,6 +114,10 @@ _score = ByPlayer . map sum . transpose .  -- calculate score
 -- | The current iteration number (i.e. completed iterations +1).
 gameNumber :: GameM m (Iterated g) => m Int
 gameNumber = liftM _gameNumber state
+
+-- | The number of completed game iterations.
+numCompleted :: GameM m (Iterated g) => m Int
+numCompleted = liftM (subtract 1) gameNumber
 
 -- | The state of the current game iteration.
 gameState :: GameM m (Iterated g) => m (State g)
@@ -279,3 +283,50 @@ lastGame's = liftM lastGame
 -- | Selects the elements corresponding to the last `n` completed iterations of the game.
 lastNGames' :: GameM m g => Int -> m (ByGame a) -> m [a]
 lastNGames' i = liftM (lastNGames i)
+
+
+--
+-- * Printing functions
+--
+
+-- | Print transcript of the given game.
+printTranscriptOfGame :: (GameM m (Iterated g), Show (Move (Iterated g))) => Int -> m ()
+printTranscriptOfGame n = do
+    printStrLn $ "Game " ++ show n ++ ":"
+    -- print the transcript
+    t  <- liftM (forGame n) transcripts
+    ps <- players
+    printStrLn (showTranscript ps t)
+    -- maybe print the payoff
+    p  <- liftM (forGame n) payoffs
+    this <- gameNumber
+    if this == n then return ()
+                 else printStrLn $ "  Payoff: " ++ showPayoffAsList p
+
+-- Print transcripts of all completed games.
+printTranscripts :: (GameM m (Iterated g), Show (Move (Iterated g))) => m ()
+printTranscripts = do n <- numCompleted
+                      mapM_ printTranscriptOfGame [1..n]
+
+-- | Print summary of the last game.
+printSummary :: (GameM m (Iterated g), Show (Move (Iterated g))) => m ()
+printSummary = numCompleted >>= printSummaryOfGame
+
+-- | Print summary of every completed game.
+printSummaries :: (GameM m (Iterated g), Show (Move (Iterated g))) => m ()
+printSummaries = numCompleted >>= \n -> mapM_ printSummaryOfGame [1..n]
+
+-- | Print the summary of the indicated game.
+printSummaryOfGame :: (GameM m (Iterated g), Show (Move (Iterated g))) => Int -> m ()
+printSummaryOfGame n = 
+    do (mss,pay) <- liftM (forGame n) summaries
+       ps <- players
+       printStrLn $ "Summary of Game "++show n++":"
+       printStr $ showMoveSummary ps mss
+       printMaybePayoff pay
+    
+-- | Print the current score.
+printScore :: (GameM m (Iterated g), Show (Move (Iterated g))) => m ()
+printScore = do printStrLn "Score:"
+                printStr =<< liftM2 scoreString players score
+
