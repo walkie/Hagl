@@ -138,7 +138,7 @@ their x = do ByPlayer as <- x
 everyTurn's :: GameM m g => m (ByTurn a) -> m [a]
 everyTurn's = liftM everyTurn
 
--- | Selects the elements corresponding to the first turn of the game.
+-- | Selects the element corresponding to the first turn of the game.
 firstTurn's :: GameM m g => m (ByTurn a) -> m a
 firstTurn's = liftM firstTurn
 
