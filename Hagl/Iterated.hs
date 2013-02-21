@@ -137,7 +137,7 @@ transcripts = do t  <- liftM _gameTranscript state
 -- | Summary of each iteration, including the current one.
 summaries :: GameM m (Iterated g) => m (ByGame (Summary (Move g)))
 summaries = do t  <- liftM _gameTranscript state
-               ms <- liftM (flip summarize t) numPlayers 
+               ms <- liftM (flip summarize t) numPlaying 
                ss <- liftM _summaries history
                return (addForNewGame (ms,Nothing) ss)
 
@@ -173,7 +173,7 @@ once = step >> isNewGame >>= \done ->
 
 -- | Execute n game iterations, returning the cumulative score.
 times :: (Game g, Eq (Move g)) => Int -> ExecM (Iterated g) Payoff
-times n = numPlayers >>= go n . tie
+times n = numPlaying >>= go n . tie
   where go n p | n <= 0    = return p
                | otherwise = once >>= go (n-1) . addPayoffs p
 

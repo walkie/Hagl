@@ -121,7 +121,7 @@ isComplete = liftM isJust finalPayoff
 
 -- | Transcript of moves so far, separated by player.
 move :: GameM m g => m (MoveSummary (Move g))
-move = liftM2 summarize numPlayers transcript
+move = liftM2 summarize numPlaying transcript
 
 -- | The total number of moves each player has played.
 numMoves :: GameM m g => m (ByPlayer Int)
@@ -140,8 +140,8 @@ me :: GameM m g => m (Player g)
 me = liftM2 forPlayer myPlayerID players
 
 -- | The number of players playing the game.
-numPlayers :: GameM m g => m Int
-numPlayers = liftM dlength players
+numPlaying :: GameM m g => m Int
+numPlaying = liftM dlength players
 
 
 -- * Executing games

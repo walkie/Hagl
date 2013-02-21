@@ -114,7 +114,7 @@ my = liftM2 forPlayer myPlayerID
 -- | Selects the element corresponding to the other player in a two-player game.
 his :: GameM m g => m (ByPlayer a) -> m a
 his x = check >> liftM2 (forPlayer . nextPlayer 2) myPlayerID x
-  where check = numPlayers >>= \np -> if np == 2 then return ()
+  where check = numPlaying >>= \np -> if np == 2 then return ()
                 else fail "his/her can only be used in two player games."
                               
 -- | Selects the element corresponding to the other player in a two-player game.
