@@ -128,6 +128,10 @@ gameState = liftM _gameState state
 history :: GameM m (Iterated g) => m (History (Move g))
 history = liftM _history state
 
+-- | Transcript for the current iteration.
+gameTranscript :: GameM m (Iterated g) => m (Transcript (Move g))
+gameTranscript = liftM _gameTranscript state
+
 -- | Transcript of each iteration, including the current one.
 transcripts :: GameM m (Iterated g) => m (ByGame (Transcript (Move g)))
 transcripts = do t  <- liftM _gameTranscript state
@@ -147,8 +151,18 @@ moves = liftM (fmap _moveSummary) summaries
 
 -- | The first move of every iteration, including the current one 
 --   (which may be undefined for some players).
+firstMove :: GameM m (Iterated g) => m (ByGame (ByPlayer (Move g)))
+firstMove = liftM ((fmap . fmap) (first . everyTurn)) moves
+  where first (a:_) = a
+        first _     = error "firstMove: No moves played."
+
+-- | The only move of every iteration, including the current one 
+--   (which may be undefined for some players).
 onlyMove :: GameM m (Iterated g) => m (ByGame (ByPlayer (Move g)))
-onlyMove = liftM ((fmap . fmap) (head . everyTurn)) moves
+onlyMove = liftM ((fmap . fmap) (only . everyTurn)) moves
+  where only [a] = a
+        only []  = error "onlyMove: No moves played."
+        only _   = error "onlyMove: Multiple moves played."
 
 -- | Payoff of each iteration.  The payoff of the current game is undefined.
 payoffs :: GameM m (Iterated g) => m (ByGame Payoff)
@@ -160,7 +174,7 @@ score = liftM _score history
 
 -- | Are we at the start of a new game iteration?
 isNewGame :: GameM m (Iterated g) => m Bool
-isNewGame = liftM dnull transcripts
+isNewGame = liftM null gameTranscript
 
 
 -- ** Executing iterated games
