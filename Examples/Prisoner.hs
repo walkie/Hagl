@@ -20,10 +20,7 @@ module Examples.Prisoner where
 import Control.Monad.State
 import Prelude hiding (last, print)
 
-import Hagl.Base hiding (payoff)
-import Hagl.Normal
-import Hagl.Iterated
-import Hagl.Tournament
+import Hagl
 
 ------------------------
 -- Prisoner's Dilemma --
@@ -63,12 +60,12 @@ suspicious = "Suspicious Tit-for-Tat" ::: play D `atFirstThen` his (lastGame's o
 
 -- Tit-for-Tat that only defects after two defects in a row.
 titForTwoTats = "Tit-for-Two-Tats" :::
-    do ms <- his `each` lastGames' 2 onlyMove
+    do ms <- his `each` lastNGames' 2 onlyMove
        return $ if ms == [D, D] then D else C
 
 -- The Grim Trigger: Cs until opponent defects, then defects forever.
 grim = "Grim Trigger" :::
-    do ms <- my `each` everyGames' onlyMove
+    do ms <- my `each` completedGames' onlyMove
        if D `elem` ms then play D else play C
 
 grim' = Player "Stately Grim" False $ 
@@ -80,7 +77,7 @@ grim' = Player "Stately Grim" False $
 -- If last move resulted in a "big" payoff, do it again, otherwise switch.
 pavlov = "Pavlov" :::
     randomly `atFirstThen`
-    do p <- my (lastGame's payoff)
+    do p <- my (lastGame's payoffs)
        m <- my (lastGame's onlyMove)
        return $ if p > 1 then m else
                 if m == C then D else C
@@ -95,18 +92,4 @@ preserver = "Preserver" :::
 
 -- Run an Axelrod-style tournament.
 axelrod :: [Player (Iterated Dilemma)] -> IO ()
-axelrod ps = roundRobin (iterated pd) 2 ps (times 1000) >>= printResults
---axelrod ps = roundRobin pd 2 ps (times 200 >> printScore)
-
-{- Playing around with syntax...
-
-a -! f = (liftM2 f) a
-(!-) = ($)
-
-(?) :: Monad m => m Bool -> (m a, m a) -> m a
-mb ? (t,f) = mb >>= \b -> if b then t else f
-
-preserver2 = "Preserver" :::
-    randomly `atFirstThen`
-    (my score -! (>) !- his score ? (play D, randomly))
--}
+axelrod ps = roundRobin (iterated pd) 2 ps (times 200) >>= printResults
