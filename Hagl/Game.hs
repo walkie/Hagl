@@ -73,6 +73,7 @@ class Game g => DiscreteGame g where
 --   cardinal and ordinal payoffs while being easy to work with.
 type Payoff = ByPlayer Float
 
+
 -- ** Smart constructors
 --
 

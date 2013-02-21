@@ -88,10 +88,6 @@ stateGameTree who end moves exec pay init = tree init
 -- * Incremental construction
 --
 
--- | Construct a decision node with only one option.
-player :: PlayerID -> Edge mv -> GameTree mv
-player i e = GameTree (Decision i) [e]
-
 -- | Construct a payoff node from a list of floats.
 pays :: [Float] -> GameTree mv
 pays vs = GameTree (Payoff (ByPlayer vs)) []
@@ -166,7 +162,7 @@ instance Show mv => Show (GameTree mv) where
 
 
 --
--- * Extensive form games with partial information
+-- * Partial information
 --
 
 -- | Extensive form game with partial information
