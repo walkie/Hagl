@@ -77,8 +77,8 @@ type History mv = ByGame (Transcript mv, Summary mv)
 data Iter s mv = Iter {
   _gameNumber     :: Int,           -- ^ The current iteration number.
   _history        :: History mv,    -- ^ History of all completed game iterations.
-  _gameTranscript :: Transcript mv, -- ^ The transcript of the current iteration.
-  _gameState      :: s              -- ^ The state of the current game iteration.
+  _iterTranscript :: Transcript mv, -- ^ The transcript of the current iteration.
+  _iterState      :: s              -- ^ The state of the current game iteration.
 }
 
 -- | Initial iterated game execution state.
@@ -114,33 +114,33 @@ _score = ByPlayer . map sum . transpose .  -- calculate score
 
 -- | The current iteration number (i.e. completed iterations +1).
 gameNumber :: GameM m (Iterated g) => m Int
-gameNumber = liftM _gameNumber state
+gameNumber = liftM _gameNumber gameState
 
 -- | The number of completed game iterations.
 numCompleted :: GameM m (Iterated g) => m Int
 numCompleted = liftM (subtract 1) gameNumber
 
 -- | The state of the current game iteration.
-gameState :: GameM m (Iterated g) => m (State g)
-gameState = liftM _gameState state
+iterState :: GameM m (Iterated g) => m (State g)
+iterState = liftM _iterState gameState
 
 -- | Record of all completed game iterations.
 history :: GameM m (Iterated g) => m (History (Move g))
-history = liftM _history state
+history = liftM _history gameState
 
 -- | Transcript for the current iteration.
-gameTranscript :: GameM m (Iterated g) => m (Transcript (Move g))
-gameTranscript = liftM _gameTranscript state
+iterTranscript :: GameM m (Iterated g) => m (Transcript (Move g))
+iterTranscript = liftM _iterTranscript gameState
 
 -- | Transcript of each iteration, including the current one.
 transcripts :: GameM m (Iterated g) => m (ByGame (Transcript (Move g)))
-transcripts = do t  <- liftM _gameTranscript state
+transcripts = do t  <- liftM _iterTranscript gameState
                  ts <- liftM _transcripts history
                  return (addForNewGame t ts)
 
 -- | Summary of each iteration, including the current one.
 summaries :: GameM m (Iterated g) => m (ByGame (Summary (Move g)))
-summaries = do t  <- liftM _gameTranscript state
+summaries = do t  <- liftM _iterTranscript gameState
                ms <- liftM (flip summarize t) numPlaying 
                ss <- liftM _summaries history
                return (addForNewGame (ms,Nothing) ss)
@@ -174,7 +174,7 @@ score = liftM _score history
 
 -- | Are we at the start of a new game iteration?
 isNewGame :: GameM m (Iterated g) => m Bool
-isNewGame = liftM null gameTranscript
+isNewGame = liftM null iterTranscript
 
 
 -- ** Executing iterated games

@@ -100,8 +100,8 @@ location :: GameM m g => m (Node (State g) (Move g))
 location = liftM _location getExec
 
 -- | The current game state.
-state :: GameM m g => m (State g)
-state = liftM fst location
+gameState :: GameM m g => m (State g)
+gameState = liftM fst location
 
 -- | Currently available moves.
 availMoves :: (DiscreteGame g, GameM m g) => m [Move g]
