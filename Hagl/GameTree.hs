@@ -4,6 +4,7 @@
 module Hagl.GameTree where
 
 import Data.Maybe (fromMaybe)
+import Data.List  (intersperse)
 import qualified Data.Tree as DT (Tree(..), drawTree)
 
 import Hagl.Lists
@@ -47,6 +48,7 @@ instance Eq mv => DiscreteGame (GameTree mv) where
   movesFrom _ (es,_) = map fst es
 
 
+--
 -- * Smart constructors
 --
 
@@ -80,6 +82,32 @@ stateGameTree :: (s -> PlayerID) -- ^ Whose turn is it?
 stateGameTree who end moves exec pay init = tree init
   where tree s | end s     = GameTree (Payoff (pay s)) []
                | otherwise = GameTree (Decision (who s)) [(m, tree (exec s m)) | m <- moves s]
+
+
+--
+-- * Incremental construction
+--
+
+-- | Construct a decision node with only one option.
+player :: PlayerID -> Edge mv -> GameTree mv
+player i e = GameTree (Decision i) [e]
+
+-- | Construct a payoff node from a list of floats.
+pays :: [Float] -> GameTree mv
+pays vs = GameTree (Payoff (ByPlayer vs)) []
+
+-- | Combines two game trees rooted with the same kind of node.
+(<+>) :: GameTree mv -> GameTree mv -> GameTree mv
+GameTree a es <+> GameTree b fs = GameTree (comb a b) (es ++ fs)
+  where comb (Payoff (ByPlayer as))
+             (Payoff (ByPlayer bs)) = Payoff (ByPlayer (zipWith (+) as bs))
+        comb (Chance d) (Chance d') = Chance (d ++ d')
+        comb (Decision a) (Decision b) | a == b = Decision a
+        comb _ _ = error "<+>: incompatible roots"
+
+-- | Add a decision branch to a game tree.
+(<|>) :: GameTree mv -> Edge mv -> GameTree mv
+GameTree (Decision i) es <|> e = GameTree (Decision i) (e:es)
 
 
 --
@@ -135,3 +163,31 @@ drawTree = condense . DT.drawTree . tree ""
 
 instance Show mv => Show (GameTree mv) where
   show = drawTree
+
+
+--
+-- * Extensive form games with partial information
+--
+
+-- | Extensive form game with partial information
+data Extensive mv = Extensive (Info mv) (GameTree mv) 
+
+-- | Information group
+data Info mv = Perfect
+             | Imperfect (GameTree mv -> [GameTree mv])
+
+-- | Construct a perfect information game from a GameTree.
+extensive :: GameTree mv -> Extensive mv
+extensive t = Extensive Perfect t
+
+-- Instances 
+
+instance Eq mv => Game (Extensive mv) where
+  type State (Extensive mv) = [Edge mv]
+  type Move (Extensive mv) = mv
+  start (Extensive _ t) = start t
+  transition (Extensive _ t) m = transition t m
+
+instance Show mv => Show (Extensive mv) where
+  show (Extensive Perfect t)       = show t
+  show (Extensive (Imperfect f) t) = unlines $ intersperse "*** OR ***" (map show (f t))
