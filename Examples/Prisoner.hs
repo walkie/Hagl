@@ -65,7 +65,7 @@ titForTwoTats = "Tit-for-Two-Tats" :::
 
 -- The Grim Trigger: Cs until opponent defects, then defects forever.
 grim = "Grim Trigger" :::
-    do ms <- my `each` completedGames' onlyMove
+    do ms <- his `each` completedGames' onlyMove
        if D `elem` ms then play D else play C
 
 grim' = Player "Stately Grim" False $ 
