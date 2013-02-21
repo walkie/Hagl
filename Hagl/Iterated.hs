@@ -1,5 +1,7 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, TypeFamilies #-}
+{-# LANGUAGE FlexibleContexts, GeneralizedNewtypeDeriving, TypeFamilies #-}
 
+-- | This module provides support for representing and executing
+--   iterated games.
 module Hagl.Iterated where
 
 import Control.Monad (liftM)
@@ -56,7 +58,10 @@ instance Show g => Show (Iterated g) where
 
 
 --
--- * Iterated game execution state
+-- * Execution
+--
+
+-- ** Iterated game execution state
 --
 
 -- | Summary of each iteration: a summary of moves by each player, and
@@ -101,6 +106,52 @@ _score :: History mv -> Payoff
 _score = ByPlayer . map sum . transpose .  -- calculate score
          map everyPlayer . everyGame .     -- convert to plain lists
          fmap _payoff . _summaries         -- get payoffs for each game
+
+
+-- ** Execution state accessors
+--
+
+-- | The current iteration number (i.e. completed iterations +1).
+gameNumber :: GameM m (Iterated g) => m Int
+gameNumber = liftM _gameNumber state
+
+-- | The state of the current game iteration.
+gameState :: GameM m (Iterated g) => m (State g)
+gameState = liftM _gameState state
+
+-- | Record of all completed game iterations.
+history :: GameM m (Iterated g) => m (History (Move g))
+history = liftM _history state
+
+-- | Transcript of each iteration, including the current one.
+transcripts :: GameM m (Iterated g) => m (ByGame (Transcript (Move g)))
+transcripts = do t  <- liftM _gameTranscript state
+                 ts <- liftM _transcripts history
+                 return (addForNewGame t ts)
+
+-- | Summary of each iteration, including the current one.
+summaries :: GameM m (Iterated g) => m (ByGame (Summary (Move g)))
+summaries = do t  <- liftM _gameTranscript state
+               ms <- liftM (flip summarize t) numPlayers 
+               ss <- liftM _summaries history
+               return (addForNewGame (ms,Nothing) ss)
+
+-- | Summary of the moves of each iteration, including the current one.
+moves :: GameM m (Iterated g) => m (ByGame (MoveSummary (Move g)))
+moves = liftM (fmap _moveSummary) summaries
+
+-- | The first move of every iteration, including the current one 
+--   (which may be undefined for some players).
+onlyMove :: GameM m (Iterated g) => m (ByGame (ByPlayer (Move g)))
+onlyMove = liftM ((fmap . fmap) (head . everyTurn)) moves
+
+-- | Payoff of each iteration.  The payoff of the current game is undefined.
+payoffs :: GameM m (Iterated g) => m (ByGame Payoff)
+payoffs = liftM (fmap _payoff) summaries
+
+-- | Current score.  The sum of previous iterations' payoffs.
+score :: GameM m (Iterated g) => m Payoff
+score = liftM _score history
 
 
 -- Game instances
