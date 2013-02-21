@@ -1,17 +1,20 @@
 
+-- | Functions for running various kinds of tournaments.
 module Hagl.Tournament where
 
 import Control.Monad (liftM)
 import Data.Function (on)
 import Data.List     (nub,sortBy)
 
-import Hagl.Base
+import Hagl.Lists
+import Hagl.Game
+import Hagl.Exec
 
---------------------------
--- Tournament Execution --
---------------------------
+--
+-- * Tournament execution
+--
 
--- Tournaments results: mapping from player names to scores.
+-- | Tournaments results: mapping from player names to scores.
 type Results = [(Name,Float)]
 
 -- | Run a game with each successive collection of players. Aggregate the scores
@@ -19,7 +22,7 @@ type Results = [(Name,Float)]
 runGames :: Game g => g -> [[Player g]] -> ExecM g Payoff -> IO Results
 runGames g pss run = do
     pays <- mapM (\ps -> evalGame g ps run) pss
-    let paymap  = zip names $ (concat . map toList) pays
+    let paymap  = zip names $ (concat . map everyPlayer) pays
     let score n = sum [p | (m,p) <- paymap, n == m]
     return [(n, score n) | n <- nub names]
   where names = (map name . concat) pss
