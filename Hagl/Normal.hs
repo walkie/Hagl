@@ -215,7 +215,7 @@ showMatrix (Matrix ms ns vs) = showGrid ms ns (map (ByPlayer . (:[])) vs)
 --   Just prints the corresponding game tree if numPlayers != 2.
 showNormal :: (Eq mv, Show mv) => Normal mv -> String
 showNormal (Normal 2 (ByPlayer [ms,ns]) vs) = showGrid ms ns vs
-showNormal g = show (toGameTree g)
+showNormal g = show (gameTree g)
 
 -- | Pretty printer helper function.
 --   TODO some bugs here (assumes move names are the same length...)

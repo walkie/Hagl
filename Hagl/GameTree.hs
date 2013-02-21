@@ -24,10 +24,13 @@ data GameTree mv = GameTree {
   edges  :: [Edge mv]  -- ^ The outbound edges.
 } deriving Eq
 
--- | Get the game tree corresponding to a discrete game.
-toGameTree :: DiscreteGame g => g -> GameTree (Move g)
-toGameTree g = build (start g)
-  where build n@(_,a) = GameTree a [(m, build (transition g n m)) | m <- movesFrom g n]
+-- | Generate the game tree for a discrete game.
+gameTree :: DiscreteGame g => g -> GameTree (Move g)
+gameTree g = gameTreeFrom g (start g)
+
+-- | Generate the game tree from a particular location in a discrete game.
+gameTreeFrom :: DiscreteGame g => g -> Node (State g) (Move g) -> GameTree (Move g)
+gameTreeFrom g n@(_,a) = GameTree a [(m, gameTreeFrom g (transition g n m)) | m <- movesFrom g n]
 
 
 -- Instances
