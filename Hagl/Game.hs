@@ -43,6 +43,14 @@ class Game g where
   -- | The transition function.
   transition :: g -> Node (State g) (Move g) -> Move g -> Node (State g) (Move g)
 
+-- | Get the initial state of a game.
+startState :: Game g => g -> State g
+startState = fst . start
+
+-- | Get the initial action of a game.
+startAction :: Game g => g -> Action (Move g)
+startAction = snd . start
+
 
 -- 
 -- * Discrete games

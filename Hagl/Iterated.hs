@@ -23,6 +23,10 @@ newtype ByGame a = ByGame [a] deriving (Eq,Show,Functor)
 forGame :: Int -> ByGame a -> a
 forGame i (ByGame as) = as !! (length as - i)
 
+-- | Add an element corresponding to a new game iteration.
+addForNewGame :: a -> ByGame a -> ByGame a
+addForNewGame a (ByGame as) = ByGame (a:as)
+
 -- | Return the elements corresponding to every iteration (all elements as a
 --   plain list).
 everyGame :: ByGame a -> [a]
@@ -173,6 +177,24 @@ _score :: History mv -> Payoff
 _score = ByPlayer . map sum . transpose .  -- calculate score
          map everyPlayer . everyGame .     -- convert to plain lists
          fmap _payoff . _summaries         -- get payoffs for each game
+
+
+instance Game g => Game (Iterated g) where
+  
+  type Move  (Iterated g) = Move g
+  type State (Iterated g) = Iter (State g) (Move g)
+  
+  start (Iterated _ g) = (initIter s, a)
+    where (s,a) = start g
+
+  transition (Iterated l g) (Iter n h t s, a) m =
+      case transition g (s,a) m of
+        (s',Payoff p) | reached n l -> (Iter n h' [] s', Payoff (_score h'))
+                      | otherwise   -> (Iter (n+1) h' [] (startState g), startAction g)
+          where np = length (toAssocList p)
+                h' = addForNewGame (t', (summarize np t', Just p)) h
+        (s',a') -> (Iter n h t' s', a')
+    where t' = moveEvent a m : t
 
 
 -------------------------
