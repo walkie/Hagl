@@ -237,6 +237,10 @@ runStrategy (Player n s f) = do
     (mv, s') <- runStateT (unS f) s
     return (mv, Player n s' f)
 
+-- | Modify a state and return it. Handy in some strategies.
+update :: MonadState s m => (s -> s) -> m s
+update f = modify f >> get
+
 
 --
 -- * Pretty printing
