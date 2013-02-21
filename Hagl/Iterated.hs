@@ -179,6 +179,10 @@ _score = ByPlayer . map sum . transpose .  -- calculate score
          fmap _payoff . _summaries         -- get payoffs for each game
 
 
+--
+-- Instances
+--
+
 instance Game g => Game (Iterated g) where
   
   type Move  (Iterated g) = Move g
@@ -196,38 +200,8 @@ instance Game g => Game (Iterated g) where
         (s',a') -> (Iter n h t' s', a')
     where t' = moveEvent a m : t
 
-
--------------------------
--- Iterated Game Trees --
--------------------------
-
-{-
-
-type IterGameTree s mv = GameTree (Iter s mv) mv
-
-iterGameTree :: Limit         -- ^ number of iterations
-             -> Int           -- ^ number of players
-             -> GameTree s mv -- ^ original uniterated game tree
-             -> IterGameTree s mv
-iterGameTree l np orig = build initIter orig
-  where 
-    build f (GameTree s node) = case node of
-        Internal d es -> GameTree i $ Internal d [(m, next m t) | (m,t) <- es]
-          where next m = build (Iter n hist ((moved d m):tran))
-        Payoff p | reached n l -> GameTree (Iter n h' [] s) (Payoff (_score h'))
-                 | otherwise   -> build (Iter (n+1) h' []) orig
-          where h' = (tran, (summarize np tran, Just p)) `dcons` hist
-      where i@(Iter n hist tran _) = f s
-
-
----------------
--- Instances --
----------------
-
-instance Game g => Game (Iterated g) where
-  type Move  (Iterated g)    = Move g
-  type State (Iterated g)    = Iter (State g) (Move g)
-  gameTree (Iterated l g) np = iterGameTree l np (gameTree g np)
+instance DiscreteGame g => DiscreteGame (Iterated g) where
+  movesFrom (Iterated _ g) (Iter _ _ _ s, a) = movesFrom g (s,a)
 
 instance Show Limit where
   show (Finite n) = "Iterated " ++ show n ++ " times"
@@ -235,4 +209,3 @@ instance Show Limit where
 
 instance Show g => Show (Iterated g) where
   show (Iterated l g) = "(" ++ show l ++ ")\n" ++ show g
--}
