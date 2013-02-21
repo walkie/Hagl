@@ -44,14 +44,13 @@ normal :: Int -> [[mv]] -> [[Float]] -> Normal mv
 normal np mss vs = Normal np (ByPlayer mss) (map ByPlayer vs)
 
 -- | Construct a two-player game.
-bimatrix :: [[mv]] -> [[Float]] -> Normal mv
-bimatrix = normal 2
+bimatrix :: [mv] -> [mv] -> [Float] -> [Float] -> Normal mv
+bimatrix ms ns vs ws = normal 2 [ms,ns] (zipWith (\a b -> [a,b]) vs ws)
 
 -- | Construct a two-player, symmetric game.
 symmetric :: [mv] -> [Float] -> Normal mv
-symmetric ms vs = bimatrix [ms, ms] vs'
+symmetric ms vs = bimatrix ms ms vs sym
   where sym = concat (transpose (chunk (length ms) vs))
-        vs' = zipWith (\a b -> [a,b]) vs sym
 
 -- | Construct a two-player, zero-sum game.
 matrix :: [mv] -> [mv] -> [Float] -> Matrix mv
