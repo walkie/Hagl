@@ -153,6 +153,25 @@ payoffs = liftM (fmap _payoff) summaries
 score :: GameM m (Iterated g) => m Payoff
 score = liftM _score history
 
+-- | Are we at the start of a new game iteration?
+isNewGame :: GameM m (Iterated g) => m Bool
+isNewGame = liftM dnull transcripts
+
+
+-- ** Executing iterated games
+--
+
+-- | Execute a single game iteration, returning the payoff.
+once :: (Game g, Eq (Move g)) => ExecM (Iterated g) Payoff
+once = step >> isNewGame >>= \done ->
+       if done then lastGame's payoffs else once
+
+-- | Execute n game iterations, returning the cumulative score.
+times :: (Game g, Eq (Move g)) => Int -> ExecM (Iterated g) Payoff
+times n = numPlayers >>= go n . tie
+  where go n p | n <= 0    = return p
+               | otherwise = once >>= go (n-1) . addPayoffs p
+
 
 -- Game instances
 --
