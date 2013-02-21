@@ -7,12 +7,15 @@ module Hagl.Strategy where
 import Control.Exception   (catch)
 import Control.Monad.Trans (liftIO)
 import Control.Monad       (liftM, liftM2)
+import Data.Function       (on)
+import Data.List           (maximumBy)
 import System.IO.Error     (isUserError)
 
 import Prelude hiding (catch)
 
 import Hagl.Lists
 import Hagl.Game
+import Hagl.GameTree
 import Hagl.Exec
 
 --
@@ -41,6 +44,29 @@ human = me >>= liftIO . getMove . name
   where getMove n = putStr (n ++ "'s move: ") >> catch readLn (retry n)
         retry n e | isUserError e = putStrLn "Not a valid move... try again." >> getMove n
                   | otherwise     = ioError e
+
+-- | Minimax strategy.  Computes the best move for the current player. 
+--   Conceptually explores the entire game tree, but implements alpha-beta
+--   pruning for efficiency.  Assumes games without chance.
+minimax :: DiscreteGame g => Strategy s g
+minimax = liftM minimaxAlg $ liftM2 gameTreeFrom game location
+
+-- | Minimax algorithm.  Computes the best move for the player whose decision
+--   is at the root of the game tree.  Conceptually explores the entire game
+--   tree, but implements alpha-beta pruning for efficiency.  Assumes games
+--   without chance.
+minimaxAlg :: GameTree mv -> mv
+minimaxAlg (GameTree (Decision me) es) =
+    fst $ maximumBy (compare `on` snd) [(m, val me (-inf) inf t) | (m,t) <- es]
+  where inf  = 1/0 :: Float
+        val me _ _ (GameTree (Payoff vs) _) = forPlayer me vs
+        val me a b (GameTree (Decision p) es) | a >= b    = ifMe a b
+                                              | otherwise = ifMe a' b'
+          where ifMe a b   = if (me == p) then a else b
+                mm (a,b) t = let v = val me a b t
+                             in ifMe (max a v, b) (a, min b v)
+                (a',b')    = foldl mm (a,b) (map snd es)
+minimaxAlg _ = error "minimaxAlg: root of game tree is not a decision!"
 
 
 --
