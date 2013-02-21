@@ -109,11 +109,11 @@ inThe = flip ($)
 
 -- | Select the element corresponding to the current player.
 my :: GameM m g => m (ByPlayer a) -> m a
-my = liftM2 forPlayer myIx
+my = liftM2 forPlayer myPlayerID
 
 -- | Selects the element corresponding to the other player in a two-player game.
 his :: GameM m g => m (ByPlayer a) -> m a
-his x = check >> liftM2 (forPlayer . nextPlayer 2) myIx x
+his x = check >> liftM2 (forPlayer . nextPlayer 2) myPlayerID x
   where check = numPlayers >>= \np -> if np == 2 then return ()
                 else fail "his/her can only be used in two player games."
                               
@@ -128,7 +128,7 @@ our = liftM everyPlayer
 -- | Selects the elements corresponding to all players except the current player.
 their :: GameM m g => m (ByPlayer a) -> m [a]
 their x = do ByPlayer as <- x
-             i <- myIx
+             i <- myPlayerID
              return (take i as ++ drop (i+1) as)
 
 

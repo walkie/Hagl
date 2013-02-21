@@ -128,15 +128,16 @@ numMoves :: GameM m g => m (ByPlayer Int)
 numMoves = liftM _numMoves getExec
 
 -- | The index of the currently active player.
-myIx :: GameM m g => m PlayerID
-myIx = do (_,a) <- location
-          case a of
-            Decision p -> return p
-            _ -> error "Internal error: myIx on non-decision node!"
+myPlayerID :: GameM m g => m PlayerID
+myPlayerID = do
+  (_,a) <- location
+  case a of
+    Decision p -> return p
+    _ -> error "Internal error: myPlayerID on non-decision node!"
 
 -- | The currently active player.
 me :: GameM m g => m (Player g)
-me = liftM2 forPlayer myIx players
+me = liftM2 forPlayer myPlayerID players
 
 -- | The number of players playing the game.
 numPlayers :: GameM m g => m Int
