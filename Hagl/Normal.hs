@@ -39,7 +39,7 @@ data Matrix mv = Matrix [mv] [mv] [Float] deriving Eq
 --
 
 -- | Smart constructor to build a normal form game from bare lists.
---   TODO should do some consistency checking
+--   (TODO: Should do some consistency checking.)
 normal :: Int -> [[mv]] -> [[Float]] -> Normal mv
 normal np mss vs = Normal np (ByPlayer mss) (map ByPlayer vs)
 
@@ -65,27 +65,30 @@ square ms = Matrix ms ms
 -- * Basic functions
 --
 
--- TODO generalize Normal mv ---> Norm g mv => g ?
-
 -- | The number of players that can play this game.
-numPlayers :: Normal mv -> Int
-numPlayers (Normal np _ _) = np
+numPlayers :: Norm g mv => g -> Int
+numPlayers g = np
+  where (Normal np _ _) = toNormal g
 
 -- | Get the payoff for a particular strategy profile.
-getPayoff :: Eq mv => Normal mv -> Profile mv -> Payoff
-getPayoff (Normal _ ms ps) m = lookupPay m (payoffMap ms ps)
+getPayoff :: (Norm g mv, Eq mv) => g -> Profile mv -> Payoff
+getPayoff g m = lookupPay m (payoffMap ms ps)
+  where (Normal _ ms ps) = toNormal g
 
 -- | Get the moves for a particular player.
-getMoves :: Normal mv -> PlayerID -> [mv]
-getMoves (Normal _ ms _) p = forPlayer p ms
+getMoves :: Norm g mv => g -> PlayerID -> [mv]
+getMoves g p = forPlayer p ms
+  where (Normal _ ms _) = toNormal g
 
 -- | The dimensions of the payoff matrix.
-dimensions :: Normal mv -> ByPlayer Int
-dimensions (Normal _ mss _) = fmap length mss
+dimensions :: Norm g mv => g -> ByPlayer Int
+dimensions g = fmap length mss
+  where (Normal _ mss _) = toNormal g
 
 -- | A list of all pure strategy profiles.
-profiles :: Normal mv -> [Profile mv]
-profiles (Normal _ mss _) = buildProfiles mss
+profiles :: Norm g mv => g -> [Profile mv]
+profiles g = buildProfiles mss
+  where (Normal _ mss _) = toNormal g
 
 -- | Get a particular row of the payoff matrix.
 row :: Matrix mv -> Int -> [Float]
@@ -217,7 +220,8 @@ showNormal (Normal 2 (ByPlayer [ms,ns]) vs) = showGrid ms ns vs
 showNormal g = show (gameTree g)
 
 -- | Pretty printer helper function.
---   TODO some bugs here (assumes move names are the same length...)
+--   (TODO: There are ome bugs in here. For one, it assumes move names
+--    are the same length...)
 showGrid :: Show mv => [mv] -> [mv] -> [Payoff] -> String
 showGrid rs cs vs = showRows (colHead : zipWith (:) rowHead grid)
   where 
