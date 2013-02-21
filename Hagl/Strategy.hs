@@ -18,6 +18,7 @@ import Hagl.Game
 import Hagl.GameTree
 import Hagl.Exec
 
+
 --
 -- * Some common strategies
 --
@@ -149,3 +150,33 @@ lastTurn's = liftM lastTurn
 -- | Selects the elements corresponding to the last `n` turns of the game.
 lastNTurns' :: GameM m g => Int -> m (ByTurn a) -> m [a]
 lastNTurns' i = liftM (lastNTurns i)
+
+
+-- ** ByGame selection
+--
+
+-- | Selects the elements corresponding to all iterations (i.e. all elements).
+everyGames' :: GameM m g => m (ByGame a) -> m [a]
+everyGames' = liftM everyGame
+
+-- | Selects the elements correspondings to all completed iterations.
+completedGames' :: GameM m g => m (ByGame a) -> m [a]
+completedGames' = liftM completedGames
+
+-- | Selects the element corresponding to the first iteration.
+firstGame's :: GameM m g => m (ByGame a) -> m a
+firstGame's = liftM firstGame
+
+-- | Selects the element corresponding to the current iteration.
+thisGame's :: GameM m g => m (ByGame a) -> m a
+thisGame's = liftM thisGame
+
+-- | Selects the element corresponding to the most recently completed iteration.
+lastGame's :: GameM m g => m (ByGame a) -> m a
+lastGame's = liftM lastGame
+
+-- | Selects the elements corresponding to the last `n` completed iterations of the game.
+lastNGames' :: GameM m g => Int -> m (ByGame a) -> m [a]
+lastNGames' i = liftM (lastNGames i)
+
+

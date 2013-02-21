@@ -12,6 +12,7 @@ import Hagl.Lists
 import Hagl.Game
 import Hagl.GameTree
 import Hagl.Exec
+import Hagl.Strategy
 
 
 --
@@ -198,91 +199,6 @@ instance Game g => Game (Iterated g) where
 
 instance DiscreteGame g => DiscreteGame (Iterated g) where
   movesFrom (Iterated _ g) (Iter _ _ _ s, a) = movesFrom g (s,a)
-
-
---
--- * ByGame lists
---
-
--- | A list where each element corresponds to one played iteration of
---   an iterated game.
-newtype ByGame a = ByGame [a] deriving (Eq,Show,Functor)
-
--- | Return the element corresponding to the given iteration number.
-forGame :: Int -> ByGame a -> a
-forGame i (ByGame as) = as !! (length as - i)
-
--- | Add an element corresponding to a new game iteration.
-addForNewGame :: a -> ByGame a -> ByGame a
-addForNewGame a (ByGame as) = ByGame (a:as)
-
--- | Return the elements corresponding to every iteration (all elements as a
---   plain list).
-everyGame :: ByGame a -> [a]
-everyGame (ByGame as) = as
-
--- | Return the elements corresponding to all completed iterations.
-completedGames :: ByGame a -> [a]
-completedGames (ByGame []) = error "completedGames: Empty game list."
-completedGames (ByGame as) = tail as
-
--- | Return the element corresponding to the first iteration.
-firstGame :: ByGame a -> a
-firstGame (ByGame []) = error "firstGame: Empty game list."
-firstGame (ByGame as) = last as
-
--- | Return the element corresponding to the current iteration.
-thisGame :: ByGame a -> a
-thisGame (ByGame []) = error "thisGame: Empty game list."
-thisGame (ByGame as) = head as
-
--- | Return the element corresponding to the most recently completed iteration.
-lastGame :: ByGame a -> a
-lastGame (ByGame [])      = error "lastGame: Empty game list."
-lastGame (ByGame [a])     = error "lastGame: No completed games."
-lastGame (ByGame (_:a:_)) = a
-
--- | Return the elements corresponding to the most recently completed n
---   iterations of the game.
-lastNGames :: Int -> ByGame a -> [a]
-lastNGames _ (ByGame []) = error "lastNGames: Empty game list."
-lastNGames i (ByGame (_:as))
-    | length as' == i = as'
-    | otherwise       = error "lastNGames: Not enough games."
-  where as' = take i as
-
-instance ByX ByGame where
-  toAssocList (ByGame l) = zip [length l ..] l
-  minX = firstGame
-  maxX = thisGame
-
-
--- ** ByGame selectors
---
-
--- | Selects the elements corresponding to all iterations (i.e. all elements).
-everyGames' :: GameM m g => m (ByGame a) -> m [a]
-everyGames' = liftM everyGame
-
--- | Selects the elements correspondings to all completed iterations.
-completedGames' :: GameM m g => m (ByGame a) -> m [a]
-completedGames' = liftM completedGames
-
--- | Selects the element corresponding to the first iteration.
-firstGame's :: GameM m g => m (ByGame a) -> m a
-firstGame's = liftM firstGame
-
--- | Selects the element corresponding to the current iteration.
-thisGame's :: GameM m g => m (ByGame a) -> m a
-thisGame's = liftM thisGame
-
--- | Selects the element corresponding to the most recently completed iteration.
-lastGame's :: GameM m g => m (ByGame a) -> m a
-lastGame's = liftM lastGame
-
--- | Selects the elements corresponding to the last `n` completed iterations of the game.
-lastNGames' :: GameM m g => Int -> m (ByGame a) -> m [a]
-lastNGames' i = liftM (lastNGames i)
 
 
 --
