@@ -1,6 +1,6 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
-{-
+{- |
 
 A simplistic model of the Cuban Missile Crisis.
 
@@ -8,8 +8,8 @@ From GHCi, print the game tree:
 > crisis
 
 Or run a simulation:
-> execGame crisis [khrushchev, kennedy] (once >> printTranscript)
-> execGame crisis [khrushchev, kennedy] (step >> step >> printLn (this game's moves) >> print location >> finish >> printTranscript)
+> evalGame crisis [khrushchev, kennedy] (finish >> printTranscript)
+> evalGame crisis [khrushchev, kennedy] (step >> step >> printTranscript >> printMovesFromHere >> finish >> printTranscript)
 
 -}
 
@@ -18,20 +18,19 @@ module Examples.Crisis where
 import Prelude hiding (last, print)
 
 import Hagl
-import Hagl.Extensive
-import Hagl.Searchable
 
---------------------------
--- Cuban Missile Crisis --
---------------------------
+--
+-- * Representation
+--
 
-crisis = extensive start
+-- | The Cuban Missle Crisis, as a game tree.
+crisis = start
   where ussr = player 1
         usa  = player 2
-        nukesInTurkey = Payoff (ByPlayer [  -2,   1])
-        nukesInCuba   = Payoff (ByPlayer [   1,  -2])
-        nuclearWar    = Payoff (ByPlayer [-100,-100])
-        noNukes       = Payoff (ByPlayer [   0,   0])
+        nukesInTurkey = payoff [  -2,   1]
+        nukesInCuba   = payoff [   1,  -2]
+        nuclearWar    = payoff [-100,-100]
+        noNukes       = payoff [   0,   0]
         start = ussr ("Send Missiles to Cuba", usaResponse) 
                  <|> ("Do Nothing", nukesInTurkey)
         usaResponse = usa ("Do Nothing", nukesInTurkey <+> nukesInCuba)
@@ -42,10 +41,16 @@ crisis = extensive start
         ussrStrikeCounter = ussr ("Pull Out", nukesInTurkey)
                              <|> ("Escalate", nuclearWar)
 
+--
+-- * Players
+--
+
+-- | Nikita Khrushchev
 khrushchev = "Khrushchev" :::
     play "Send Missiles to Cuba" `atFirstThen`
-    do m <- his move `inThe` last turn
+    do m <- his move `inThe` lastTurn's
        play $ case m of "Blockade" -> "Agree to Terms"
                         "Air Strike" -> "Pull Out"
 
+-- | John F. Kennedy
 kennedy = "Kennedy" ::: mixed [(2, "Blockade"), (1, "Air Strike")]
