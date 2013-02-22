@@ -82,7 +82,9 @@ instance Eq mv => Game (GroupedTree s mv) where
   type State (GroupedTree s mv)  = (s,[Edge s mv])
   type Move  (GroupedTree s mv)  = mv
   start (GroupedTree _ t)        = start t
-  transition (GroupedTree _ t) m = transition t m
+  transition _ ((_,es),_) mv
+    | Just (GameTree (s,a) es') <- lookup mv es = ((s,es'),a)
+    | otherwise = error "GameTree: invalid move!"
 
 instance Eq mv => DiscreteGame (GroupedTree s mv) where
   movesFrom _ ((_,es),_) = map edgeMove es
