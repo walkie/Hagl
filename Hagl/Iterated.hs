@@ -233,7 +233,7 @@ printTranscriptOfGame n = do
     if this == n then return ()
                  else printStrLn $ "  Payoff: " ++ showPayoffAsList p
 
--- Print transcripts of all completed games.
+-- | Print transcripts of all completed games.
 printTranscripts :: (GameM m (Iterated g), Show (Move (Iterated g))) => m ()
 printTranscripts = do n <- numCompleted
                       mapM_ printTranscriptOfGame [1..n]
