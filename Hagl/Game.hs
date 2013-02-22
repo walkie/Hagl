@@ -36,6 +36,9 @@ nodeAction = snd
 -- | The most general class of games. Movement between nodes is captured
 --   by a transition function. This supports discrete and continuous, 
 --   finite and infinite games.
+--
+--   The `Hagl.Game.GameGraph` data type
+--   provides a corresponding explicit representation of game graphs.
 class Game g where
   
   -- | The type of state maintained throughout the game (use @()@ for stateless games).
@@ -58,6 +61,21 @@ startState = nodeState . start
 startAction :: Game g => g -> Action (Move g)
 startAction = nodeAction . start
 
+-- | An explicit representation of a game graph.
+data GameGraph s mv = GameGraph {
+    -- | The game state and action associated with this location.
+  graphNode       :: Node s mv,
+    -- | The transition function from this location to another.
+  graphTransition :: mv -> GameGraph s mv
+}
+
+-- Game instance
+instance Game (GameGraph s mv) where
+  type State (GameGraph s mv) = (s, mv -> GameGraph s mv)
+  type Move  (GameGraph s mv) = mv
+  start (GameGraph (s,a) t) = ((s,t),a)
+  transition _ ((_,t),a) mv = start (t mv)
+
 
 -- 
 -- * Discrete games
@@ -65,6 +83,9 @@ startAction = nodeAction . start
 
 -- | Discrete games have a discrete set of moves available at each node.
 --   Note that discrete games may still be inifinite.
+--
+--   The explicit representation of a discrete game is as a
+--   `Hagl.GameTree.GameTree`.
 class Game g => DiscreteGame g where
   
   -- | The available moves from a given node.
