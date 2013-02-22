@@ -15,7 +15,7 @@ From GHCi, try some of the following.
 
 -}
 
-module Examples.Prisoner where
+module Hagl.Examples.Prisoner where
 
 import Control.Monad.State
 import Prelude hiding (last, print)

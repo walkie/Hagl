@@ -13,7 +13,7 @@ Or run a simulation:
 
 -}
 
-module Examples.Crisis where
+module Hagl.Examples.Crisis where
 
 import Prelude hiding (last, print)
 

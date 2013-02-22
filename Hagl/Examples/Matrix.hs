@@ -9,7 +9,7 @@ From GHCi try:
 
 -}
 
-module Examples.Matrix where
+module Hagl.Examples.Matrix where
 
 import Hagl
 
