@@ -1,11 +1,13 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
-{-
+{- |
 
-From GHCi:
+An example zero-sum game: Rock-paper-scissors.
 
-> execGame rps [rocky, randy] (times 10 >> printTranscripts >> printScore)
-> roundRobin rps [rocky, rotate, randy, pavlov, frequency] (times 100)
+From GHCi, try some of the following.
+
+> execGame irps [rocky, randy] (times 10 >> printTranscripts >> printScore)
+> roundRobin irps 2 [rocky, rotate, randy, pavlov, frequency] (times 100)
 
 -}
 
@@ -14,34 +16,50 @@ module Examples.RPS where
 import Prelude hiding (last)
 
 import Hagl
-import Hagl.Normal
 
--------------------------
--- Rock Paper Scissors --
--------------------------
+--
+-- * Game representation
+--
 
+-- | Moves in rock-paper-scissors.
 data RPS = Rock | Paper | Scissors deriving (Enum, Eq, Show)
 
+-- | Rock-papers-scissors game.
+rps :: Matrix RPS
 rps = square [Rock .. Scissors] [0,-1, 1,
                                  1, 0,-1,
                                 -1, 1, 0]
 
--- Some simple players
-rocky  = "Stalone" ::: pure Rock
-rotate = "RPS"     ::: periodic [Rock, Paper, Scissors]
-tricky = "Tricky"  ::: [play Rock, play Paper] `thereafter` play Scissors
-randy  = "Randy"   ::: randomly
+-- | Iterated rock-paper-scissors.
+irps = iterated rps
 
--- If last move resulted in a "big" payoff, do it again, otherwise switch.
+--
+-- * Players
+--
+
+-- | Good ol' rock, nothing beats that.
+rocky  = "Stalone" ::: pure Rock
+
+-- | Rotates through all three options in a cycle.
+rotate = "RPS" ::: periodic [Rock, Paper, Scissors]
+
+-- | Plays rock, then paper, the scissors forever after.
+tricky = "Tricky" ::: [play Rock, play Paper] `thereafter` play Scissors
+
+-- | Plays randomly
+randy  = "Randy" ::: randomly
+
+-- | If last move resulted in a "big" payoff, do it again, otherwise play randomly
 pavlov = "Pavlov" :::
     randomly `atFirstThen`
-    do p <- my (last game's payoff)
-       m <- my (last game's move)
+    do p <- my (lastGame's payoffs)
+       m <- my (lastGame's onlyMove)
        if p > 0 then return m else randomly
 
--- Play the move that will beat the move the opponent has played most.
+-- | Play the move that will beat the move the opponent has played most.
 frequency = "Huckleberry" :::
-    do ms <- her `each` every games' move
+    randomly `atFirstThen`
+    do ms <- her `each` completedGames' onlyMove
        let r = length $ filter (Rock ==) ms
            p = length $ filter (Paper ==) ms
            s = length $ filter (Scissors ==) ms
