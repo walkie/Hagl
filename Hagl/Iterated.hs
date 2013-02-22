@@ -226,7 +226,7 @@ printTranscriptOfGame n = do
     -- print the transcript
     t  <- liftM (forGame n) transcripts
     ps <- players
-    printStrLn (showTranscript ps t)
+    printStr (showTranscript ps t)
     -- maybe print the payoff
     p  <- liftM (forGame n) payoffs
     this <- gameNumber
