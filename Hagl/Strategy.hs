@@ -57,11 +57,11 @@ minimax = liftM minimaxAlg $ liftM2 gameTreeFrom game location
 --   tree, but implements alpha-beta pruning for efficiency.  Assumes games
 --   without chance.
 minimaxAlg :: GameTree s mv -> mv
-minimaxAlg (GameTree _ (Decision me) es) =
+minimaxAlg (GameTree (_,Decision me) es) =
     fst $ maximumBy (compare `on` snd) [(m, val me (-inf) inf t) | (m,t) <- es]
   where inf  = 1/0 :: Float
-        val me _ _ (GameTree _ (Payoff vs) _) = forPlayer me vs
-        val me a b (GameTree _ (Decision p) es) | a >= b    = ifMe a b
+        val me _ _ (GameTree (_,Payoff vs) _) = forPlayer me vs
+        val me a b (GameTree (_,Decision p) es) | a >= b    = ifMe a b
                                                 | otherwise = ifMe a' b'
           where ifMe a b   = if (me == p) then a else b
                 mm (a,b) t = let v = val me a b t

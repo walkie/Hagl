@@ -19,21 +19,26 @@ type Extensive mv = GameTree () mv
 -- | An edge in an extensive form game.
 type ExtEdge mv = (mv, Extensive mv)
 
+-- | Smart constructor for extensive game tree nodes.
+extensive :: Action mv -> [ExtEdge mv] -> Extensive mv
+extensive a = GameTree ((),a)
+
+
 --
 -- * Incremental construction
 --
 
 -- | Decision node.
 decision :: PlayerID -> [ExtEdge mv] -> Extensive mv
-decision = GameTree () . Decision
+decision = extensive . Decision
 
 -- | Chance node.
 chance :: Dist mv -> [ExtEdge mv] -> Extensive mv
-chance = GameTree () . Chance
+chance = extensive . Chance
 
 -- | Payoff node.
 payoff :: [Float] -> Extensive mv
-payoff fs = GameTree () (Payoff (ByPlayer fs)) []
+payoff fs = extensive (Payoff (ByPlayer fs)) []
 
 -- | Begin a game tree in which multiple players decide in turn. The given
 --   function defines the branch resulting from each possible sequence of moves.
@@ -44,11 +49,11 @@ decisions ps f = d [] ps
 
 -- | Construct a payoff node from a list of floats.
 pays :: [Float] -> Extensive mv
-pays vs = GameTree () (Payoff (ByPlayer vs)) []
+pays vs = extensive (Payoff (ByPlayer vs)) []
 
 -- | Combines two game trees rooted with the same kind of node.
 (<+>) :: Extensive mv -> Extensive mv -> Extensive mv
-GameTree () a es <+> GameTree () b fs = GameTree () (comb a b) (es ++ fs)
+GameTree ((),a) es <+> GameTree ((),b) fs = extensive (comb a b) (es ++ fs)
   where comb (Payoff (ByPlayer as))
              (Payoff (ByPlayer bs)) = Payoff (ByPlayer (zipWith (+) as bs))
         comb (Chance d) (Chance d') = Chance (d ++ d')
@@ -57,7 +62,7 @@ GameTree () a es <+> GameTree () b fs = GameTree () (comb a b) (es ++ fs)
 
 -- | Add a decision branch to a game tree.
 (<|>) :: GameTree s mv -> Edge s mv -> GameTree s mv
-GameTree s (Decision i) es <|> e = GameTree s (Decision i) (e:es)
+GameTree (s,Decision i) es <|> e = GameTree (s,Decision i) (e:es)
 
 
 --

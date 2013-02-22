@@ -25,6 +25,13 @@ data Action mv =
   | Payoff Payoff     -- ^ A terminating payoff node.
   deriving Eq
 
+-- | The state at a given node.
+nodeState :: Node s mv -> s
+nodeState = fst
+
+-- | The action at a given node.
+nodeAction :: Node s mv -> Action mv
+nodeAction = snd
 
 -- | The most general class of games. Movement between nodes is captured
 --   by a transition function. This supports discrete and continuous, 
@@ -45,11 +52,11 @@ class Game g where
 
 -- | Get the initial state of a game.
 startState :: Game g => g -> State g
-startState = fst . start
+startState = nodeState . start
 
 -- | Get the initial action of a game.
 startAction :: Game g => g -> Action (Move g)
-startAction = snd . start
+startAction = nodeAction . start
 
 
 -- 
