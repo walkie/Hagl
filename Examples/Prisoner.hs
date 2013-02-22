@@ -1,7 +1,4 @@
-{-# LANGUAGE FlexibleInstances,
-             NoMonomorphismRestriction,
-             TypeFamilies,
-             UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances, TypeFamilies #-}
 
 {- |
 
