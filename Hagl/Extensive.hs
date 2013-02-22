@@ -84,5 +84,8 @@ instance Eq mv => Game (GroupedTree s mv) where
   start (GroupedTree _ t)        = start t
   transition (GroupedTree _ t) m = transition t m
 
+instance Eq mv => DiscreteGame (GroupedTree s mv) where
+  movesFrom _ ((_,es),_) = map edgeMove es
+
 instance Show mv => Show (GroupedTree s mv) where
   show (GroupedTree f t) = unlines $ intersperse "*** OR ***" (map show (f t))
