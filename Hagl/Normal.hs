@@ -131,7 +131,8 @@ paretoNash :: (Norm g mv, Eq mv) => g -> [Profile mv]
 paretoNash g = pareto n `intersect` nash n
   where n = toNormal g
 
--- | All saddle points of a matrix game.
+-- | All saddle points of a matrix game.  Saddle points correspond to pure
+--   Nash equilibria.
 saddle :: Eq mv => Matrix mv -> [Profile mv]
 saddle g = [p | p <- profiles n, v p == minimum (r p), v p == maximum (c p)]
   where n = toNormal g
