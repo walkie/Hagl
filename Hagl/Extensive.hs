@@ -60,6 +60,11 @@ GameTree ((),a) es <+> GameTree ((),b) fs = extensive (comb a b) (es ++ fs)
         comb (Decision a) (Decision b) | a == b = Decision a
         comb _ _ = error "<+>: incompatible roots"
 
+-- | Construct a decision node with a single edge. Useful in conjunction
+--   the '<|>' operator.
+player :: PlayerID -> ExtEdge mv -> Extensive mv
+player p e = decision p [e]
+
 -- | Add a decision branch to a game tree.
 (<|>) :: GameTree s mv -> Edge s mv -> GameTree s mv
 GameTree (s,Decision i) es <|> e = GameTree (s,Decision i) (e:es)
