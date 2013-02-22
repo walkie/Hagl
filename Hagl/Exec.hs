@@ -295,6 +295,13 @@ printTranscript = do
     printStr (showTranscript ps t)
     printMaybePayoff fp
 
+-- | Print the moves from the current location.
+printMovesFromHere :: (GameM m g, Show (Move g), DiscreteGame g) => m ()
+printMovesFromHere = do
+    g <- game
+    l <- location
+    printStrLn (show (movesFrom g l))
+
 
 --
 -- Instances
