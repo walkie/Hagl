@@ -7,6 +7,7 @@ module Hagl (
   module Hagl.Iterated,
   module Hagl.Lists,
   module Hagl.Normal,
+  module Hagl.Payoff,
   module Hagl.Print,
   module Hagl.Strategy,
   module Hagl.Tournament
@@ -19,6 +20,7 @@ import Hagl.GameTree
 import Hagl.Iterated
 import Hagl.Lists
 import Hagl.Normal
+import Hagl.Payoff
 import Hagl.Print
 import Hagl.Strategy
 import Hagl.Tournament
