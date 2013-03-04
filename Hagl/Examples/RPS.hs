@@ -7,7 +7,7 @@ An example zero-sum game: Rock-paper-scissors.
 From GHCi, try some of the following.
 
 > execGame irps [rocky, randy] (times 10 >> printTranscripts >> printScore)
-> roundRobin irps 2 [rocky, rotate, randy, pavlov, frequency] (times 100)
+> roundRobin irps 2 [rocky, rotate, randy, rpsPavlov, frequency] (times 100)
 
 -}
 
@@ -50,7 +50,7 @@ tricky = "Tricky" ::: [play Rock, play Paper] `thereafter` play Scissors
 randy  = "Randy" ::: randomly
 
 -- | If last move resulted in a "big" payoff, do it again, otherwise play randomly
-pavlov = "Pavlov" :::
+rpsPavlov = "Pavlov" :::
     randomly `atFirstThen`
     do p <- my (lastGame's payoffs)
        m <- my (lastGame's onlyMove)

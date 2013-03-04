@@ -9,4 +9,4 @@ module Hagl.Examples (
 import Hagl.Examples.Crisis
 import Hagl.Examples.Matrix
 import Hagl.Examples.Prisoner
-import Hagl.Examples.RPS
+import Hagl.Examples.RPS      hiding (randy)
