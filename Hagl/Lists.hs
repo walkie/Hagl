@@ -6,7 +6,7 @@ module Hagl.Lists where
 
 import Control.Monad.IO.Class
 
-import Data.List     (elemIndex,intersperse,nub,sort)
+import Data.List     (elemIndex,intercalate,nub,sort)
 import Data.Maybe    (fromJust)
 import System.Random (randomRIO)
 
@@ -54,13 +54,13 @@ class Functor d => ByX d where
 
   -- | Get the element corresponding to the smallest index in the list.
   minX :: d a -> a
-  minX l | null ixs  = error $ "minX: empty list"
+  minX l | null ixs  = error "minX: empty list"
          | otherwise = fromJust $ forX (minimum ixs) l
     where ixs = map fst (toAssocList l)
   
   -- | Get the element corresponding to the largest index in the list.
   maxX :: d a -> a
-  maxX l | null ixs  = error $ "maxX: empty list"
+  maxX l | null ixs  = error "maxX: empty list"
          | otherwise = fromJust $ forX (maximum ixs) l
     where ixs = map fst (toAssocList l)
 
@@ -241,4 +241,4 @@ randomlyFrom as = do
 
 -- | Concatenate a sequence of elements, separated by commas.
 showSeq :: [String] -> String
-showSeq = concat . intersperse ","
+showSeq = intercalate ","

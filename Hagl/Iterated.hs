@@ -140,7 +140,7 @@ transcripts = do t  <- liftM _iterTranscript gameState
 -- | Summary of each iteration, including the current one.
 summaries :: GameM m (Iterated g) => m (ByGame (Summary (Move g)))
 summaries = do t  <- liftM _iterTranscript gameState
-               ms <- liftM (flip summarize t) numPlaying 
+               ms <- liftM (`summarize` t) numPlaying 
                ss <- liftM _summaries history
                return (addForNewGame (ms,Nothing) ss)
 

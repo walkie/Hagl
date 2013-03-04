@@ -132,7 +132,7 @@ titForTwoTats = "Tit-for-Two-Tats" :::
 grim :: Player (Iterated Dilemma)
 grim = "Grim Trigger" :::
     do ms <- his `each` completedGames' onlyMove
-       if D `elem` ms then play D else play C
+       play (if D `elem` ms then D else C)
 
 -- | The Grim Trigger, implemented using state.  Much faster than 'grim', since
 --   it doesn't examine every previous game iteration.
@@ -141,7 +141,7 @@ grim' = Player "Stately Grim" False $
   play C `atFirstThen`
   do m <- her (lastGame's onlyMove)
      triggered <- update (|| m == D)
-     if triggered then play D else play C
+     play (if triggered then D else C)
 
 -- | If last move resulted in a "big" payoff, do it again, otherwise switch.
 pavlov :: Player (Iterated Dilemma)

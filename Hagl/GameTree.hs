@@ -78,7 +78,7 @@ stateGameTree :: (s -> PlayerID) -- ^ Whose turn is it?
               -> (s -> Payoff)   -- ^ Payoff for this (final) state.
               -> s               -- ^ The current state.
               -> GameTree s mv
-stateGameTree who end moves exec pay init = tree init
+stateGameTree who end moves exec pay = tree
   where tree s | end s     = GameTree (s, Payoff (pay s)) []
                | otherwise = GameTree (s, Decision (who s)) [(m, tree (exec s m)) | m <- moves s]
 
@@ -94,7 +94,7 @@ playerID _                            = Nothing
 
 -- | The highest numbered player in this finite game tree.
 maxPlayer :: GameTree s mv -> Int
-maxPlayer t = foldl1 max $ map (fromMaybe 0 . playerID) (dfs t)
+maxPlayer t = maximum $ map (fromMaybe 0 . playerID) (dfs t)
 
 -- | The immediate children of a node.
 children :: GameTree s mv -> [GameTree s mv]

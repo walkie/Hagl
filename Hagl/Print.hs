@@ -6,7 +6,7 @@
 --   specific to.
 module Hagl.Print where
 
-import Control.Monad (liftM,liftM2)
+import Control.Monad (liftM,liftM2,unless)
 import Control.Monad.IO.Class
 
 import Hagl.Lists
@@ -43,7 +43,7 @@ printStrLn = liftIO . putStrLn
 -- | String representation of a transcript.
 showTranscript :: (Game g, Show (Move g)) =>
   ByPlayer (Player g) -> Transcript (Move g) -> String
-showTranscript ps t = (unlines . map mv . reverse) t
+showTranscript ps = unlines . map mv . reverse
   where mv (Just i,  m) = "  " ++ show (forPlayer i ps) ++ "'s move: " ++ show m
         mv (Nothing, m) = "  Chance: " ++ show m
 
@@ -101,8 +101,8 @@ printTranscriptOfGame n = do
     -- maybe print the payoff
     p  <- liftM (forGame n) payoffs
     this <- gameNumber
-    if this == n then return ()
-                 else printStrLn $ "  Payoff: " ++ showPayoffAsList p
+    unless (this == n) $
+      printStrLn $ "  Payoff: " ++ showPayoffAsList p
 
 -- | Print transcripts of all completed games.
 printTranscripts :: (GameM m (Iterated g), Show (Move (Iterated g))) => m ()

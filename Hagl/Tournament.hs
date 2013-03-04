@@ -23,7 +23,7 @@ type Results = [(Name,Float)]
 runGames :: Game g => g -> [[Player g]] -> ExecM g Payoff -> IO Results
 runGames g pss run = do
     pays <- mapM (\ps -> evalGame g ps run) pss
-    let paymap  = zip names $ (concat . map everyPlayer) pays
+    let paymap  = zip names (concatMap everyPlayer pays)
     let score n = sum [p | (m,p) <- paymap, n == m]
     return [(n, score n) | n <- nub names]
   where names = (map name . concat) pss

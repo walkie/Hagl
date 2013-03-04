@@ -8,7 +8,7 @@ module Hagl.Strategy where
 
 import Control.Exception   (catch)
 import Control.Monad.Trans (liftIO)
-import Control.Monad       (liftM, liftM2)
+import Control.Monad       (liftM, liftM2, unless)
 import Data.Function       (on)
 import Data.List           (maximumBy)
 import System.IO.Error     (isUserError)
@@ -65,7 +65,7 @@ minimaxAlg (GameTree (_,Decision me) es) =
         val me _ _ (GameTree (_,Payoff vs) _) = forPlayer me vs
         val me a b (GameTree (_,Decision p) es) | a >= b    = ifMe a b
                                                 | otherwise = ifMe a' b'
-          where ifMe a b   = if (me == p) then a else b
+          where ifMe a b   = if me == p then a else b
                 mm (a,b) t = let v = val me a b t
                              in ifMe (max a v, b) (a, min b v)
                 (a',b')    = foldl mm (a,b) (map snd es)
@@ -116,8 +116,8 @@ my = liftM2 forPlayer myPlayerID
 -- | Selects the element corresponding to the other player in a two-player game.
 his :: GameM m g => m (ByPlayer a) -> m a
 his x = check >> liftM2 (forPlayer . nextPlayer 2) myPlayerID x
-  where check = numPlaying >>= \np -> if np == 2 then return ()
-                else fail "his/her can only be used in two player games."
+  where check = numPlaying >>= \np -> unless (np == 2) $
+                fail "his/her can only be used in two player games."
                               
 -- | Selects the element corresponding to the other player in a two-player game.
 her :: GameM m g => m (ByPlayer a) -> m a

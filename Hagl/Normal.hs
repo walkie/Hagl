@@ -10,7 +10,7 @@ module Hagl.Normal where
 
 import Data.Function (on)
 import Data.Maybe    (fromJust)
-import Data.List     (elemIndex,intersect,intersperse,isPrefixOf,transpose)
+import Data.List     (elemIndex,intercalate,intersect,isPrefixOf,transpose)
 
 import Hagl.Lists
 import Hagl.Payoff
@@ -253,7 +253,7 @@ showGrid rs cs vs = showRows (colHead : zipWith (:) rowHead grid)
     gridMax = maximum . map maxLength
     
     showRow :: [String] -> String
-    showRow = concat . intersperse " | "
+    showRow = intercalate " | "
     
     showRows :: [[String]] -> String
     showRows = unlines . map showRow
