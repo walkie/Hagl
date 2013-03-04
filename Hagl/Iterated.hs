@@ -4,11 +4,12 @@
 --   iterated games.
 module Hagl.Iterated where
 
-import Control.Monad (liftM,liftM2)
+import Control.Monad (liftM)
 import Data.Maybe    (fromMaybe)
 import Data.List     (transpose)
 
 import Hagl.Lists
+import Hagl.Payoff
 import Hagl.Game
 import Hagl.GameTree
 import Hagl.Exec
@@ -19,11 +20,12 @@ import Hagl.Strategy
 -- * Representation
 --
 
+-- | An iterated game is just a game repeated a number of times specified by
+--   `Limit`.
+data Iterated g = Iterated Limit g
+
 -- | An iterated game can have either a finite or infinite number of iterations.
 data Limit = Finite Int | Infinite deriving Eq
-
--- | Representation of iterated games.
-data Iterated g = Iterated Limit g
 
 -- | Construct an infinitely iterated game from a non-iterated game.
 iterated :: g -> Iterated g
@@ -59,10 +61,7 @@ instance Show g => Show (Iterated g) where
 
 
 --
--- * Execution
---
-
--- ** Iterated game execution state
+-- * Iterated game execution state
 --
 
 -- | Summary of each iteration: a summary of moves by each player, and
@@ -177,7 +176,8 @@ isNewGame :: GameM m (Iterated g) => m Bool
 isNewGame = liftM null iterTranscript
 
 
--- ** Executing iterated games
+--
+-- * Executing iterated games
 --
 
 -- | Execute a single game iteration, returning the payoff.
@@ -192,6 +192,7 @@ times n = numPlaying >>= go n . tie
                | otherwise = once >>= go (n-1) . addPayoffs p
 
 
+--
 -- Game instances
 --
 
@@ -213,50 +214,3 @@ instance Game g => Game (Iterated g) where
 
 instance DiscreteGame g => DiscreteGame (Iterated g) where
   movesFrom (Iterated _ g) (Iter _ _ _ s, a) = movesFrom g (s,a)
-
-
---
--- * Printing functions
---
-
--- | Print transcript of the given game.
-printTranscriptOfGame :: (GameM m (Iterated g), Show (Move (Iterated g))) => Int -> m ()
-printTranscriptOfGame n = do
-    printStrLn $ "Game " ++ show n ++ ":"
-    -- print the transcript
-    t  <- liftM (forGame n) transcripts
-    ps <- players
-    printStr (showTranscript ps t)
-    -- maybe print the payoff
-    p  <- liftM (forGame n) payoffs
-    this <- gameNumber
-    if this == n then return ()
-                 else printStrLn $ "  Payoff: " ++ showPayoffAsList p
-
--- | Print transcripts of all completed games.
-printTranscripts :: (GameM m (Iterated g), Show (Move (Iterated g))) => m ()
-printTranscripts = do n <- numCompleted
-                      mapM_ printTranscriptOfGame [1..n]
-
--- | Print summary of the last game.
-printSummary :: (GameM m (Iterated g), Show (Move (Iterated g))) => m ()
-printSummary = numCompleted >>= printSummaryOfGame
-
--- | Print summary of every completed game.
-printSummaries :: (GameM m (Iterated g), Show (Move (Iterated g))) => m ()
-printSummaries = numCompleted >>= \n -> mapM_ printSummaryOfGame [1..n]
-
--- | Print the summary of the indicated game.
-printSummaryOfGame :: (GameM m (Iterated g), Show (Move (Iterated g))) => Int -> m ()
-printSummaryOfGame n = 
-    do (mss,pay) <- liftM (forGame n) summaries
-       ps <- players
-       printStrLn $ "Summary of Game "++show n++":"
-       printStr $ showMoveSummary ps mss
-       printMaybePayoff pay
-    
--- | Print the current score.
-printScore :: (GameM m (Iterated g), Show (Move (Iterated g))) => m ()
-printScore = do printStrLn "Score:"
-                printStr =<< liftM2 scoreString players score
-

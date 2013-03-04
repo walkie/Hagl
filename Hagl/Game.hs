@@ -7,31 +7,12 @@
 --   node is reached.
 module Hagl.Game where
 
-import Data.List (intersperse)
-
 import Hagl.Lists
+import Hagl.Payoff
 
 --
--- * Game graphs
+-- * Game type class
 --
-
--- | A node consists of a game state and an action to perform.
-type Node s mv = (s, Action mv)
-
--- | The action to perform at a given node.
-data Action mv =
-    Decision PlayerID -- ^ A decision by the indicated player.
-  | Chance (Dist mv)  -- ^ A move based on a probability distribution.
-  | Payoff Payoff     -- ^ A terminating payoff node.
-  deriving Eq
-
--- | The state at a given node.
-nodeState :: Node s mv -> s
-nodeState = fst
-
--- | The action at a given node.
-nodeAction :: Node s mv -> Action mv
-nodeAction = snd
 
 -- | The most general class of games. Movement between nodes is captured
 --   by a transition function. This supports discrete and continuous, 
@@ -61,21 +42,6 @@ startState = nodeState . start
 startAction :: Game g => g -> Action (Move g)
 startAction = nodeAction . start
 
--- | An explicit representation of a game graph.
-data GameGraph s mv = GameGraph {
-    -- | The game state and action associated with this location.
-  graphNode       :: Node s mv,
-    -- | The transition function from this location to another.
-  graphTransition :: mv -> GameGraph s mv
-}
-
--- Game instance
-instance Game (GameGraph s mv) where
-  type State (GameGraph s mv) = (s, mv -> GameGraph s mv)
-  type Move  (GameGraph s mv) = mv
-  start (GameGraph (s,a) t) = ((s,t),a)
-  transition _ ((_,t),a) mv = start (t mv)
-
 
 -- 
 -- * Discrete games
@@ -92,64 +58,56 @@ class Game g => DiscreteGame g where
   movesFrom :: g -> Node (State g) (Move g) -> [Move g]
 
 
--- * Payoffs
+--
+-- * Nodes and actions
 --
 
--- | Payoffs are represented as a list of `Float` values
---   where each value corresponds to a particular player.  While the type
---   of payoffs could be generalized, this representation supports both
---   cardinal and ordinal payoffs while being easy to work with.
-type Payoff = ByPlayer Float
+-- | A node consists of a game state and an action to perform.
+type Node s mv = (s, Action mv)
 
+-- | The action to perform at a given node.
+data Action mv =
+    -- | A decision by the indicated player.
+    Decision PlayerID
+    -- | A move based on a probability distribution. This corresponds to
+    --   moves by Chance or Nature in game theory texts.
+  | Chance (Dist mv)
+    -- | A terminating payoff node.
+  | Payoff Payoff
+  deriving Eq
 
--- ** Smart constructors
---
+-- | The state at a given node.
+nodeState :: Node s mv -> s
+nodeState = fst
 
--- | Payoff where all players out of n score payoff a, except player p, who scores b.
-allBut :: Int -> PlayerID -> Float -> Float -> Payoff
-allBut n p a b = ByPlayer $ replicate (p-1) a ++ b : replicate (n-p) a
-
--- | Add two payoffs.
-addPayoffs :: Payoff -> Payoff -> Payoff
-addPayoffs (ByPlayer as) (ByPlayer bs) = ByPlayer (zipWith (+) as bs)
-
--- | Zero-sum payoff where player w wins (scoring n-1) 
---   and all other players lose (scoring -1).
-winner :: Int -> PlayerID -> Payoff
-winner n w = allBut n w (-1) (fromIntegral n - 1)
-
--- | Zero-sum payoff where player w loses (scoring -n+1)
---   and all other players, out of np, win (scoring 1).
-loser :: Int -> PlayerID -> Payoff
-loser n l = allBut n l 1 (1 - fromIntegral n)
-
--- | Zero-sum payoff where all players tie.  Each player scores 0.
-tie :: Int -> Payoff
-tie n = ByPlayer (replicate n 0)
-
-
--- ** Pretty printing
---
-
--- | Concatenate a sequence of elements, separated by commas.
-showSeq :: [String] -> String
-showSeq = concat . intersperse ","
-
--- | Pretty print floats as integers, when possible.
-showFloat :: Float -> String
-showFloat f | f == fromIntegral i = show i
-            | otherwise           = show f
-  where i = floor f
-
--- | String representation of a Payoff.
-showPayoff :: Payoff -> String
-showPayoff (ByPlayer vs) = showSeq (map showFloat vs)
-
--- | Bracketed string representation of a Payoff.
-showPayoffAsList :: Payoff -> String
-showPayoffAsList p = "[" ++ showPayoff p ++ "]"
+-- | The action at a given node.
+nodeAction :: Node s mv -> Action mv
+nodeAction = snd
 
 instance Show mv => Show (Action mv) where
   show (Decision p) = "Player " ++ show p
   show (Chance d)   = "Chance " ++ show d
   show (Payoff p)   = showPayoffAsList p
+
+
+--
+-- * Game graphs
+--
+
+-- | An explicit representation of a game graph.
+data GameGraph s mv = GameGraph (Node s mv) (mv -> GameGraph s mv)
+
+-- | The game state and action associated with this location.
+graphNode :: GameGraph s mv -> Node s mv
+graphNode (GameGraph n _) = n
+    
+-- | The transition function from this location to another.
+graphTransition :: GameGraph s mv -> mv -> GameGraph s mv
+graphTransition (GameGraph _ t) = t
+
+-- Game instance
+instance Game (GameGraph s mv) where
+  type State (GameGraph s mv) = (s, mv -> GameGraph s mv)
+  type Move  (GameGraph s mv) = mv
+  start (GameGraph (s,a) t) = ((s,t),a)
+  transition _ ((_,t),a) mv = start (t mv)

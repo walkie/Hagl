@@ -2,6 +2,8 @@
 
 -- | This module provides impelemntations of some common strategies and
 --   data selectors for writing custom strategies in a nice way.
+--   Also essential for writing custom strategies are the execution state
+--   accessor functions in "Hagl.Exec" and "Hagl.Iterated".
 module Hagl.Strategy where
 
 import Control.Exception   (catch)

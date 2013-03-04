@@ -13,6 +13,7 @@ import Data.Maybe    (fromJust)
 import Data.List     (elemIndex,intersect,intersperse,isPrefixOf,transpose)
 
 import Hagl.Lists
+import Hagl.Payoff
 import Hagl.Game
 import Hagl.GameTree
 
@@ -23,7 +24,10 @@ import Hagl.GameTree
 -- | Pure strategy profile; one move per player.
 type Profile mv = ByPlayer mv
 
--- | Normal form game type class.
+-- | The class of games that can be converted to normal form.
+--   Technically this is all finite, discrete games, but such a generic
+--   instance is not provided.  Rather this is used to provide a common
+--   interface for grid-structured games.
 class Norm g mv | g -> mv where
   toNormal :: g -> Normal mv
   

@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE PatternGuards, TypeFamilies #-}
 
 -- | Extensive form representation of games.
 module Hagl.Extensive where

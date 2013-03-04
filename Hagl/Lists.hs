@@ -6,7 +6,7 @@ module Hagl.Lists where
 
 import Control.Monad.IO.Class
 
-import Data.List     (elemIndex,nub,sort)
+import Data.List     (elemIndex,intersperse,nub,sort)
 import Data.Maybe    (fromJust)
 import System.Random (randomRIO)
 
@@ -238,3 +238,7 @@ randomlyFrom :: MonadIO m => [a] -> m a
 randomlyFrom as = do
   i <- liftIO $ randomRIO (0, length as -1) 
   return (as !! i)
+
+-- | Concatenate a sequence of elements, separated by commas.
+showSeq :: [String] -> String
+showSeq = concat . intersperse ","

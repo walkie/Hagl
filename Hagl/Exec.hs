@@ -4,25 +4,60 @@
              FunctionalDependencies,
              MultiParamTypeClasses #-}
 
--- | This module defines the game execution and player strategy monads,
---   and provides functions for executing games.
+-- | At a high level, this module defines the execution of games and
+--   strategies in Hagl.  The goal is that end-users should be able to write
+--   strategies and execute games without understanding the gory monadic
+--   details.  For many examples, see "Hagl.Examples".
+--
+--   Now, on to the gory details...  This module defines two monad
+--   transformers, `ExecM` and `StratM`.  `ExecM` maintains the current
+--   execution state of the game, while `StratM` adds an additional state
+--   that is local to each strategy.  Each strategy may define it's own
+--   type of state, and strategies cannot affect the state of other strategies.
+--
+--   At the center of the monad onion is the `IO` monad, allowing both game
+--   execution and strategies to do things like print output, get random
+--   numbers, and look up the price of tea in Shanghai.
 module Hagl.Exec where
 
 import Control.Monad.State hiding (State)
 
 import Control.Monad (liftM,liftM2)
 import Data.Function (on)
-import Data.Maybe    (fromMaybe,isJust)
+import Data.Maybe    (isJust)
 
 import Hagl.Lists
+import Hagl.Payoff
 import Hagl.Game
 
 
 --
--- * Game execution
+-- * Game execution monad
 --
 
--- ** Game execution state
+-- | The game execution monad.  A state monad transformer that maintains the
+--   game execution state.
+data ExecM g a = ExecM  { unE :: StateT (Exec g) IO a }
+
+-- | This type class captures all monads that wrap the game execution monad,
+--   providing uniform access to the game execution state.  It is similar to
+--   `MonadIO` for the `IO` monad.
+class (Game g, Monad m, MonadIO m) => GameM m g | m -> g where
+  getExec :: m (Exec g)
+
+-- | Evaluate a command with the given game and players in the game
+--   execution monad, returning the result.
+evalGame :: Game g => g -> [Player g] -> ExecM g a -> IO a
+evalGame g ps f = evalStateT (unE f) (initExec g ps)
+
+-- | Execute a command with the given game and players in the game
+--   execution monad, returning the execution state.
+execGame :: Game g => g -> [Player g] -> ExecM g a -> IO (Exec g)
+execGame g ps f = execStateT (unE f) (initExec g ps)
+
+
+--
+-- * Game execution state
 --
 
 -- | A record of a single move event.
@@ -58,30 +93,6 @@ initExec :: Game g => g -> [Player g] -> Exec g
 initExec g ps = Exec g (ByPlayer ps) (start g) ms [] Nothing
   where ms = ByPlayer (replicate np 0)
         np = length ps
-
-
--- ** Game execution monad
---
-
--- | The game execution monad.  A state monad transformer that maintains the
---   game execution state.
-data ExecM g a = ExecM  { unE :: StateT (Exec g) IO a }
-
--- | This type class captures all monads that wrap the game execution monad,
---   providing uniform access to the game execution state.  It is similar to
---   MonadIO for the IO monad.
-class (Game g, Monad m, MonadIO m) => GameM m g | m -> g where
-  getExec :: m (Exec g)
-
--- | Evaluate a command with the given game and players in the game
---   execution monad, returning the result.
-evalGame :: Game g => g -> [Player g] -> ExecM g a -> IO a
-evalGame g ps f = evalStateT (unE f) (initExec g ps)
-
--- | Execute a command with the given game and players in the game
---   execution monad, returning the execution state.
-execGame :: Game g => g -> [Player g] -> ExecM g a -> IO (Exec g)
-execGame g ps f = execStateT (unE f) (initExec g ps)
 
 
 -- ** Execution state accessors
@@ -144,6 +155,7 @@ numPlaying :: GameM m g => m Int
 numPlaying = liftM dlength players
 
 
+--
 -- * Executing games
 --
 
@@ -240,67 +252,6 @@ runStrategy (Player n s f) = do
 -- | Modify a state and return it. Handy in some strategies.
 update :: MonadState s m => (s -> s) -> m s
 update f = modify f >> get
-
-
---
--- * Pretty printing
---
-
--- | String representation of a transcript.
-showTranscript :: (Game g, Show (Move g)) =>
-  ByPlayer (Player g) -> Transcript (Move g) -> String
-showTranscript ps t = (unlines . map mv . reverse) t
-  where mv (Just i,  m) = "  " ++ show (forPlayer i ps) ++ "'s move: " ++ show m
-        mv (Nothing, m) = "  Chance: " ++ show m
-
--- | String representation of a move summary.
-showMoveSummary :: (Game g, Show (Move g)) =>
-  ByPlayer (Player g) -> MoveSummary (Move g) -> String
-showMoveSummary ps mss = (unlines . map row)
-                         (zip (everyPlayer ps) (map everyTurn (everyPlayer mss)))
-  where row (p,ms) = "  " ++ show p ++ " moves: " ++ showSeq (reverse (map show ms))
-
--- | Generate a string showing a set of players' scores.
-scoreString :: ByPlayer (Player g) -> Payoff -> String 
-scoreString (ByPlayer ps) (ByPlayer vs) = 
-    unlines ["  "++show p++": "++showFloat v | (p,v) <- zip ps vs]
-
--- | Print a value from within a MonadIO monad.
-print :: (MonadIO m, Show a) => m a -> m ()
-print = (>>= printStr . show)
-
--- | Print a value + newline from within a MonadIO monad.
-printLn :: (MonadIO m, Show a) => m a -> m ()
-printLn = (>>= printStrLn . show)
-
--- | Print a string from within a MonadIO monad.
-printStr :: MonadIO m => String -> m ()
-printStr = liftIO . putStr
-
--- | Print a string + newline from within a MonadIO monad.
-printStrLn :: MonadIO m => String -> m ()
-printStrLn = liftIO . putStrLn
-
--- | Print a payoff or nothing.
-printMaybePayoff :: GameM m g => Maybe Payoff -> m ()
-printMaybePayoff Nothing  = return ()
-printMaybePayoff (Just p) = printStrLn $ "  Payoff: " ++ show (everyPlayer p)
-    
--- | Print the transcript of this game, and the payoff if the game is complete.
-printTranscript :: (GameM m g, Show (Move g)) => m ()
-printTranscript = do
-    ps <- players
-    t  <- transcript
-    fp <- finalPayoff
-    printStr (showTranscript ps t)
-    printMaybePayoff fp
-
--- | Print the moves from the current location.
-printMovesFromHere :: (GameM m g, Show (Move g), DiscreteGame g) => m ()
-printMovesFromHere = do
-    g <- game
-    l <- location
-    printStrLn (show (movesFrom g l))
 
 
 --

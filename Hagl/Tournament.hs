@@ -7,6 +7,7 @@ import Data.Function (on)
 import Data.List     (nub,sortBy)
 
 import Hagl.Lists
+import Hagl.Payoff
 import Hagl.Game
 import Hagl.Exec
 

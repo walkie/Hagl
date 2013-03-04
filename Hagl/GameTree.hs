@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE PatternGuards, TypeFamilies #-}
 
 -- | A representation of games as trees. Each node has an associated state,
 --   action, and outbound edges.
@@ -8,6 +8,7 @@ import Data.Maybe (fromMaybe)
 import qualified Data.Tree as DT (Tree(..), drawTree)
 
 import Hagl.Lists
+import Hagl.Payoff
 import Hagl.Game
 
 --
