@@ -180,6 +180,20 @@ isNewGame = liftM null iterTranscript
 -- * Executing iterated games
 --
 
+-- | Run a non-iterated game as a finite iterated game the indicated number of
+--   times and return the final score.  Like `Hagl.Exec.runGame` but on the
+--   iterated version of 'g'.
+runIterated :: (Game g, Eq (Move g)) => g -> Int -> [Player (Iterated g)] -> IO Payoff
+runIterated g n = runGame (Iterated (Finite n) g)
+
+-- | Like `Hagl.Exec.evalGame`, but on an infinitely iterated version of 'g'.
+evalIterated :: Game g => g -> [Player (Iterated g)] -> ExecM (Iterated g) a -> IO a
+evalIterated = evalGame . Iterated Infinite
+
+-- | Like `Hagl.Exec.execGame`, but on an infinitely iterated version of 'g'.
+execIterated :: Game g => g -> [Player (Iterated g)] -> ExecM (Iterated g) a -> IO (Exec (Iterated g))
+execIterated = execGame . Iterated Infinite
+
 -- | Execute a single game iteration, returning the payoff.
 once :: (Game g, Eq (Move g)) => ExecM (Iterated g) Payoff
 once = step >> isNewGame >>= \done ->
