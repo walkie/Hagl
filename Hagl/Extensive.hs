@@ -1,4 +1,4 @@
-{-# LANGUAGE PatternGuards, TypeFamilies #-}
+{-# LANGUAGE FlexibleContexts, PatternGuards, TypeFamilies #-}
 
 -- | Extensive form representation of games.
 module Hagl.Extensive where
@@ -7,21 +7,20 @@ import Data.List (intersperse)
 
 import Hagl.Lists
 import Hagl.Game
-import Hagl.GameTree
 
 --
 -- * Representation
 --
 
--- | An extensive form game is a game tree with no state.
-type Extensive mv = GameTree () mv
+-- | An extensive form game is a discrete game tree with no state.
+type Extensive mv = Discrete () mv
 
 -- | An edge in an extensive form game.
 type ExtEdge mv = (mv, Extensive mv)
 
 -- | Smart constructor for extensive game tree nodes.
 extensive :: Action mv -> [ExtEdge mv] -> Extensive mv
-extensive a = GameTree ((),a)
+extensive a = Discrete ((),a)
 
 
 --
@@ -53,7 +52,7 @@ pays vs = extensive (Payoff (ByPlayer vs)) []
 
 -- | Combines two game trees rooted with the same kind of node.
 (<+>) :: Extensive mv -> Extensive mv -> Extensive mv
-GameTree ((),a) es <+> GameTree ((),b) fs = extensive (comb a b) (es ++ fs)
+Discrete ((),a) es <+> Discrete ((),b) fs = extensive (comb a b) (es ++ fs)
   where comb (Payoff (ByPlayer as))
              (Payoff (ByPlayer bs)) = Payoff (ByPlayer (zipWith (+) as bs))
         comb (Chance d) (Chance d') = Chance (d ++ d')
@@ -66,8 +65,8 @@ player :: PlayerID -> ExtEdge mv -> Extensive mv
 player p e = decision p [e]
 
 -- | Add a decision branch to a game tree.
-(<|>) :: GameTree s mv -> Edge s mv -> GameTree s mv
-GameTree (s,Decision i) es <|> e = GameTree (s,Decision i) (e:es)
+(<|>) :: Discrete s mv -> Edge s mv -> Discrete s mv
+Discrete (s,Decision i) es <|> e = Discrete (s,Decision i) (e:es)
 
 
 --
@@ -77,22 +76,17 @@ GameTree (s,Decision i) es <|> e = GameTree (s,Decision i) (e:es)
 -- | A game tree where players may know only which group they are in,
 --   rather than their precise location.
 --   (TODO: This isn't really fleshed out yet.)
-data GroupedTree s mv = GroupedTree (InfoGroup s mv) (GameTree s mv)
+data GroupedTree t s mv = GroupedTree (InfoGroup t s mv) (t s mv)
 
 -- | An information group is a mapping from a specific location to a set
 --   of possible locations.
-type InfoGroup s mv = GameTree s mv -> [GameTree s mv]
+type InfoGroup t s mv = t s mv -> [t s mv]
 
-instance Eq mv => Game (GroupedTree s mv) where
-  type State (GroupedTree s mv)  = (s,[Edge s mv])
-  type Move  (GroupedTree s mv)  = mv
-  start (GroupedTree _ t)        = start t
-  transition _ ((_,es),_) mv
-    | Just (GameTree (s,a) es') <- lookup mv es = ((s,es'),a)
-    | otherwise = error "GameTree: invalid move!"
+instance (GameTree t, Eq mv) => Game (GroupedTree t s mv) where
+  type TreeType (GroupedTree t s mv) = t
+  type State    (GroupedTree t s mv) = s
+  type Move     (GroupedTree t s mv) = mv
+  gameTree (GroupedTree _ t) = t
 
-instance Eq mv => DiscreteGame (GroupedTree s mv) where
-  movesFrom _ ((_,es),_) = map edgeMove es
-
-instance Show mv => Show (GroupedTree s mv) where
+instance (Show (t s mv), Show mv) => Show (GroupedTree t s mv) where
   show (GroupedTree f t) = unlines $ intersperse "*** OR ***" (map show (f t))
