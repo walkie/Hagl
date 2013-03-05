@@ -6,8 +6,8 @@ An example zero-sum game: Rock-paper-scissors.
 
 From GHCi, try some of the following.
 
-> execGame irps [rocky, randy] (times 10 >> printTranscripts >> printScore)
-> roundRobin irps 2 [rocky, rotate, randy, rpsPavlov, frequency] (times 100)
+> execGame rps [rocky, randy] (times 10 >> printTranscripts >> printScore)
+> roundRobin rps 2 [rocky, rotate, randy, rpsPavlov, frequency] (times 100) >>= printResults
 
 -}
 
@@ -30,8 +30,6 @@ rps = square [Rock .. Scissors] [0,-1, 1,
                                  1, 0,-1,
                                 -1, 1, 0]
 
--- | Iterated rock-paper-scissors.
-irps = iterated rps
 
 --
 -- * Players
