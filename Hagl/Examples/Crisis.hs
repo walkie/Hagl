@@ -29,10 +29,10 @@ import Hagl
 crisis = start
   where ussr = player 1
         usa  = player 2
-        nukesInTurkey = payoff [  -2,   1]
-        nukesInCuba   = payoff [   1,  -2]
-        nuclearWar    = payoff [-100,-100]
-        noNukes       = payoff [   0,   0]
+        nukesInTurkey = pays [  -2,   1]
+        nukesInCuba   = pays [   1,  -2]
+        nuclearWar    = pays [-100,-100]
+        noNukes       = pays [   0,   0]
         start = ussr ("Send Missiles to Cuba", usaResponse) 
                  <|> ("Do Nothing", nukesInTurkey)
         usaResponse = usa ("Do Nothing", nukesInTurkey <+> nukesInCuba)
