@@ -4,7 +4,6 @@ module Hagl (module X) where
 import Hagl.Exec       as X
 import Hagl.Extensive  as X
 import Hagl.Game       as X
-import Hagl.Iterated   as X
 import Hagl.Lists      as X
 import Hagl.Normal     as X
 import Hagl.Payoff     as X
