@@ -12,8 +12,8 @@ import Control.Monad.IO.Class
 import Hagl.Lists
 import Hagl.Payoff
 import Hagl.Game
+import Hagl.History
 import Hagl.Exec
-import Hagl.Iterated
 
 --
 -- * Generic printing functions
@@ -64,60 +64,48 @@ scoreString (ByPlayer ps) (ByPlayer vs) =
 -- * Printing game execution state
 --
 
--- | Print a payoff or nothing.
-printMaybePayoff :: GameM m g => Maybe Payoff -> m ()
-printMaybePayoff Nothing  = return ()
-printMaybePayoff (Just p) = printStrLn $ "  Payoff: " ++ show (everyPlayer p)
-    
--- | Print the transcript of this game, and the payoff if the game is complete.
-printTranscript :: (GameM m g, Show (Move g)) => m ()
-printTranscript = do
-    ps <- players
-    t  <- transcript
-    fp <- finalPayoff
-    printStr (showTranscript ps t)
-    printMaybePayoff fp
-
 -- | Print the moves from the current location.
 printMovesFromHere :: (GameM m g, Show (Move g), DiscreteGame g) => m ()
 printMovesFromHere = do
   l <- location
   (printStrLn . show . movesFrom) l
 
+-- | Print a payoff or nothing.
+printMaybePayoff :: GameM m g => Maybe Payoff -> m ()
+printMaybePayoff Nothing  = return ()
+printMaybePayoff (Just p) = printStrLn $ "  Payoff: " ++ show (everyPlayer p)
+    
+-- | Print the transcript of the current game iteration.
+printTranscript :: (GameM m g, Show (Move g)) => m ()
+printTranscript = gameNumber >>= printTranscriptOfGame
 
---
--- * Printing iterated game execution state
---
+-- | Print the transcript of the last completed game iteration.
+printLastTranscript :: (GameM m g, Show (Move g)) => m ()
+printLastTranscript = gameNumber >>= printTranscriptOfGame . subtract 1
 
 -- | Print transcript of the given game.
-printTranscriptOfGame :: (GameM m (Iterated g), Show (Move (Iterated g))) => Int -> m ()
+printTranscriptOfGame :: (GameM m g, Show (Move g)) => Int -> m ()
 printTranscriptOfGame n = do
-    printStrLn $ "Game " ++ show n ++ ":"
-    -- print the transcript
-    t  <- liftM (forGame n) transcripts
+    (t,(_,p)) <- liftM (forGame n) history
     ps <- players
     printStr (showTranscript ps t)
-    -- maybe print the payoff
-    p  <- liftM (forGame n) payoffs
-    this <- gameNumber
-    unless (this == n) $
-      printStrLn $ "  Payoff: " ++ showPayoffAsList p
+    printMaybePayoff p
 
 -- | Print transcripts of all completed games.
-printTranscripts :: (GameM m (Iterated g), Show (Move (Iterated g))) => m ()
+printTranscripts :: (GameM m g, Show (Move g)) => m ()
 printTranscripts = do n <- numCompleted
                       mapM_ printTranscriptOfGame [1..n]
 
 -- | Print summary of the last game.
-printSummary :: (GameM m (Iterated g), Show (Move (Iterated g))) => m ()
+printSummary :: (GameM m g, Show (Move g)) => m ()
 printSummary = numCompleted >>= printSummaryOfGame
 
 -- | Print summary of every completed game.
-printSummaries :: (GameM m (Iterated g), Show (Move (Iterated g))) => m ()
+printSummaries :: (GameM m g, Show (Move g)) => m ()
 printSummaries = numCompleted >>= \n -> mapM_ printSummaryOfGame [1..n]
 
 -- | Print the summary of the indicated game.
-printSummaryOfGame :: (GameM m (Iterated g), Show (Move (Iterated g))) => Int -> m ()
+printSummaryOfGame :: (GameM m g, Show (Move g)) => Int -> m ()
 printSummaryOfGame n = 
     do (mss,pay) <- liftM (forGame n) summaries
        ps <- players
@@ -126,7 +114,7 @@ printSummaryOfGame n =
        printMaybePayoff pay
     
 -- | Print the current score.
-printScore :: (GameM m (Iterated g), Show (Move (Iterated g))) => m ()
+printScore :: (GameM m g, Show (Move g)) => m ()
 printScore = do printStrLn "Score:"
                 printStr =<< liftM2 scoreString players score
 
