@@ -11,7 +11,6 @@ import Data.List     (transpose)
 import Hagl.Lists
 import Hagl.Payoff
 import Hagl.Game
-import Hagl.GameTree
 import Hagl.Exec
 import Hagl.Strategy
 
@@ -211,10 +210,12 @@ times n = numPlaying >>= go n . tie
 --
 
 instance Game g => Game (Iterated g) where
-  
+  type TreeType (Iterated g) = TreeType g
   type Move  (Iterated g) = Move g
   type State (Iterated g) = Iter (State g) (Move g)
+  gameTree = undefined
   
+  {-
   start (Iterated _ g) = (initIter s, a)
     where (s,a) = start g
 
@@ -225,6 +226,4 @@ instance Game g => Game (Iterated g) where
           where h' = addForNewGame (t', (summarize (dlength p) t', Just p)) h
         (s',a') -> (Iter n h t' s', a')
     where t' = moveEvent a m : t
-
-instance DiscreteGame g => DiscreteGame (Iterated g) where
-  movesFrom (Iterated _ g) (Iter _ _ _ s, a) = movesFrom g (s,a)
+  -}
