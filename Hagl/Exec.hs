@@ -80,17 +80,17 @@ summarize np t = ByPlayer [ByTurn [mv | (mi,mv) <- t, mi == Just p] | p <- [1..n
 
 -- | The state of a game execution.
 data Exec g = Exec {
-  _game        :: g,                       -- ^ Game definition.
-  _players     :: ByPlayer (Player g),     -- ^ Players active in the game.
-  _location    :: Node (State g) (Move g), -- ^ The current location in the game graph.
-  _numMoves    :: ByPlayer Int,            -- ^ Number of moves played by each player
-  _transcript  :: Transcript (Move g),     -- ^ Moves played so far (newest at head)
-  _finalPayoff :: Maybe Payoff             -- ^ Final payoff, once the game is completed
+  _game        :: g,                               -- ^ Game definition.
+  _players     :: ByPlayer (Player g),             -- ^ Players active in the game.
+  _location    :: (TreeType g) (State g) (Move g), -- ^ The current location in the game tree.
+  _numMoves    :: ByPlayer Int,                    -- ^ Number of moves played by each player
+  _transcript  :: Transcript (Move g),             -- ^ Moves played so far (newest at head)
+  _finalPayoff :: Maybe Payoff                     -- ^ Final payoff, once the game is completed
 }
 
 -- | Initial game execution state.
 initExec :: Game g => g -> [Player g] -> Exec g
-initExec g ps = Exec g (ByPlayer ps) (start g) ms [] Nothing
+initExec g ps = Exec g (ByPlayer ps) (gameTree g) ms [] Nothing
   where ms = ByPlayer (replicate np 0)
         np = length ps
 
@@ -107,16 +107,16 @@ players :: GameM m g => m (ByPlayer (Player g))
 players = liftM _players getExec
 
 -- | Current location in the game graph.
-location :: GameM m g => m (Node (State g) (Move g))
+location :: GameM m g => m ((TreeType g) (State g) (Move g))
 location = liftM _location getExec
 
 -- | The current game state.
 gameState :: GameM m g => m (State g)
-gameState = liftM fst location
+gameState = liftM treeState location
 
 -- | Currently available moves.
 availMoves :: (DiscreteGame g, GameM m g) => m [Move g]
-availMoves = liftM2 movesFrom game location
+availMoves = liftM movesFrom location
 
 -- | Transcript of all moves so far.
 transcript :: GameM m g => m (Transcript (Move g))
@@ -141,7 +141,7 @@ numMoves = liftM _numMoves getExec
 -- | The index of the currently active player.
 myPlayerID :: GameM m g => m PlayerID
 myPlayerID = do
-  (_,a) <- location
+  a <- liftM treeAction location
   case a of
     Decision p -> return p
     _ -> error "Internal error: myPlayerID on non-decision node!"
@@ -161,7 +161,7 @@ numPlaying = liftM dlength players
 
 -- | Process one node in the game tree.
 step :: (Game g, Eq (Move g)) => ExecM g (Maybe Payoff)
-step = location >>= processNode
+step = location >>= processNode . treeNode
   where
     processNode (s,a) = case a of
       Decision i -> performMove a (decide i)
@@ -171,7 +171,8 @@ step = location >>= processNode
     performMove a getMove = do
       m <- getMove
       e <- getExec
-      put e { _location   = transition (_game e) (_location e) m,
+      let Just l' = treeMove (_location e) m -- TODO handle Nothing
+      put e { _location   = l',
               _transcript = moveEvent a m : _transcript e,
               _numMoves   = inc a (_numMoves e) }
       return Nothing

@@ -28,7 +28,7 @@ import Hagl.Payoff
 --   the type of moves on edges.  The function `gameTree` is used
 --   to get the game tree representation of this game, which is used
 --   internally by Hagl for execution and analysis.
-class Game g where
+class GameTree (TreeType g) => Game g where
 
   -- The type of the corresponding game tree--either `Discrete` or `Continuous`.
   type TreeType g :: * -> * -> *
@@ -40,7 +40,7 @@ class Game g where
   type Move g
   
   -- | A representation of this game as a game tree.
-  gameTree :: GameTree (TreeType g) => g -> (TreeType g) (State g) (Move g)
+  gameTree :: g -> (TreeType g) (State g) (Move g)
 
 -- | Captures all games whose `TreeType` is `Discrete`.  Do not instantiate 
 --   this class directly!
