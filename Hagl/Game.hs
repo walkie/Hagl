@@ -4,9 +4,14 @@
              TypeFamilies,
              UndecidableInstances #-}
 
--- | A representation of games as trees. Each node has an associated state,
---   action, and outbound edges.
-module Hagl.GameTree where
+-- | All games in Hagl can be reduced to one of two kinds of game trees.
+--   Each node in a game tree consists of a game state and an action to
+--   perform (e.g. a player must make a decision).  Edges between nodes
+--   are determined by moves.  For `Discrete` game trees, the edges are
+--   given explicitly as a list.  For `Continuous` game trees, the edges
+--   are defined implicitly by a function.  Games end when a `Payoff`
+--   node is reached.
+module Hagl.Game where
 
 import Data.Maybe (fromMaybe)
 import qualified Data.Tree as DT (Tree(..), drawTree)
@@ -15,17 +20,17 @@ import Hagl.Lists
 import Hagl.Payoff
 
 --
--- * Game type class
+-- * Games
 --
 
--- | The most general class of games. Movement between nodes is captured
---   by a transition function. This supports discrete and continuous, 
---   finite and infinite games.
---
---   The `Hagl.Game.GameGraph` data type
---   provides a corresponding explicit representation of game graphs.
+-- | A game has several associated types describing whether the game
+--   is discrete or continuous, what type of state it maintains, and
+--   the type of moves on edges.  The function `gameTree` is used
+--   to get the game tree representation of this game, which is used
+--   internally by Hagl for execution and analysis.
 class Game g where
 
+  -- The type of the corresponding game tree--either `Discrete` or `Continuous`.
   type TreeType g :: * -> * -> *
   
   -- | The type of state maintained throughout the game (use @()@ for stateless games).
@@ -34,13 +39,14 @@ class Game g where
   -- | The type of moves that may be played during the game.
   type Move g
   
-  -- | The initial node.
+  -- | A representation of this game as a game tree.
   gameTree :: GameTree (TreeType g) => g -> (TreeType g) (State g) (Move g)
 
 -- | Captures all games whose `TreeType` is `Discrete`.  Do not instantiate 
 --   this class directly!
 class (Game g, TreeType g ~ Discrete) => DiscreteGame g
 instance (Game g, TreeType g ~ Discrete) => DiscreteGame g
+
 
 --
 -- * Nodes and actions
@@ -75,7 +81,7 @@ instance Show mv => Show (Action mv) where
 
 
 --
--- * Representation
+-- * Game trees
 --
 
 -- | A location in a game tree consists of a node and some representation of
@@ -94,17 +100,15 @@ treeState = nodeState . treeNode
 treeAction :: GameTree t => t s mv -> Action mv
 treeAction = nodeAction . treeNode
 
--- | An edge represents a single transition from one location in a game tree
---   to another, via a move.
-type Edge s mv = (mv, Discrete s mv)
+-- | Get the PlayerID corresponding to a decision node.
+playerID :: GameTree t => t s mv -> Maybe PlayerID
+playerID t = case treeAction t of
+               Decision p -> Just p
+               _          -> Nothing
 
--- | The move assicated with an edge.
-edgeMove :: Edge s mv -> mv
-edgeMove = fst
 
--- | The destination of an edge.
-edgeDest :: Edge s mv -> Discrete s mv
-edgeDest = snd
+-- ** Discrete game trees
+--
 
 -- | A discrete game tree provides a finite list of outbound edges from
 --   each location, providing a discrete and finite list of available moves.
@@ -115,66 +119,21 @@ data Discrete s mv = Discrete {
   dtreeEdges :: [Edge s mv]
 } deriving Eq
 
+-- | An edge represents a single transition from one location in a discrete
+--   game tree to another, via a move.
+type Edge s mv = (mv, Discrete s mv)
+
+-- | The move assicated with an edge.
+edgeMove :: Edge s mv -> mv
+edgeMove = fst
+
+-- | The destination of an edge.
+edgeDest :: Edge s mv -> Discrete s mv
+edgeDest = snd
+
 -- | The available moves from a given location.
 movesFrom :: Discrete s mv -> [mv]
 movesFrom = map edgeMove . dtreeEdges
-
--- | The edges of a continuous game tree are defined by a transition function
---   from moves to children, supporting a potentially infinite or continuous
---   set of available moves.
-data Continuous s mv = Continuous {
-  -- | The game state and action associated with this location.
-  ctreeNode :: Node s mv,
-  -- | The transition function.
-  ctreeMove :: mv -> Maybe (Continuous s mv)
-}
-
-instance GameTree Discrete where
-  treeNode = dtreeNode
-  treeMove t m = lookup m (dtreeEdges t)
-
-instance GameTree Continuous where
-  treeNode = ctreeNode
-  treeMove = ctreeMove
-
-instance Game (Discrete s mv) where
-  type TreeType (Discrete s mv) = Discrete
-  type State (Discrete s mv) = s
-  type Move (Discrete s mv) = mv
-  gameTree = id
-
-instance Game (Continuous s mv) where
-  type TreeType (Continuous s mv) = Continuous
-  type State (Continuous s mv) = s
-  type Move (Continuous s mv) = mv
-  gameTree = id
-
---
--- * Generating game trees
---
-
--- | Build a tree for a state-based game.
-stateGameTree :: (s -> PlayerID) -- ^ Whose turn is it?
-              -> (s -> Bool)     -- ^ Is the game over?
-              -> (s -> [mv])     -- ^ Available moves.
-              -> (s -> mv -> s)  -- ^ Execute a move and return the new state.
-              -> (s -> Payoff)   -- ^ Payoff for this (final) state.
-              -> s               -- ^ The current state.
-              -> Discrete s mv
-stateGameTree who end moves exec pay = tree
-  where tree s | end s     = Discrete (s, Payoff (pay s)) []
-               | otherwise = Discrete (s, Decision (who s)) [(m, tree (exec s m)) | m <- moves s]
-
-
---
--- * Simple queries
---
-
--- | Get the PlayerID corresponding to a decision node.
-playerID :: GameTree t => t s mv -> Maybe PlayerID
-playerID t = case treeAction t of
-               Decision p -> Just p
-               _          -> Nothing
 
 -- | The highest numbered player in this finite game tree.
 maxPlayer :: Discrete s mv -> Int
@@ -188,6 +147,40 @@ children = map edgeDest . dtreeEdges
 child :: Eq mv => mv -> Discrete s mv -> Discrete s mv
 child mv t | Just t' <- lookup mv (dtreeEdges t) = t'
 child _  _ = error "GameTree.child: invalid move"
+
+instance GameTree Discrete where
+  treeNode = dtreeNode
+  treeMove t m = lookup m (dtreeEdges t)
+
+instance Game (Discrete s mv) where
+  type TreeType (Discrete s mv) = Discrete
+  type State (Discrete s mv) = s
+  type Move (Discrete s mv) = mv
+  gameTree = id
+
+
+-- ** Continuous game trees
+--
+
+-- | The edges of a continuous game tree are defined by a transition function
+--   from moves to children, supporting a potentially infinite or continuous
+--   set of available moves.
+data Continuous s mv = Continuous {
+  -- | The game state and action associated with this location.
+  ctreeNode :: Node s mv,
+  -- | The transition function.
+  ctreeMove :: mv -> Maybe (Continuous s mv)
+}
+
+instance GameTree Continuous where
+  treeNode = ctreeNode
+  treeMove = ctreeMove
+
+instance Game (Continuous s mv) where
+  type TreeType (Continuous s mv) = Continuous
+  type State (Continuous s mv) = s
+  type Move (Continuous s mv) = mv
+  gameTree = id
 
 
 --
@@ -220,3 +213,5 @@ drawTree = condense . DT.drawTree . tree ""
 
 instance Show mv => Show (Discrete s mv) where
   show = drawTree
+instance Show mv => Show (Continuous s mv) where
+  show = show . treeAction
