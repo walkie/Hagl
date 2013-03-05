@@ -81,9 +81,8 @@ printTranscript = do
 -- | Print the moves from the current location.
 printMovesFromHere :: (GameM m g, Show (Move g), DiscreteGame g) => m ()
 printMovesFromHere = do
-    g <- game
-    l <- location
-    printStrLn (show (movesFrom g l))
+  l <- location
+  (printStrLn . show . movesFrom) l
 
 
 --
