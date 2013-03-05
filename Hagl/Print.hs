@@ -73,7 +73,7 @@ printMovesFromHere = do
 -- | Print a payoff or nothing.
 printMaybePayoff :: GameM m g => Maybe Payoff -> m ()
 printMaybePayoff Nothing  = return ()
-printMaybePayoff (Just p) = printStrLn $ "  Payoff: " ++ show (everyPlayer p)
+printMaybePayoff (Just p) = printStrLn $ "  Payoff: " ++ showPayoffAsList p
     
 -- | Print the transcript of the current game iteration.
 printTranscript :: (GameM m g, Show (Move g)) => m ()
@@ -86,6 +86,7 @@ printLastTranscript = gameNumber >>= printTranscriptOfGame . subtract 1
 -- | Print transcript of the given game.
 printTranscriptOfGame :: (GameM m g, Show (Move g)) => Int -> m ()
 printTranscriptOfGame n = do
+    printStrLn $ "Iteration " ++ show n ++ ":"
     (t,(_,p)) <- liftM (forGame n) history
     ps <- players
     printStr (showTranscript ps t)
