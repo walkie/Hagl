@@ -6,13 +6,12 @@ A linearized implementation of the Dollar Auction:
   (http://en.wikipedia.org/wiki/Dollar_auction)
 
 Example experiments from GHCi:
-(TODO: update these)
 
 > execGame (DollarAuction 4) [penny, nickel, quarter, dim] (once >> printTranscript)
 > execGame (DollarAuction 4) [penny, nickel, quarter, dim] (times 100 >> printScore)
 
 (The included strategies are not necessarily good ones and are
-merely included as examples...)
+just included as examples...)
 
 -}
 module Hagl.Examples.Auction where
@@ -54,6 +53,9 @@ data DollarAuction = DollarAuction Int
 -- | The current game state is the current two highest bids.
 type HighBids = (Bid,Bid)
 
+-- | The initial state.
+initBids = ((0,0),(0,0))
+
 -- | Return the value of the highest bid.
 highBid :: HighBids -> Cents
 highBid = snd . fst
@@ -70,33 +72,30 @@ nextBid = snd . snd
 nextBidder :: HighBids -> PlayerID
 nextBidder = fst . snd
 
--- | Generate a payoff for the end of a dollar auction game.
-dollarAuctionPayoff :: Int -> HighBids -> Payoff
-dollarAuctionPayoff n ((hp,hb),(np,nb)) = ByPlayer [fromIntegral (val p) | p <- [1..n]]
+-- | Is the auction over?
+auctionOver :: PlayerID -> HighBids -> Bool
+auctionOver p s = p == highBidder s
+
+-- | Update high bids.
+auctionUpdate :: PlayerID -> HighBids -> BidOrPass -> HighBids
+auctionUpdate p ((hp,hb),_) (Bid b) | b > hb = ((p,b),(hp,hb))
+auctionUpdate _ s _ = s
+
+-- | Generate a payoff for the end of the game.
+auctionPayoff :: Int -> HighBids -> Payoff
+auctionPayoff n ((hp,hb),(np,nb)) = ByPlayer [fromIntegral (val p) | p <- [1..n]]
   where val p | p == hp   = 100 - hb
               | p == np   =   0 - nb
               | otherwise =   0
 
--- | Generate the next node in the game graph on a pass.
-onPass :: Int -> PlayerID -> HighBids -> Node HighBids BidOrPass
-onPass n p s | p == p'   = (s, Payoff (dollarAuctionPayoff n s))
-             | otherwise = (s, Decision (nextPlayer n p))
-  where p' = nextPlayer n p
-
--- | Generate the next node in the game graph on a bid.  Note that the
---   game interprets bids that are not higher than the current highest bid
---   to be equivalent to `Pass`.
-onBid :: Int -> PlayerID -> Cents -> HighBids -> Node HighBids BidOrPass
-onBid n p b s@((hp,hb),_) | b > hb    = (((p,b),(hp,hb)), Decision (nextPlayer n p))
-                          | otherwise = onPass n p s
-
 -- Game instance.
 instance Game DollarAuction where
+  type TreeType DollarAuction = Continuous
   type Move  DollarAuction = BidOrPass
   type State DollarAuction = HighBids
-  start _ = (((0,0),(0,0)), Decision 1)
-  transition (DollarAuction n) (s, Decision p) Pass    = onPass n p s
-  transition (DollarAuction n) (s, Decision p) (Bid b) = onBid n p b s
+
+  gameTree (DollarAuction n) = takeTurnsC n auctionOver auctionUpdate
+                                 (const (auctionPayoff n)) 1 initBids
 
 --
 -- * Some example players

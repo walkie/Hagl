@@ -8,6 +8,6 @@ import Hagl.Lists      as X
 import Hagl.Normal     as X
 import Hagl.Payoff     as X
 import Hagl.Print      as X
--- import Hagl.StateGames as X
+import Hagl.StateGames as X
 import Hagl.Strategy   as X
 import Hagl.Tournament as X
