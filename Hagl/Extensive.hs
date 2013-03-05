@@ -6,6 +6,7 @@ module Hagl.Extensive where
 import Data.List (intersperse)
 
 import Hagl.Lists
+import Hagl.Payoff
 import Hagl.Game
 
 --
@@ -36,8 +37,8 @@ chance :: Dist mv -> [ExtEdge mv] -> Extensive mv
 chance = extensive . Chance
 
 -- | Payoff node.
-payoff :: [Float] -> Extensive mv
-payoff fs = extensive (Payoff (ByPlayer fs)) []
+payoff :: Payoff -> Extensive mv
+payoff p = extensive (Payoff p) []
 
 -- | Begin a game tree in which multiple players decide in turn. The given
 --   function defines the branch resulting from each possible sequence of moves.

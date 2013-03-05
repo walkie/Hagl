@@ -15,7 +15,7 @@ import Data.List     (elemIndex,intercalate,intersect,isPrefixOf,transpose)
 import Hagl.Lists
 import Hagl.Payoff
 import Hagl.Game
-import Hagl.GameTree
+import Hagl.Extensive
 
 --
 -- * Representation
@@ -179,30 +179,21 @@ instance Norm (Matrix mv) mv where
 
 instance Eq mv => Game (Normal mv) where
   
-  type State (Normal mv) = [mv]
-  type Move  (Normal mv) = mv
+  type TreeType (Normal mv) = Discrete 
+  type State    (Normal mv) = ()
+  type Move     (Normal mv) = mv
   
-  start _ = ([], Decision 1)
-  
-  transition g (ms, Decision p) m
-      | p < numPlayers g = (ms', Decision (p+1))
-      | otherwise        = (ms', (Payoff . getPayoff g . ByPlayer . reverse) ms')
-    where ms' = m:ms
-
-instance Eq mv => DiscreteGame (Normal mv) where
-  movesFrom g (_, Decision p) = getMoves g p
-  movesFrom _ _ = []
+  gameTree g = trans 1 []
+    where
+      trans p ms
+        | p <= numPlayers g = decision p [(m, trans (p+1) (m:ms)) | m <- getMoves g p]
+        | otherwise         = (payoff . getPayoff g . ByPlayer . reverse) ms
 
 instance Eq mv => Game (Matrix mv) where
-  type State (Matrix mv) = [mv]
-  type Move  (Matrix mv) = mv
-  start      = start      . toNormal
-  transition = transition . toNormal
-
-instance Eq mv => DiscreteGame (Matrix mv) where
-  movesFrom (Matrix ms _ _) (_, Decision 1) = ms
-  movesFrom (Matrix _ ms _) (_, Decision 2) = ms
-  movesFrom _ _ = []
+  type TreeType (Matrix mv) = Discrete 
+  type State    (Matrix mv) = ()
+  type Move     (Matrix mv) = mv
+  gameTree = gameTree . toNormal
 
 instance (Eq mv,Show mv) => Show (Normal mv) where
   show = showNormal
