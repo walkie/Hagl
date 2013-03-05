@@ -205,9 +205,12 @@ isNewGame = liftM null transcript
 numCompleted :: GameM m g => m Int
 numCompleted = liftM (subtract 1) gameNumber
 
--- | Record of all completed game iterations.
+-- | Historical record of all game iterations.
 history :: GameM m g => m (History (Move g))
-history = liftM _history getExec
+history = do t  <- transcript
+             ms <- liftM (`summarize` t) numPlaying
+             h  <- liftM _history getExec
+             return (addForNewGame (t,(ms,Nothing)) h)
 
 -- | Transcript of each iteration, including the current one.
 transcripts :: GameM m g => m (ByGame (Transcript (Move g)))
