@@ -1,29 +1,47 @@
-module Examples.Dice where
+{-# LANGUAGE TupleSections #-}
+
+-- | Some simple games of chance.
+module Hagl.Examples.Chance where
 
 import Hagl
-import Hagl.Extensive
 
-------------------
--- Dice Rolling --
-------------------
 
-die = Extensive 1 Perfect (Chance [(1, side a) | a <- [1..6]])
-  where side a = (a, Payoff (ByPlayer [a]))
+--
+-- * Dice rolling
+--
 
--- roll n dice and print out the total
+-- | Simulates a die roll.  A single player game that just rewards the
+--   player with a random value from 1 to 6.
+die :: Extensive Int
+die = chance (map (1,) [1..6]) (map edge [1..6])
+  where edge a = (a, pays [fromIntegral a])
+
+-- | Roll a die `n` times and sum the result.
 roll n = execGame die ["Total" ::: undefined] (times n >> printScore)
 
--------------------
--- Coin Flipping --
--------------------
 
+--
+-- * Coin flipping
+--
+
+-- | A coin is either heads or tails.
 data Coin = H | T deriving (Eq, Show)
 
-coin :: GameTree Coin -> GameTree Coin -> GameTree Coin
-coin h t = Chance [(1,(H,h)), (1,(T,t))]
+-- | Simulates flipping a coin.  The result is passed to the argument
+--   function, which builds the subsequent game tree.
+flipCoin :: (Coin -> Extensive Coin) -> Extensive Coin
+flipCoin f = chance [(1,H),(1,T)] [(H, f H), (T, f T)]
 
-pick :: PlayerIx -> Coin -> GameTree Coin
-pick i c = Decision i [(H, pay H), (T, pay T)]
-  where pay p = Payoff (ByPlayer [if p == c then 1 else -1])
+-- | Have the player predict which side will come up.  The selection is
+--   passed to the argument function, which builds the subsequent game tree.
+callCoin :: (Coin -> Extensive Coin) -> Extensive Coin
+callCoin f = decision 1 [(H, f H), (T, f T)]
 
-pickRight = coin (pick 1 H) (pick 1 T)
+-- | Build a payoff from the player's prediction and the actual flip.  If
+--   correct, the player gets 1 point, else -1.
+calledIt :: Coin -> Coin -> Extensive Coin
+calledIt a b = pays [if a == b then 1 else -1]
+
+-- | Build the simple coin game of predicting which side will come up, then
+--   flipping it.
+coinGame = callCoin (flipCoin . calledIt)
