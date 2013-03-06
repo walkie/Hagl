@@ -109,7 +109,7 @@ suspicious = "Suspicious Tit-for-Tat" ::: play D `atFirstThen` his (lastGame's o
 
 -- | A variant of Tit-for-Tat that only defects after two defects in a row.
 titForTwoTats :: Player Dilemma
-titForTwoTats = "Tit-for-Two-Tats" :::
+titForTwoTats = "Tit-for-Two-Tats" ::: [play C, play C] `thereafter`
     do ms <- his `each` lastNGames' 2 onlyMove
        return $ if ms == [D, D] then D else C
 
