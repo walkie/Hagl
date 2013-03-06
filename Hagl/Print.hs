@@ -121,7 +121,8 @@ printSummaryOfGame n =
        printMaybePayoff pay
     
 -- | Print the current score.
-printScore :: (GameM m g, Show (Move g)) => m ()
+printScore :: (GameM m g, Show (Move g)) => m Payoff
 printScore = do printStrLn "Score:"
                 printStr =<< liftM2 scoreString players score
+                score
 
