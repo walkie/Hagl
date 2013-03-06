@@ -64,6 +64,12 @@ scoreString (ByPlayer ps) (ByPlayer vs) =
 -- * Printing game execution state
 --
 
+-- | Print the current location in the game tree.
+printLocation :: (GameM m g, Show (Move g), Show (TreeType g (State g) (Move g))) => m ()
+printLocation = do 
+  l <- location
+  printStrLn (show l)
+
 -- | Print the moves from the current location.
 printMovesFromHere :: (GameM m g, Show (Move g), DiscreteGame g) => m ()
 printMovesFromHere = do
