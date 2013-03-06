@@ -84,7 +84,10 @@ newtype ByPlayer a = ByPlayer [a] deriving (Eq,Show,Functor)
 
 -- | Return the element corresponding to the given `PlayerID`.
 forPlayer :: PlayerID -> ByPlayer a -> a
-forPlayer i (ByPlayer as) = as !! (i-1)
+forPlayer i (ByPlayer as) | i <= n    = as !! (i-1)
+                          | otherwise = error e
+  where n = length as
+        e = "forPlayer: PlayerID=" ++ show i ++ " numPlayers=" ++ show n
 
 -- | Return the elements corresponding to every player (all elements as
 --   a plain list).
