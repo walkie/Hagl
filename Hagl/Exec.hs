@@ -214,13 +214,11 @@ history = do t  <- transcript
 
 -- | Transcript of each iteration, including the current one.
 transcripts :: GameM m g => m (ByGame (Transcript (Move g)))
-transcripts = liftM2 addForNewGame transcript (liftM _transcripts history)
+transcripts = liftM _transcripts history
 
 -- | Summary of each iteration, including the current one.
 summaries :: GameM m g => m (ByGame (Summary (Move g)))
-summaries = do ms <- liftM2 summarize numPlaying transcript
-               ss <- liftM _summaries history
-               return (addForNewGame (ms,Nothing) ss)
+summaries = liftM _summaries history
 
 -- | Payoff of each iteration.  The payoff of the current game is undefined.
 payoffs :: GameM m g => m (ByGame Payoff)
