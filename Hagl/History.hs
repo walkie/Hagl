@@ -72,7 +72,8 @@ _summaries = fmap snd
 
 -- | Compute the current score from a history.
 _score :: History mv -> Payoff
-_score = ByPlayer . map sum . transpose .  -- calculate score
-         map everyPlayer . everyGame .     -- convert to plain lists
-         fmap _payoff . _summaries         -- get payoffs for each game
+_score = ByPlayer . map sum . transpose .   -- calculate score
+         map everyPlayer . completedGames . -- convert to plain lists
+         fmap _payoff . _summaries          -- get payoffs for each completed game
+
 

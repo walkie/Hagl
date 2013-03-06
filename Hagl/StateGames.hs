@@ -47,8 +47,8 @@ takeTurnsD ::
      -> Discrete s mv
 takeTurnsD np end moves exec pay = tree
   where tree p s | end p s   = Discrete (s, Payoff (pay p s)) []
-                 | otherwise = Discrete (s, Decision p) [(m, tree (p+1) (exec p s m))
-                                                        | m <- moves p s]
+                 | otherwise = Discrete (s, Decision p)
+                                        [(m, tree (nextPlayer np p) (exec p s m)) | m <- moves p s]
 
 -- | Build a continuous game tree by taking turns making moves until some condition is met.
 takeTurnsC ::
@@ -61,4 +61,5 @@ takeTurnsC ::
      -> Continuous s mv
 takeTurnsC np end exec pay = tree
   where tree p s | end p s   = Continuous (s, Payoff (pay p s)) (\_ -> Nothing)
-                 | otherwise = Continuous (s, Decision p) (\m -> Just (tree (p+1) (exec p s m)))
+                 | otherwise = Continuous (s, Decision p)
+                                          (\m -> Just (tree (nextPlayer np p) (exec p s m)))
