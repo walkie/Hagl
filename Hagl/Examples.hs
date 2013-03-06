@@ -1,11 +1,20 @@
 -- | This module provides a convenient way to import all of the examples at once.
-module Hagl.Examples (module X) where
+module Hagl.Examples (
+  module Hagl,
+  module Hagl.Examples.Auction,
+  module Hagl.Examples.Chance,
+  module Hagl.Examples.Crisis,
+  module Hagl.Examples.Matrix,
+  module Hagl.Examples.Prisoner,
+  module Hagl.Examples.RPS,
+  module Hagl.Examples.TicTacToe
+) where
 
-import Hagl                    as X
-import Hagl.Examples.Auction   as X
-import Hagl.Examples.Chance    as X
-import Hagl.Examples.Crisis    as X
-import Hagl.Examples.Matrix    as X
-import Hagl.Examples.Prisoner  as X
-import Hagl.Examples.RPS       as X hiding (randy)
-import Hagl.Examples.TicTacToe as X
+import Hagl
+import Hagl.Examples.Auction
+import Hagl.Examples.Chance
+import Hagl.Examples.Crisis
+import Hagl.Examples.Matrix
+import Hagl.Examples.Prisoner
+import Hagl.Examples.RPS hiding (randy)
+import Hagl.Examples.TicTacToe

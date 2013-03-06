@@ -1,13 +1,24 @@
 -- | This module provides a convenient way to import all of Hagl at once.
-module Hagl (module X) where
+module Hagl (
+  module Hagl.Exec,
+  module Hagl.Extensive,
+  module Hagl.Game,
+  module Hagl.Lists,
+  module Hagl.Normal,
+  module Hagl.Payoff,
+  module Hagl.Print,
+  module Hagl.StateGames,
+  module Hagl.Strategy,
+  module Hagl.Tournament
+) where
 
-import Hagl.Exec       as X
-import Hagl.Extensive  as X
-import Hagl.Game       as X
-import Hagl.Lists      as X
-import Hagl.Normal     as X
-import Hagl.Payoff     as X
-import Hagl.Print      as X
-import Hagl.StateGames as X
-import Hagl.Strategy   as X
-import Hagl.Tournament as X
+import Hagl.Exec
+import Hagl.Extensive
+import Hagl.Game
+import Hagl.Lists
+import Hagl.Normal
+import Hagl.Payoff
+import Hagl.Print
+import Hagl.StateGames
+import Hagl.Strategy
+import Hagl.Tournament
