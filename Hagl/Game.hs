@@ -47,6 +47,11 @@ class GameTree (TreeType g) => Game g where
 class (Game g, TreeType g ~ Discrete) => DiscreteGame g
 instance (Game g, TreeType g ~ Discrete) => DiscreteGame g
 
+-- | Captures all games whose `TreeType` is `Continuous`.  Do not instantiate 
+--   this class directly!
+class (Game g, TreeType g ~ Continuous) => ContinuousGame g
+instance (Game g, TreeType g ~ Continuous) => ContinuousGame g
+
 
 --
 -- * Nodes and actions
