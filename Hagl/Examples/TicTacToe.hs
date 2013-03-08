@@ -1,13 +1,17 @@
 {-# LANGUAGE FlexibleContexts, TypeFamilies #-}
 
--- | An implementation of the game Tic Tac Toe.
---   Try playing against the minimax algorithm by running in GHCi:
---
---   > playTicTacToe
---
---   Valid moves are the integers [0..8], where each integer names square of
---   the board, starting in the upper left and proceeding in the order that 
---   you would read a book.  The named square must be empty.
+{-|
+
+An implementation of the game Tic Tac Toe.
+Try playing against the minimax algorithm by running in GHCi:
+
+>>> playTicTacToe
+
+Valid moves are the integers [0..8], where each integer names square of
+the board, starting in the upper left and proceeding in the order that 
+you would read a book.  The named square must be empty.
+
+-}
 module Hagl.Examples.TicTacToe where
 
 import Control.Monad.Trans (liftIO)

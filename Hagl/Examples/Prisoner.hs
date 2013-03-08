@@ -6,12 +6,12 @@ Defines the prisoner's dilemma, stag hunt, and a suite of strategies.
 
 From GHCi, try some of the following.
 
-> nash pd
-> pareto pd
-> paretoNash pd
-> paretoNash stag
-> execGame pd [tft, pavlov] (times 10 >> printTranscripts >> printScore)
-> axelrod [fink, tft, grim', pavlov, preserver]
+>>> nash pd
+>>> pareto pd
+>>> paretoNash pd
+>>> paretoNash stag
+>>> execGame pd [tft, pavlov] (times 10 >> printTranscripts >> printScore)
+>>> axelrod [fink, tft, grim', pavlov, preserver]
 
 -}
 

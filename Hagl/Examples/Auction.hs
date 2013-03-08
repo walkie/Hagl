@@ -7,8 +7,8 @@ A linearized implementation of the Dollar Auction:
 
 Example experiments from GHCi:
 
-> execGame (DollarAuction 4) [penny, nickel, quarter, dim] (once >> printTranscript)
-> execGame (DollarAuction 4) [penny, nickel, quarter, dim] (times 100 >> printScore)
+>>> execGame (DollarAuction 4) [penny, nickel, quarter, dim] (once >> printTranscript)
+>>> execGame (DollarAuction 4) [penny, nickel, quarter, dim] (times 100 >> printScore)
 
 (The included strategies are not good ones, just examples...)
 

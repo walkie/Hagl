@@ -4,8 +4,8 @@ Example matrix games.
    
 From GHCi try:
 
-> saddle m1
-> saddle m2
+>>> saddle m1
+>>> saddle m2
 
 -}
 

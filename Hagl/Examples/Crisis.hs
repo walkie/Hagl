@@ -6,12 +6,12 @@ A simplistic model of the Cuban Missile Crisis.
 
 From GHCi, print the game tree:
 
-> crisis
+>>> crisis
 
 Or run a simulation:
 
-> evalGame crisis [khrushchev, kennedy] (finish >> printTranscript)
-> evalGame crisis [khrushchev, kennedy] (step >> step >> printTranscript >> printMovesFromHere >> finish >> printTranscript)
+>>> evalGame crisis [khrushchev, kennedy] (finish >> printTranscript)
+>>> evalGame crisis [khrushchev, kennedy] (step >> step >> printTranscript >> printMovesFromHere >> finish >> printTranscript)
 
 -}
 

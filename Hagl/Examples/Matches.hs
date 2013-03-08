@@ -6,9 +6,10 @@ An implementation of the Match Game, described in the paper.
 Try to force your opponent to take the last match.
 
 Example experiments from GHCi:
-> execGame matchGame [matchy, randy] (once >> printTranscript)
-> execGame matchGame [matchy, randy] (times 1000 >> printScore)
-> execGame matchGame [randy, matchy] (times 1000 >> printScore)
+
+>>> execGame matchGame [matchy, randy] (once >> printTranscript)
+>>> execGame matchGame [matchy, randy] (times 1000 >> printScore)
+>>> execGame matchGame [randy, matchy] (times 1000 >> printScore)
 
 -}
 
@@ -23,11 +24,15 @@ import Hagl
 -- * Game representation
 --
 
--- | Match game:
---   * Number of players.
---   * Number of matches at the beginning of the game.
---   * List of moves (i.e. # of matches a player may take).
--- e.g. Matches 2 15 [1,2,3] -- number of players, 15 matches, can take 1-3 each turn.
+-- | Match game.  Arguments are:
+--
+--     1. Number of players.
+--
+--     2. Number of matches at the beginning of the game.
+--
+--     3. List of moves--the number of matches a player may take.
+--
+--   For example: @Matches 2 15 [1,2,3]@ -- 2 players, 15 matches, can take 1-3 each turn.
 data Matches = Matches Int Int [Int]
 
 instance Game Matches where
