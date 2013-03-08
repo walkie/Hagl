@@ -20,9 +20,14 @@ import Hagl.Game
 -- | Pure strategy profile; one move per player.
 type Profile mv = ByPlayer mv
 
--- | A general simultaneous move game.  First argument is the number of
---   players, second is the payoff function.
-data Simultaneous mv = Simultaneous Int (Profile mv -> Payoff)
+-- | A general simultaneous move game.  Arguments are:
+--
+--     1. Number of players.
+--
+--     2. Is this move valid?
+--     
+--     3. Payoff function.
+data Simultaneous mv = Simultaneous Int (PlayerID -> mv -> Bool) (Profile mv -> Payoff)
 
 -- | The class of type constructors for games that can be converted into
 --   a simultaneous move game.  Any type constructor that instantiates
@@ -34,12 +39,17 @@ class IsSimultaneous s where
 -- | The number of players that can play this game.
 numPlayers :: (IsSimultaneous s, Eq mv) => s mv -> Int
 numPlayers g = np
-  where (Simultaneous np _) = toSimultaneous g
+  where (Simultaneous np _ _) = toSimultaneous g
+
+-- | Is this move valid for the indicated player?
+isMoveValid :: (IsSimultaneous s, Eq mv) => s mv -> PlayerID -> mv -> Bool
+isMoveValid g p m = valid p m
+  where (Simultaneous _ valid _) = toSimultaneous g
 
 -- | Get the payoff for a particular strategy profile.
 getPayoff :: (IsSimultaneous s, Eq mv) => s mv -> Profile mv -> Payoff
-getPayoff g p = f p
-  where (Simultaneous _ f) = toSimultaneous g
+getPayoff g ms = pay ms
+  where (Simultaneous _ _ pay) = toSimultaneous g
 
 
 --
@@ -55,8 +65,10 @@ instance Game (Simultaneous mv) where
   type State    (Simultaneous mv) = ()
   type Move     (Simultaneous mv) = mv
 
-  gameTree (Simultaneous np f) = tree 1 []
+  gameTree (Simultaneous np v f) = tree 1 []
     where
       tree p ms
-        | p <= np   = Continuous ((), Decision p) (\m -> Just (tree (p+1) (m:ms)))
-        | otherwise = Continuous ((), (Payoff . f . ByPlayer . reverse) ms) (\_ -> Nothing)
+        | p <= np   = Continuous ((), Decision p)
+                      (\m -> if v p m then Just (tree (p+1) (m:ms)) else Nothing)
+        | otherwise = Continuous ((), (Payoff . f . ByPlayer . reverse) ms)
+                      (\_ -> Nothing)

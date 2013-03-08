@@ -164,8 +164,9 @@ instance IsNormal Matrix where
   toNormal (Matrix ms ns vs) = Normal 2 (ByPlayer [ms,ns]) (zerosum vs)
 
 instance IsSimultaneous Normal where
-  toSimultaneous (Normal np ms ps) =
-      Simultaneous np (\p -> lookupPay p (payoffMap ms ps))
+  toSimultaneous (Normal np ms ps) = Simultaneous np ok pay
+    where pay p  = lookupPay p (payoffMap ms ps)
+          ok i m = i >= 1 && i <= dlength ms && (m `elem` forPlayer i ms)
 
 instance IsSimultaneous Matrix where
   toSimultaneous = toSimultaneous . toNormal
