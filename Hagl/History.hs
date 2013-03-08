@@ -1,5 +1,5 @@
 -- | This module provides data structures for tracking the execution of
---   games Hagl, and simple functions for manipulating this data.  Note
+--   games in Hagl, and simple functions for manipulating this data.  Note
 --   that underscore-prefixed functions have monadic versions in "Hagl.Exec"
 --   without the underscore.  Usually you want the monadic versions from
 --   within strategies.

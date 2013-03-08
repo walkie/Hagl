@@ -1,5 +1,5 @@
 # Hagl: Haskell Game Language 
-#### Eric Walkingshaw, Oregon State University
+#### Eric Walkingshaw
 
 To play with the examples, load them into GHCi by running `ghci Hagl.Examples`
 from this directory.
