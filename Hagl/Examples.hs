@@ -4,6 +4,7 @@ module Hagl.Examples (
   module Hagl.Examples.Auction,
   module Hagl.Examples.Chance,
   module Hagl.Examples.Crisis,
+  module Hagl.Examples.Matches,
   module Hagl.Examples.Matrix,
   module Hagl.Examples.Prisoner,
   module Hagl.Examples.RPS,
@@ -14,6 +15,7 @@ import Hagl
 import Hagl.Examples.Auction
 import Hagl.Examples.Chance
 import Hagl.Examples.Crisis
+import Hagl.Examples.Matches hiding (randy)
 import Hagl.Examples.Matrix
 import Hagl.Examples.Prisoner
 import Hagl.Examples.RPS hiding (randy)

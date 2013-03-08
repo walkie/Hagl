@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts, TypeFamilies #-}
 
-{-
+{- |
 
 An implementation of the Match Game, described in the paper.
 Try to force your opponent to take the last match.
@@ -12,53 +12,54 @@ Example experiments from GHCi:
 
 -}
 
-module Examples.Matches where
+module Hagl.Examples.Matches where
 
-import Control.Monad (liftM)
-import Data.List     (find)
+import Data.List (find)
 
-import Hagl hiding (last, moves, payoff, turn)
 
--- Match game:
+import Hagl
+
+--
+-- * Game representation
+--
+
+-- | Match game:
+--   * Number of players.
 --   * Number of matches at the beginning of the game.
 --   * List of moves (i.e. # of matches a player may take).
--- e.g. Matches 15 [1,2,3] -- 15 matches, can take 1-3 each turn.
-data Matches = Matches Int [Int]
+-- e.g. Matches 2 15 [1,2,3] -- number of players, 15 matches, can take 1-3 each turn.
+data Matches = Matches Int Int [Int]
 
 instance Game Matches where
-  type Move Matches = Int
+  
+  type TreeType Matches = Discrete
+  type Move  Matches = Int
   type State Matches = Int
-  initState (Matches n _) = n
-  runGame = takeTurns turn end >>= payoff . last
 
-matches :: GameM m Matches => m Int
-matches = gameState
+  gameTree (Matches np init ms) = takeTurnsD np end moves up pay 1 init
+    where
+      end   _ n   = n <= 0
+      moves _ n   = [m | m <- ms, n-m >= 0]
+      up    _ n m = n-m
+      pay   p _   = loser np p
 
-draw = updateGameState . subtract
+-- | An example match game
+matchGame = Matches 2 15 [1,2,3]
 
-turn p = decide p >>= draw >> return p
-          
-end = liftM (<= 0) matches
-
-payoff p = liftM (flip loser p) numPlayers
-
-moves = do n <- matches
-           (Matches _ ms) <- game
-           return [m | m <- ms, n-m >= 0]
-
-randomly = moves >>= randomlyFrom
-
--- An example match game
-matchGame = Matches 15 [1,2,3]
 
 --
--- Players
+-- * Players
 --
 
+-- | A player that plays randomly.
+randy :: DiscreteGame g => Player g
 randy = "Randy" ::: randomly
 
+-- | A player that plays optimally.  Guaranteed to win if given the first move.
+--   (Only works with move sets of the form [1..n]!)
+matchy :: Player Matches
 matchy = "Matchy" ::: do
-    n  <- matches
-    ms <- moves
-    let winning m = mod (n-1) (maximum ms + 1) == m
+    n  <- gameState
+    ms <- availMoves
+    let winning m = mod n (maximum ms + 1) == m
     maybe randomly play (find winning ms)
