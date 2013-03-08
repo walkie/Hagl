@@ -10,8 +10,7 @@ Example experiments from GHCi:
 > execGame (DollarAuction 4) [penny, nickel, quarter, dim] (once >> printTranscript)
 > execGame (DollarAuction 4) [penny, nickel, quarter, dim] (times 100 >> printScore)
 
-(The included strategies are not necessarily good ones and are
-just included as examples...)
+(The included strategies are not good ones, just examples...)
 
 -}
 module Hagl.Examples.Auction where
@@ -43,6 +42,7 @@ bidder = fst
 bidValue :: Bid -> Cents
 bidValue = snd
 
+
 --
 -- * Game representation
 --
@@ -72,21 +72,6 @@ nextBid = snd . snd
 nextBidder :: HighBids -> PlayerID
 nextBidder = fst . snd
 
--- | Is the auction over?
-auctionOver :: PlayerID -> HighBids -> Bool
-auctionOver p s = p == highBidder s
-
--- | Update high bids.
-auctionUpdate :: PlayerID -> HighBids -> BidOrPass -> HighBids
-auctionUpdate p ((hp,hb),_) (Bid b) | b > hb = ((p,b),(hp,hb))
-auctionUpdate _ s _ = s
-
--- | Generate a payoff for the end of the game.
-auctionPayoff :: Int -> HighBids -> Payoff
-auctionPayoff n ((hp,hb),(np,nb)) = ByPlayer [fromIntegral (val p) | p <- [1..n]]
-  where val p | p == hp   = 100 - hb
-              | p == np   =   0 - nb
-              | otherwise =   0
 
 -- Game instance.
 instance Game DollarAuction where
@@ -94,8 +79,19 @@ instance Game DollarAuction where
   type Move  DollarAuction = BidOrPass
   type State DollarAuction = HighBids
 
-  gameTree (DollarAuction n) = takeTurnsC n auctionOver auctionUpdate
-                                 (const (auctionPayoff n)) 1 initBids
+  gameTree (DollarAuction n) = takeTurnsC n end up pay 1 initBids
+    where
+      -- Is the auction over?
+      end p s = p == highBidder s
+      -- Update the high bids.
+      up  p ((hp,hb),_) (Bid b) | b > hb = ((p,b),(hp,hb))
+      up  _ s _ = s
+      -- Generate a payoff for the end of the game.
+      pay _ ((hp,hb),(np,nb)) = ByPlayer [fromIntegral (val p) | p <- [1..n]]
+        where val p | p == hp   = 100 - hb
+                    | p == np   =   0 - nb
+                    | otherwise =   0
+
 
 --
 -- * Some example players
