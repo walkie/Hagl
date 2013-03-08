@@ -1,4 +1,7 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleInstances,
+             FunctionalDependencies,
+             MultiParamTypeClasses,
+             TypeFamilies #-}
 
 -- | This module provides different representations of normal form games, smart
 --   constructors for creating them, and functions for analyzing them.
@@ -23,8 +26,8 @@ import Hagl.Simultaneous
 --   Technically this includes all finite, discrete games, but such a generic
 --   instance is not provided.  Rather this is used to provide a common
 --   interface for grid-structured games.
-class IsNormal n where
-  toNormal :: n mv -> Normal mv
+class IsNormal g mv | g -> mv where
+  toNormal :: g -> Normal mv
   
 -- | A general normal form game.  Arguments are the number of players,
 --   a list of moves available to each player, and the payoff corresponding
@@ -67,17 +70,17 @@ square ms = Matrix ms ms
 --
 
 -- | Get the moves for a particular player.
-getMoves :: IsNormal n => n mv -> PlayerID -> [mv]
+getMoves :: IsNormal g mv => g -> PlayerID -> [mv]
 getMoves g p = forPlayer p ms
   where (Normal _ ms _) = toNormal g
 
 -- | The dimensions of the payoff matrix.
-dimensions :: IsNormal n => n mv -> ByPlayer Int
+dimensions :: IsNormal g mv => g -> ByPlayer Int
 dimensions g = fmap length mss
   where (Normal _ mss _) = toNormal g
 
 -- | A list of all pure strategy profiles.
-profiles :: IsNormal n => n mv -> [Profile mv]
+profiles :: IsNormal g mv => g -> [Profile mv]
 profiles g = buildProfiles mss
   where (Normal _ mss _) = toNormal g
 
@@ -99,7 +102,7 @@ zerosum vs = [ByPlayer [v, -v] | v <- vs]
 --
 
 -- | All pure Nash equilibrium solutions.
-nash :: (IsNormal n, Eq mv) => n mv -> [Profile mv]
+nash :: (IsNormal g mv, Eq mv) => g -> [Profile mv]
 nash g = [s | s <- profiles n, stable s]
   where n = toNormal g
         stable s = all (uni s) [1 .. numPlayers n]
@@ -108,7 +111,7 @@ nash g = [s | s <- profiles n, stable s]
                                 in [ByPlayer (h++e:t) | e <- getMoves n p]
 
 -- | All strong Pareto optimal solutions.
-pareto :: (IsNormal n, Eq mv) => n mv -> [Profile mv]
+pareto :: (IsNormal g mv, Eq mv) => g -> [Profile mv]
 pareto g = [s | s <- profiles n, opt s]
   where n = toNormal g
         opt s = not (any (imp s) (profiles n))
@@ -117,7 +120,7 @@ pareto g = [s | s <- profiles n, opt s]
                    in or (zipWith (>) p' p) && and (zipWith (>=) p' p)
 
 -- | All Pareto optimal, pure equilibriums.
-paretoNash :: (IsNormal n, Eq mv) => n mv -> [Profile mv]
+paretoNash :: (IsNormal g mv, Eq mv) => g -> [Profile mv]
 paretoNash g = pareto n `intersect` nash n
   where n = toNormal g
 
@@ -157,18 +160,18 @@ lookupPay p m | Just v <- lookup p m = v
 -- Instances
 --
 
-instance IsNormal Normal where
+instance IsNormal (Normal mv) mv where
   toNormal = id
 
-instance IsNormal Matrix where
+instance IsNormal (Matrix mv) mv where
   toNormal (Matrix ms ns vs) = Normal 2 (ByPlayer [ms,ns]) (zerosum vs)
 
-instance IsSimultaneous Normal where
+instance Eq mv => IsSimultaneous (Normal mv) mv where
   toSimultaneous (Normal np ms ps) = Simultaneous np ok pay
     where pay p  = lookupPay p (payoffMap ms ps)
           ok i m = i >= 1 && i <= dlength ms && (m `elem` forPlayer i ms)
 
-instance IsSimultaneous Matrix where
+instance Eq mv => IsSimultaneous (Matrix mv) mv where
   toSimultaneous = toSimultaneous . toNormal
 
 instance Eq mv => Game (Normal mv) where

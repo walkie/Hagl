@@ -1,4 +1,7 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleInstances,
+             FunctionalDependencies,
+             MultiParamTypeClasses,
+             TypeFamilies #-}
 
 -- | This module provides a generic representation of simultaneous move games
 --   with an arbitrary payoff function.  This representation is intended for
@@ -33,21 +36,21 @@ data Simultaneous mv = Simultaneous Int (PlayerID -> mv -> Bool) (Profile mv -> 
 --   a simultaneous move game.  Any type constructor that instantiates
 --   'IsNormal' (the class of normal form games) should also instantiate
 --   this type class.
-class IsSimultaneous s where
-  toSimultaneous :: Eq mv => s mv -> Simultaneous mv
+class IsSimultaneous g mv | g -> mv where
+  toSimultaneous :: g -> Simultaneous mv
 
 -- | The number of players that can play this game.
-numPlayers :: (IsSimultaneous s, Eq mv) => s mv -> Int
+numPlayers :: IsSimultaneous g mv => g -> Int
 numPlayers g = np
   where (Simultaneous np _ _) = toSimultaneous g
 
 -- | Is this move valid for the indicated player?
-isMoveValid :: (IsSimultaneous s, Eq mv) => s mv -> PlayerID -> mv -> Bool
+isMoveValid :: IsSimultaneous g mv => g -> PlayerID -> mv -> Bool
 isMoveValid g p m = valid p m
   where (Simultaneous _ valid _) = toSimultaneous g
 
 -- | Get the payoff for a particular strategy profile.
-getPayoff :: (IsSimultaneous s, Eq mv) => s mv -> Profile mv -> Payoff
+getPayoff :: IsSimultaneous g mv => g -> Profile mv -> Payoff
 getPayoff g ms = pay ms
   where (Simultaneous _ _ pay) = toSimultaneous g
 
@@ -56,7 +59,7 @@ getPayoff g ms = pay ms
 -- Instances
 --
 
-instance IsSimultaneous Simultaneous where
+instance IsSimultaneous (Simultaneous mv) mv where
   toSimultaneous = id
 
 instance Game (Simultaneous mv) where
