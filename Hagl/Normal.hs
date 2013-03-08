@@ -2,7 +2,8 @@
              FunctionalDependencies,
              MultiParamTypeClasses,
              PatternGuards,
-             TypeFamilies #-}
+             TypeFamilies,
+             UndecidableInstances #-}
 
 -- | This module provides different representations of normal form games, smart
 --   constructors for creating them, and functions for analyzing them.
@@ -16,22 +17,22 @@ import Hagl.Lists
 import Hagl.Payoff
 import Hagl.Game
 import Hagl.Extensive
+import Hagl.Simultaneous
 
 --
 -- * Representation
 --
 
--- | Pure strategy profile; one move per player.
-type Profile mv = ByPlayer mv
-
 -- | The class of games that can be converted to normal form.
 --   Technically this is all finite, discrete games, but such a generic
 --   instance is not provided.  Rather this is used to provide a common
 --   interface for grid-structured games.
-class Norm g mv | g -> mv where
+class (Game g, Eq mv) => Norm g mv | g -> mv where
   toNormal :: g -> Normal mv
   
--- | A general normal form game.
+-- | A general normal form game.  Arguments are the number of players,
+--   a list of moves available to each player, and the payoff corresponding
+--   to each potential combination of moves.
 data Normal mv = Normal Int (ByPlayer [mv]) [Payoff] deriving Eq
 
 -- | A two-player, zero-sum game.
@@ -68,16 +69,6 @@ square ms = Matrix ms ms
 --
 -- * Basic functions
 --
-
--- | The number of players that can play this game.
-numPlayers :: Norm g mv => g -> Int
-numPlayers g = np
-  where (Normal np _ _) = toNormal g
-
--- | Get the payoff for a particular strategy profile.
-getPayoff :: (Norm g mv, Eq mv) => g -> Profile mv -> Payoff
-getPayoff g m = lookupPay m (payoffMap ms ps)
-  where (Normal _ ms ps) = toNormal g
 
 -- | Get the moves for a particular player.
 getMoves :: Norm g mv => g -> PlayerID -> [mv]
@@ -171,11 +162,15 @@ lookupPay p m | Just v <- lookup p m = v
 -- Instances
 --
 
-instance Norm (Normal mv) mv where
+instance Eq mv => Norm (Normal mv) mv where
   toNormal = id
 
-instance Norm (Matrix mv) mv where
+instance Eq mv => Norm (Matrix mv) mv where
   toNormal (Matrix ms ns vs) = Normal 2 (ByPlayer [ms,ns]) (zerosum vs)
+
+instance (Norm g mv, Eq mv) => Simult g mv where
+  toSimultaneous g = Simultaneous np (\p -> lookupPay p (payoffMap ms ps))
+    where (Normal np ms ps) = toNormal g
 
 instance Eq mv => Game (Normal mv) where
   
@@ -183,10 +178,10 @@ instance Eq mv => Game (Normal mv) where
   type State    (Normal mv) = ()
   type Move     (Normal mv) = mv
   
-  gameTree g = trans 1 []
+  gameTree g = tree 1 []
     where
-      trans p ms
-        | p <= numPlayers g = decision p [(m, trans (p+1) (m:ms)) | m <- getMoves g p]
+      tree p ms
+        | p <= numPlayers g = decision p [(m, tree (p+1) (m:ms)) | m <- getMoves g p]
         | otherwise         = (payoff . getPayoff g . ByPlayer . reverse) ms
 
 instance Eq mv => Game (Matrix mv) where
