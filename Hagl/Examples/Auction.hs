@@ -3,7 +3,7 @@
 {- |
 
 A linearized implementation of the Dollar Auction:
-  (http://en.wikipedia.org/wiki/Dollar_auction)
+  <http://en.wikipedia.org/wiki/Dollar_auction>
 
 Example experiments from GHCi:
 

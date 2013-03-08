@@ -5,8 +5,8 @@
 {- |
 
 An implementation of the Keynesian p-Beauty Contest.
-Also known as the Guessing Game or Guess 2/3 of the Average
-(http://en.wikipedia.org/wiki/Guess_2/3_of_the_average).
+Also known as the Guessing Game or Guess 2/3 of the Average:
+  <http://en.wikipedia.org/wiki/Guess_2/3_of_the_average>
 
 >>> execGame (guess23 4) guessPlayers (once >> printTranscript)
 
