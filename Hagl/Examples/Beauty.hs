@@ -56,6 +56,6 @@ instance Game Beauty where
 guess23 :: Int -> Beauty
 guess23 np = Beauty np 100 (2/3)
 
--- | Some \really\ simple players guessing game players.
+-- | Some /really/ simple players guessing game players.
 guessPlayers :: [Player Beauty]
 guessPlayers = ["A" ::: return 5, "B" ::: return 5, "C" ::: return 0, "D" ::: return 2]
