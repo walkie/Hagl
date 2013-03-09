@@ -4,11 +4,11 @@
              TypeFamilies #-}
 
 -- | This module provides a generic representation of simultaneous move games
---   with an arbitrary payoff function.  This representation is intended for
+--   with arbitrary payoff functions.  This representation is intended for
 --   games with a continuous domain of moves, whereas the module "Hagl.Normal"
 --   supports the discrete case.  Any normal form game can be converted into
---   a simultaneous game, but the reverse is not true since we require the
---   set of available moves in a normal form game to be finite.
+--   a simultaneous game, but the reverse is not also true because of the
+--   discreteness requirement.
 module Hagl.Simultaneous where
 
 import Hagl.Lists
