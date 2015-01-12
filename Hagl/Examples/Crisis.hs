@@ -31,7 +31,7 @@ crisis = start
         usa  = player 2
         nukesInTurkey = pays [  -2,   1]
         nukesInCuba   = pays [   1,  -2]
-        nuclearWar    = pays [-100,-100]
+        nuclearWar    = chance [(1, "Truly devastating war"), (4, "Devastating war")] [("Truly devastating war", pays [-100,-100]), ("Devastating war", pays [-20, -20])]
         noNukes       = pays [   0,   0]
         start = ussr ("Send Missiles to Cuba", usaResponse) 
                  <|> ("Do Nothing", nukesInTurkey)
