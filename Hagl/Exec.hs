@@ -315,9 +315,6 @@ times n = numPlaying >>= go n . tie
 --
 -- Instances
 --
--- data ExecM g a = ExecM { unE :: StateT (Exec g) IO a }
--- instance Functor (ExecM g)  where
---   fmap f (ExecM g) = ExecM $ (fmap . fmap) ExecM g
 
 instance Functor (ExecM g) where
   fmap = liftM

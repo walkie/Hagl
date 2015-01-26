@@ -1,6 +1,8 @@
-
-{-# LANGUAGE FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses, TypeFamilies #-}
-{-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE FlexibleInstances,
+             FunctionalDependencies,
+             MultiParamTypeClasses,
+             PatternGuards,
+             TypeFamilies #-}
 
 -- | This module provides different representations of normal form games, smart
 --   constructors for creating them, and functions for analyzing them.
