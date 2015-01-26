@@ -54,11 +54,11 @@ stag = symmetric [C,D] [3,0,2,1]
 
 -- | Always defects.
 fink :: Player Dilemma
-fink = "Fink" ::: pure D
+fink = "Fink" ::: pureStrat D
 
 -- | Always cooperates.
 mum :: Player Dilemma
-mum = "Mum" ::: pure C
+mum = "Mum" ::: pureStrat C
 
 -- | Alternates between cooperation and defection.
 alt :: Player Dilemma
@@ -102,7 +102,7 @@ mod3 = Player "Mod3 Cooperator" 0 $
   do i <- get
      put (i+1)
      return $ if i `mod` 3 == 0 then C else D
-     
+
 -- | Suspicious Tit-for-Tat.  Like Tit-for-Tat but defect on first move.
 suspicious :: Player Dilemma
 suspicious = "Suspicious Tit-for-Tat" ::: play D `atFirstThen` his (lastGame's onlyMove)
@@ -123,7 +123,7 @@ grim = "Grim Trigger" :::
 -- | The Grim Trigger, implemented using state.  Much faster than 'grim', since
 --   it doesn't examine every previous game iteration.
 grim' :: Player Dilemma
-grim' = Player "Stately Grim" False $ 
+grim' = Player "Stately Grim" False $
   play C `atFirstThen`
   do m <- her (lastGame's onlyMove)
      triggered <- update (|| m == D)

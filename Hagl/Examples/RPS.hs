@@ -36,7 +36,7 @@ rps = square [Rock .. Scissors] [0,-1, 1,
 --
 
 -- | Good ol' rock, nothing beats that.
-rocky  = "Stalone" ::: pure Rock
+rocky  = "Stalone" ::: pureStrat Rock
 
 -- | Rotates through all three options in a cycle.
 rotate = "RPS" ::: periodic [Rock, Paper, Scissors]
@@ -62,6 +62,6 @@ frequency = "Huckleberry" :::
            p = length $ filter (Paper ==) ms
            s = length $ filter (Scissors ==) ms
            x = maximum [r,p,s]
-        in return $ if x == r then Paper else 
+        in return $ if x == r then Paper else
                     if x == p then Scissors
                               else Rock

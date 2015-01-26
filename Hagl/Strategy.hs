@@ -25,8 +25,8 @@ import Hagl.Exec
 --
 
 -- | A pure strategy. Always plays the same move.
-pure :: Move g -> Strategy s g
-pure = return
+pureStrat :: Move g -> Strategy s g
+pureStrat = return
 
 -- | A mixed strategy. Plays moves based on a distribution.
 mixed :: Dist (Move g) -> Strategy s g
@@ -47,7 +47,7 @@ human = me >>= liftIO . getMove . name
         retry n e | isUserError e = putStrLn "Not a valid move... try again." >> getMove n
                   | otherwise     = ioError e
 
--- | Minimax strategy.  Computes the best move for the current player. 
+-- | Minimax strategy.  Computes the best move for the current player.
 --   Conceptually explores the entire game tree, but implements alpha-beta
 --   pruning for efficiency.  Assumes games without chance.
 minimax :: DiscreteGame g => Strategy s g
@@ -117,7 +117,7 @@ his :: GameM m g => m (ByPlayer a) -> m a
 his x = check >> liftM2 (forPlayer . nextPlayer 2) myPlayerID x
   where check = numPlaying >>= \np -> unless (np == 2) $
                 fail "his/her can only be used in two player games."
-                              
+
 -- | Selects the element corresponding to the other player in a two-player game.
 her :: GameM m g => m (ByPlayer a) -> m a
 her = his

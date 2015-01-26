@@ -1,7 +1,6 @@
-{-# LANGUAGE FlexibleInstances,
-             FunctionalDependencies,
-             MultiParamTypeClasses,
-             TypeFamilies #-}
+
+{-# LANGUAGE FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses, TypeFamilies #-}
+{-# LANGUAGE PatternGuards #-}
 
 -- | This module provides different representations of normal form games, smart
 --   constructors for creating them, and functions for analyzing them.
@@ -28,7 +27,7 @@ import Hagl.Simultaneous
 --   interface for grid-structured games.
 class IsNormal g mv | g -> mv where
   toNormal :: g -> Normal mv
-  
+
 -- | A general normal form game.  Arguments are the number of players,
 --   a list of moves available to each player, and the payoff corresponding
 --   to each potential combination of moves.
@@ -175,11 +174,11 @@ instance Eq mv => IsSimultaneous (Matrix mv) mv where
   toSimultaneous = toSimultaneous . toNormal
 
 instance Eq mv => Game (Normal mv) where
-  
-  type TreeType (Normal mv) = Discrete 
+
+  type TreeType (Normal mv) = Discrete
   type State    (Normal mv) = ()
   type Move     (Normal mv) = mv
-  
+
   gameTree g = tree 1 []
     where
       tree p ms
@@ -187,7 +186,7 @@ instance Eq mv => Game (Normal mv) where
         | otherwise         = (payoff . getPayoff g . ByPlayer . reverse) ms
 
 instance Eq mv => Game (Matrix mv) where
-  type TreeType (Matrix mv) = Discrete 
+  type TreeType (Matrix mv) = Discrete
   type State    (Matrix mv) = ()
   type Move     (Matrix mv) = mv
   gameTree = gameTree . toNormal
@@ -217,7 +216,7 @@ showNormal g = show (gameTree g)
 --    are the same length...)
 showGrid :: Show mv => [mv] -> [mv] -> [Payoff] -> String
 showGrid rs cs vs = showRows (colHead : zipWith (:) rowHead grid)
-  where 
+  where
     rs' = map show rs
     cs' = map show cs
     vs' = chunk (length cs) (map showPayoff vs)
@@ -228,26 +227,26 @@ showGrid rs cs vs = showRows (colHead : zipWith (:) rowHead grid)
 
     padLeft :: Int -> String -> String
     padLeft n s = replicate (n - length s) ' ' ++ s
-    
+
     pad :: Int -> String -> String
     pad n s | length s <  n-1 = pad n (' ' : s ++ " ")
             | length s == n-1 = ' ' : s
             | otherwise       = s
-    
+
     maxLength :: [String] -> Int
     maxLength = maximum . map length
-    
+
     gridMax :: [[String]] -> Int
     gridMax = maximum . map maxLength
-    
+
     showRow :: [String] -> String
     showRow = intercalate " | "
-    
+
     showRows :: [[String]] -> String
     showRows = unlines . map showRow
-    
+
     toGrid :: [mv] -> [Payoff] -> [[Payoff]]
     toGrid = chunk . length
-    
+
     extractGrid :: Eq mv => ByPlayer [mv] -> [Payoff] -> [mv] -> [Payoff]
     extractGrid mss ps ms = [vs | (ByPlayer ms', vs) <- payoffMap mss ps, ms `isPrefixOf` ms']

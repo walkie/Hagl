@@ -1,6 +1,6 @@
-{-# LANGUAGE ExistentialQuantification, 
-             FlexibleContexts, 
-             FlexibleInstances, 
+{-# LANGUAGE ExistentialQuantification,
+             FlexibleContexts,
+             FlexibleInstances,
              FunctionalDependencies,
              MultiParamTypeClasses #-}
 
@@ -22,6 +22,7 @@ module Hagl.Exec where
 
 import Control.Monad.State hiding (State)
 
+import Control.Applicative
 import Control.Monad (liftM,liftM2)
 import Data.Function (on)
 import Data.Maybe    (isJust)
@@ -38,7 +39,7 @@ import Hagl.History
 
 -- | The game execution monad.  A state monad transformer that maintains the
 --   game execution state.
-data ExecM g a = ExecM  { unE :: StateT (Exec g) IO a }
+data ExecM g a = ExecM { unE :: StateT (Exec g) IO a }
 
 -- | This type class captures all monads that wrap the game execution monad,
 --   providing uniform access to the game execution state.  It is similar to
@@ -76,10 +77,10 @@ type Strategy s g = StratM s g (Move g)
 -- | Run the strategy associated with a particular player, producing a move
 --   and an updated player state.
 runStrategy :: Player g -> ExecM g (Move g, Player g)
-runStrategy p@(n ::: m) = do 
+runStrategy p@(n ::: m) = do
     mv <- evalStateT (unS m) ()
     return (mv, p)
-runStrategy (Player n s f) = do 
+runStrategy (Player n s f) = do
     (mv, s') <- runStateT (unS f) s
     return (mv, Player n s' f)
 
@@ -236,14 +237,14 @@ numMoves = liftM _numMoves getExec
 moves :: GameM m g => m (ByGame (MoveSummary (Move g)))
 moves = liftM (fmap _moveSummary) summaries
 
--- | The first move of every iteration, including the current one 
+-- | The first move of every iteration, including the current one
 --   (which may be undefined for some players).
 firstMove :: GameM m g => m (ByGame (ByPlayer (Move g)))
 firstMove = liftM ((fmap . fmap) (first . everyTurn)) moves
   where first (a:_) = a
         first _     = error "firstMove: No moves played."
 
--- | The only move of every iteration, including the current one 
+-- | The only move of every iteration, including the current one
 --   (which may be undefined for some players).
 onlyMove :: GameM m g => m (ByGame (ByPlayer (Move g)))
 onlyMove = liftM ((fmap . fmap) (only . everyTurn)) moves
@@ -264,7 +265,7 @@ step = location >>= processLocation
       Decision i -> decide i   >>= performMove l
       Chance d   -> fromDist d >>= performMove l
       Payoff p   -> givePayoff p
-    
+
     performMove l m = do
       e <- getExec
       let a = treeAction l
@@ -274,7 +275,7 @@ step = location >>= processLocation
                            _numMoves   = inc a (_numMoves e) }
         Nothing -> fail "step: illegal move!"
       return Nothing
-    
+
     inc (Decision p) ns = setForPlayer p (forPlayer p ns + 1) ns
     inc _            ns = ns
 
@@ -284,7 +285,7 @@ step = location >>= processLocation
       e <- getExec
       put e { _players = setForPlayer i p (_players e) }
       return m
-    
+
     givePayoff p = do
       e <- getExec
       let t = _transcript e
@@ -314,13 +315,33 @@ times n = numPlaying >>= go n . tie
 --
 -- Instances
 --
+-- data ExecM g a = ExecM { unE :: StateT (Exec g) IO a }
+-- instance Functor (ExecM g)  where
+--   fmap f (ExecM g) = ExecM $ (fmap . fmap) ExecM g
+
+instance Functor (ExecM g) where
+  fmap = liftM
 
 instance Monad (ExecM g) where
   return = ExecM . return
   (ExecM x) >>= f = ExecM (x >>= unE . f)
+
+instance Applicative (ExecM g) where
+  pure = return
+  (<*>) = ap
+
+
+instance Functor (StratM s g) where
+  fmap = liftM
+
 instance Monad (StratM s g) where
   return = StratM . return
   (StratM x) >>= f = StratM (x >>= unS . f)
+
+instance Applicative (StratM s g) where
+  pure = return
+  (<*>) = ap
+
 
 instance MonadState (Exec g) (ExecM g) where
   get = ExecM get
