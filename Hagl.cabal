@@ -10,7 +10,7 @@ maintainer:          eric@walkingshaw.net
 category:            Game Theory
 build-type:          Simple
 cabal-version:       >=1.8
-description:         
+description:
   A DSEL for experimental game theory (also called evolutionary game theory and
   behavioral economics).  Supports defining games and strategies, then executing
   them repeatedly in order to collect and observe the results.
@@ -38,5 +38,12 @@ source-repository head
 
 library
   exposed-modules:     Hagl, Hagl.Examples, Hagl.Exec, Hagl.Extensive, Hagl.Game, Hagl.Lists, Hagl.Normal, Hagl.Payoff, Hagl.Print, Hagl.StateGames, Hagl.Strategy, Hagl.Tournament, Hagl.Examples.Auction, Hagl.Examples.Chance, Hagl.Examples.Crisis, Hagl.Examples.Matrix, Hagl.Examples.Prisoner, Hagl.Examples.RPS, Hagl.Examples.TicTacToe
-  -- other-modules:       
-  build-depends:       base ==4.5.*, mtl ==2.1.*, containers ==0.4.*, transformers ==0.3.*, random ==1.0.*
+
+  -- other-modules:
+  build-depends:
+                base >=4.5,
+                mtl >=2.1,
+                containers >=0.4,
+                transformers >=0.3,
+                random >=1.0
+
