@@ -69,7 +69,7 @@ data Action mv =
   | Chance (Dist mv)
     -- | A terminating payoff node.
   | Payoff Payoff
-  deriving Eq
+  deriving (Eq, Show)
 
 -- | The state at a given node.
 nodeState :: Node s mv -> s
@@ -79,10 +79,10 @@ nodeState = fst
 nodeAction :: Node s mv -> Action mv
 nodeAction = snd
 
-instance Show mv => Show (Action mv) where
-  show (Decision p) = "Player " ++ show p
-  show (Chance d)   = "Chance " ++ show d
-  show (Payoff p)   = showPayoffAsList p
+--instance Show mv => Show (Action mv) where
+--  show (Decision p) = "Player " ++ show p
+--  show (Chance d)   = "Chance " ++ show d
+--  show (Payoff p)   = showPayoffAsList p
 
 
 --
@@ -122,7 +122,7 @@ data Discrete s mv = Discrete {
   dtreeNode  :: Node s mv,
   -- | The outbound edges.
   dtreeEdges :: [Edge s mv]
-} deriving Eq
+} deriving (Eq, Show)
 
 -- | An edge represents a single transition from one location in a discrete
 --   game tree to another, via a move.
@@ -216,7 +216,7 @@ drawTree = condense . DT.drawTree . tree ""
     tree s t@(Discrete (_,a) _) = DT.Node (s ++ show a)
                                   [tree (show m ++ " -> ") t | (m,t) <- dtreeEdges t]
 
-instance Show mv => Show (Discrete s mv) where
-  show = drawTree
-instance Show mv => Show (Continuous s mv) where
-  show = show . treeAction
+--instance Show mv => Show (Discrete s mv) where
+--  show = drawTree
+--instance Show mv => Show (Continuous s mv) where
+--  show = show . treeAction

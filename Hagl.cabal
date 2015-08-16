@@ -38,5 +38,5 @@ source-repository head
 
 library
   exposed-modules:     Hagl, Hagl.Examples, Hagl.Exec, Hagl.Extensive, Hagl.Game, Hagl.Lists, Hagl.Normal, Hagl.Payoff, Hagl.Print, Hagl.StateGames, Hagl.Strategy, Hagl.Tournament, Hagl.Examples.Auction, Hagl.Examples.Chance, Hagl.Examples.Crisis, Hagl.Examples.Matrix, Hagl.Examples.Prisoner, Hagl.Examples.RPS, Hagl.Examples.TicTacToe
-  other-modules:       Hagl.History, Hagl.Simultaneous
-  build-depends:       base ==4.5.*, mtl ==2.1.*, containers ==0.4.*, transformers ==0.3.*, random ==1.0.*
+  other-modules:       Hagl.History, Hagl.Simultaneous, Hagl.Examples.Beauty, Hagl.Examples.Matches
+  build-depends:       base >=4.5, mtl ==2.1.*, containers ==0.4.*, transformers ==0.3.*, random ==1.0.*
