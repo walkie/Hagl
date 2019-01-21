@@ -24,9 +24,11 @@ import Hagl.Exec
 -- * Some common strategies
 --
 
--- | A pure strategy. Always plays the same move.
-pure :: Move g -> Strategy s g
-pure = return
+-- | A pure strategy. Always plays the same move. This is defined to @pure@
+--   from the Applicative class, which can be used equivalently and reads
+--   a bit better.
+pureStrategy :: Move g -> Strategy s g
+pureStrategy = pure
 
 -- | A mixed strategy. Plays moves based on a distribution.
 mixed :: Dist (Move g) -> Strategy s g
@@ -64,10 +66,12 @@ minimaxAlg (Discrete (_,Decision me) es) =
         val me _ _ (Discrete (_,Payoff vs) _) = forPlayer me vs
         val me a b (Discrete (_,Decision p) es) | a >= b    = ifMe a b
                                                 | otherwise = ifMe a' b'
-          where ifMe a b   = if me == p then a else b
-                mm (a,b) t = let v = val me a b t
-                             in ifMe (max a v, b) (a, min b v)
-                (a',b')    = foldl mm (a,b) (map snd es)
+          where
+            ifMe :: a -> a -> a
+            ifMe a b   = if me == p then a else b
+            mm (a,b) t = let v = val me a b t
+                         in ifMe (max a v, b) (a, min b v)
+            (a',b')    = foldl mm (a,b) (map snd es)
 minimaxAlg _ = error "minimaxAlg: root of game tree is not a decision!"
 
 

@@ -213,7 +213,7 @@ showNormal (Normal 2 (ByPlayer [ms,ns]) vs) = showGrid ms ns vs
 showNormal g = show (gameTree g)
 
 -- | Pretty printer helper function.
---   (TODO: There are ome bugs in here. For one, it assumes move names
+--   (TODO: There are some bugs in here. For one, it assumes move names
 --    are the same length...)
 showGrid :: Show mv => [mv] -> [mv] -> [Payoff] -> String
 showGrid rs cs vs = showRows (colHead : zipWith (:) rowHead grid)
