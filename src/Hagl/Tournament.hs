@@ -6,7 +6,7 @@ import Control.Monad (liftM)
 import Data.Function (on)
 import Data.List     (nub,sortBy)
 
-import Hagl.Lists
+import Hagl.List
 import Hagl.Payoff
 import Hagl.Game
 import Hagl.Exec

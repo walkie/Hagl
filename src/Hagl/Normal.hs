@@ -11,7 +11,7 @@ import Data.Function (on)
 import Data.Maybe    (fromJust)
 import Data.List     (elemIndex,intercalate,intersect,isPrefixOf,transpose)
 
-import Hagl.Lists
+import Hagl.List
 import Hagl.Payoff
 import Hagl.Game
 import Hagl.Extensive

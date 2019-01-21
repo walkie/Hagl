@@ -8,7 +8,7 @@ module Hagl.History where
 import Data.List  (transpose)
 import Data.Maybe (fromMaybe)
 
-import Hagl.Lists
+import Hagl.List
 import Hagl.Payoff
 import Hagl.Game
 

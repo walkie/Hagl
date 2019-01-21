@@ -1,8 +1,6 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-
 -- | This module provides list utility functions and specialized list
 --   representations used within Hagl.
-module Hagl.Lists where
+module Hagl.List where
 
 import Control.Monad.IO.Class
 

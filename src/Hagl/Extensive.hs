@@ -5,7 +5,7 @@ module Hagl.Extensive where
 
 import Data.List (intersperse)
 
-import Hagl.Lists
+import Hagl.List
 import Hagl.Payoff
 import Hagl.Game
 

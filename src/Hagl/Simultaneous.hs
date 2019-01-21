@@ -11,7 +11,7 @@
 --   discreteness requirement.
 module Hagl.Simultaneous where
 
-import Hagl.Lists
+import Hagl.List
 import Hagl.Payoff
 import Hagl.Game
 

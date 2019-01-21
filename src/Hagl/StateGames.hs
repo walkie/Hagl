@@ -2,7 +2,7 @@
 --   that are centered around the manipulation of state.
 module Hagl.StateGames where
 
-import Hagl.Lists
+import Hagl.List
 import Hagl.Payoff
 import Hagl.Game
 

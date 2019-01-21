@@ -9,7 +9,7 @@ module Hagl.Print where
 import Control.Monad (liftM,liftM2,unless)
 import Control.Monad.IO.Class
 
-import Hagl.Lists
+import Hagl.List
 import Hagl.Payoff
 import Hagl.Game
 import Hagl.History

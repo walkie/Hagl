@@ -25,7 +25,7 @@ import Control.Monad.State hiding (State)
 import Control.Monad (liftM,liftM2)
 import Data.Function (on)
 
-import Hagl.Lists
+import Hagl.List
 import Hagl.Payoff
 import Hagl.Game
 import Hagl.History

@@ -3,7 +3,7 @@ module Hagl (
   module Hagl.Exec,
   module Hagl.Extensive,
   module Hagl.Game,
-  module Hagl.Lists,
+  module Hagl.List,
   module Hagl.Normal,
   module Hagl.Payoff,
   module Hagl.Print,
@@ -16,7 +16,7 @@ module Hagl (
 import Hagl.Exec
 import Hagl.Extensive
 import Hagl.Game
-import Hagl.Lists
+import Hagl.List
 import Hagl.Normal
 import Hagl.Payoff
 import Hagl.Print

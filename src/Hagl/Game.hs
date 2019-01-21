@@ -16,7 +16,7 @@ module Hagl.Game where
 import Data.Maybe (fromMaybe)
 import qualified Data.Tree as DT (Tree(..), drawTree)
 
-import Hagl.Lists
+import Hagl.List
 import Hagl.Payoff
 
 --

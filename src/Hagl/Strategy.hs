@@ -15,7 +15,7 @@ import System.IO.Error     (isUserError)
 
 import Prelude hiding (catch)
 
-import Hagl.Lists
+import Hagl.List
 import Hagl.Game
 import Hagl.Exec
 

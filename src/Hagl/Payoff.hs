@@ -3,7 +3,7 @@
 --   payoffs, and functions for pretty printing them.
 module Hagl.Payoff where
 
-import Hagl.Lists
+import Hagl.List
 
 --
 -- * Representation
