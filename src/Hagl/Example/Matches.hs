@@ -1,5 +1,3 @@
-{-# LANGUAGE FlexibleContexts, TypeFamilies #-}
-
 {- |
 
 An implementation of the Match Game, described in the paper.
@@ -12,8 +10,7 @@ Example experiments from GHCi:
 >>> execGame matchGame [randy, matchy] (times 1000 >> printScore)
 
 -}
-
-module Hagl.Examples.Matches where
+module Hagl.Example.Matches where
 
 import Data.List (find)
 

@@ -1,5 +1,3 @@
-{-# LANGUAGE FlexibleContexts, TypeFamilies #-}
-
 {-|
 
 An implementation of the game Tic Tac Toe.
@@ -12,7 +10,7 @@ the board, starting in the upper left and proceeding in the order that
 you would read a book.  The named square must be empty.
 
 -}
-module Hagl.Examples.TicTacToe where
+module Hagl.Example.TicTacToe where
 
 import Control.Monad.Trans (liftIO)
 import Data.List           (elemIndices, intersperse, transpose)

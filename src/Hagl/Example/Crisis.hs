@@ -14,10 +14,9 @@ Or run a simulation:
 >>> evalGame crisis [khrushchev, kennedy] (step >> step >> printTranscript >> printMovesFromHere >> finish >> printTranscript)
 
 -}
+module Hagl.Example.Crisis where
 
-module Hagl.Examples.Crisis where
-
-import Prelude hiding (last, print)
+import Prelude hiding (print)
 
 import Hagl
 

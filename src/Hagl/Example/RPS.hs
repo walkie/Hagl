@@ -1,7 +1,4 @@
-{-# LANGUAGE
-      NoMonomorphismRestriction,
-      TypeFamilies
-  #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
 
 {- |
 
@@ -13,8 +10,7 @@ From GHCi, try some of the following.
 >>> roundRobin rps 2 [rocky, rotate, randy, rpsPavlov, frequency] (times 100) >>= printResults
 
 -}
-
-module Hagl.Examples.RPS where
+module Hagl.Example.RPS where
 
 import Prelude hiding (last,pure)
 

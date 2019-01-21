@@ -1,5 +1,3 @@
-{-# LANGUAGE TypeFamilies #-}
-
 {- |
 
 A linearized implementation of the Dollar Auction:
@@ -13,7 +11,7 @@ Example experiments from GHCi:
 (The included strategies are not good ones, just examples...)
 
 -}
-module Hagl.Examples.Auction where
+module Hagl.Example.Auction where
 
 import Hagl
 

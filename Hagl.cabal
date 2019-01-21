@@ -54,6 +54,7 @@ library
     , GeneralizedNewtypeDeriving
     , MultiParamTypeClasses
     , OverloadedStrings
+    , TypeFamilies
   build-depends:
       base
     , containers
@@ -62,16 +63,16 @@ library
     , transformers
   exposed-modules:
       Hagl
+    , Hagl.Example.Auction
+    , Hagl.Example.Beauty
+    , Hagl.Example.Chance
+    , Hagl.Example.Crisis
+    , Hagl.Example.Matches
+    , Hagl.Example.Matrix
+    , Hagl.Example.Prisoner
+    , Hagl.Example.RPS
+    , Hagl.Example.TicTacToe
     , Hagl.Examples
-    , Hagl.Examples.Auction
-    , Hagl.Examples.Beauty
-    , Hagl.Examples.Chance
-    , Hagl.Examples.Crisis
-    , Hagl.Examples.Matches
-    , Hagl.Examples.Matrix
-    , Hagl.Examples.Prisoner
-    , Hagl.Examples.RPS
-    , Hagl.Examples.TicTacToe
     , Hagl.Exec
     , Hagl.Extensive
     , Hagl.Game

@@ -1,7 +1,7 @@
 {-# LANGUAGE TupleSections #-}
 
 -- | Some simple games of chance.
-module Hagl.Examples.Chance where
+module Hagl.Example.Chance where
 
 import Hagl
 

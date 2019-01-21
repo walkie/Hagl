@@ -1,6 +1,4 @@
-{-# LANGUAGE FlexibleInstances,
-             MultiParamTypeClasses,
-             TypeFamilies #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 {- |
 
@@ -11,7 +9,7 @@ Also known as the Guessing Game or Guess 2/3 of the Average:
 >>> execGame (guess23 4) guessPlayers (once >> printTranscript)
 
 -}
-module Hagl.Examples.Beauty where
+module Hagl.Example.Beauty where
 
 import Data.Function (on)
 import Data.List

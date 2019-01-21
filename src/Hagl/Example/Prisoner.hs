@@ -1,5 +1,3 @@
-{-# LANGUAGE FlexibleInstances, TypeFamilies #-}
-
 {- |
 
 Defines the prisoner's dilemma, stag hunt, and a suite of strategies.
@@ -14,11 +12,10 @@ From GHCi, try some of the following.
 >>> axelrod [fink, tft, grim', pavlov, preserver]
 
 -}
-
-module Hagl.Examples.Prisoner where
+module Hagl.Example.Prisoner where
 
 import Control.Monad.State
-import Prelude hiding (last,print,pure)
+import Prelude hiding (print)
 
 import Hagl
 

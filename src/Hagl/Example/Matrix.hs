@@ -8,8 +8,7 @@ From GHCi try:
 >>> saddle m2
 
 -}
-
-module Hagl.Examples.Matrix where
+module Hagl.Example.Matrix where
 
 import Hagl
 
