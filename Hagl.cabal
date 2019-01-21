@@ -1,27 +1,27 @@
-name:                Hagl
-version:             3.0.0
-synopsis:            A DSL for experimental game theory.
-homepage:            https://github.com/walkie/Hagl
-bug-reports:         https://github.com/walkie/Hagl/issues
-license:             BSD3
-license-file:        LICENSE
-author:              Eric Walkingshaw
-maintainer:          eric@walkingshaw.net
-category:            Game Theory
-build-type:          Simple
-cabal-version:       >=1.8
-description:         
-  A DSEL for experimental game theory (also called evolutionary game theory and
-  behavioral economics).  Supports defining games and strategies, then executing
+name:          Hagl
+version:       0.3.0
+synopsis:      A DSL for experimental game theory.
+homepage:      https://github.com/walkie/Hagl
+bug-reports:   https://github.com/walkie/Hagl/issues
+license:       BSD3
+license-file:  LICENSE
+author:        Eric Walkingshaw
+maintainer:    eric@walkingshaw.net
+category:      Game Theory
+build-type:    Simple
+cabal-version: >= 1.22
+description:
+  A DSEL for experimental game theory (a.k.a. evolutionary game theory,
+  behavioral economics). Supports defining games and strategies, then executing
   them repeatedly in order to collect and observe the results.
   .
   Hagl provides built-in support for standard game representations, such as
   normal and extensive form, and constructs for defining games in terms of the
-  manipulation of a shared state (as in tic-tac-toe).  New game representations
-  can be easily added by instantiating a type class.
+  manipulation of a shared state (as in tic-tac-toe). New game representations
+  are supported via a type class.
   .
   A monadic strategy DSL supports concise and vaguely English-like definitions of
-  strategies for playing these games, usually iteratively.
+  strategies for playing games, usually iteratively.
   .
   While Hagl provides some basic game analyses, its primary focus is simulation
   and experimentation.  Games can be executed and strategies can be pitted
@@ -30,13 +30,58 @@ description:
   For some concrete examples, see the included README.md file, available online
   here: <https://github.com/walkie/Hagl/blob/master/README.md>
 
-extra-source-files: README.md
+extra-source-files:
+  README.md
+
 source-repository head
   type:     git
   location: https://github.com/walkie/Hagl.git
   branch:   master
 
 library
-  exposed-modules:     Hagl, Hagl.Examples, Hagl.Exec, Hagl.Extensive, Hagl.Game, Hagl.Lists, Hagl.Normal, Hagl.Payoff, Hagl.Print, Hagl.StateGames, Hagl.Strategy, Hagl.Tournament, Hagl.Examples.Auction, Hagl.Examples.Chance, Hagl.Examples.Crisis, Hagl.Examples.Matrix, Hagl.Examples.Prisoner, Hagl.Examples.RPS, Hagl.Examples.TicTacToe
-  other-modules:       Hagl.History, Hagl.Simultaneous
-  build-depends:       base ==4.5.*, mtl ==2.1.*, containers ==0.4.*, transformers ==0.3.*, random ==1.0.*
+  hs-source-dirs:   src
+  default-language: Haskell2010
+  ghc-options:
+    -Wall
+    -Wredundant-constraints
+    -Wno-missing-signatures
+    -Wno-name-shadowing
+    -W
+  default-extensions:
+      DeriveDataTypeable
+    , DeriveGeneric
+    , FlexibleContexts
+    , GeneralizedNewtypeDeriving
+    , MultiParamTypeClasses
+    , OverloadedStrings
+  build-depends:
+      base
+    , containers
+    , mtl
+    , random
+    , transformers
+  exposed-modules:
+      Hagl
+    , Hagl.Examples
+    , Hagl.Examples.Auction
+    , Hagl.Examples.Beauty
+    , Hagl.Examples.Chance
+    , Hagl.Examples.Crisis
+    , Hagl.Examples.Matches
+    , Hagl.Examples.Matrix
+    , Hagl.Examples.Prisoner
+    , Hagl.Examples.RPS
+    , Hagl.Examples.TicTacToe
+    , Hagl.Exec
+    , Hagl.Extensive
+    , Hagl.Game
+    , Hagl.Lists
+    , Hagl.Normal
+    , Hagl.Payoff
+    , Hagl.Print
+    , Hagl.StateGames
+    , Hagl.Strategy
+    , Hagl.Tournament
+  other-modules:
+      Hagl.History
+    , Hagl.Simultaneous

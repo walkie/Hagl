@@ -67,7 +67,8 @@ player p e = decision p [e]
 
 -- | Add a decision branch to a game tree.
 (<|>) :: Discrete s mv -> Edge s mv -> Discrete s mv
-Discrete (s,Decision i) es <|> e = Discrete (s,Decision i) (e:es)
+Discrete (s, Decision i) es <|> e = Discrete (s, Decision i) (e:es)
+Discrete _ _ <|> _ = error "<|>: can only add branches to decision nodes"
 
 
 --
@@ -83,7 +84,7 @@ data GroupedTree t s mv = GroupedTree (InfoGroup t s mv) (t s mv)
 --   of possible locations.
 type InfoGroup t s mv = t s mv -> [t s mv]
 
-instance (GameTree t, Eq mv) => Game (GroupedTree t s mv) where
+instance GameTree t => Game (GroupedTree t s mv) where
   type TreeType (GroupedTree t s mv) = t
   type State    (GroupedTree t s mv) = s
   type Move     (GroupedTree t s mv) = mv

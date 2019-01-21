@@ -179,5 +179,3 @@ lastGame's = liftM lastGame
 -- | Selects the elements corresponding to the last `n` completed iterations of the game.
 lastNGames' :: GameM m g => Int -> m (ByGame a) -> m [a]
 lastNGames' i = liftM (lastNGames i)
-
-

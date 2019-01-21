@@ -6,7 +6,7 @@ module Hagl.Lists where
 
 import Control.Monad.IO.Class
 
-import Data.List     (elemIndex,intercalate,nub,sort)
+import Data.List     (intercalate,nub,sort)
 import Data.Maybe    (fromJust)
 import System.Random (randomRIO)
 
@@ -186,7 +186,7 @@ thisGame (ByGame as) = head as
 -- | Return the element corresponding to the most recently completed iteration.
 lastGame :: ByGame a -> a
 lastGame (ByGame [])      = error "lastGame: Empty game list."
-lastGame (ByGame [a])     = error "lastGame: No completed games."
+lastGame (ByGame [_])     = error "lastGame: No completed games."
 lastGame (ByGame (_:a:_)) = a
 
 -- | Return the elements corresponding to the most recently completed n

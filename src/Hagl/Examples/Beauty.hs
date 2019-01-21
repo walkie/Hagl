@@ -15,7 +15,6 @@ module Hagl.Examples.Beauty where
 
 import Data.Function (on)
 import Data.List
-import Data.Maybe (fromJust)
 
 import Hagl
 

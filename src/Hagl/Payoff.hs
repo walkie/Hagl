@@ -51,7 +51,7 @@ tie n = ByPlayer (replicate n 0)
 showFloat :: Float -> String
 showFloat f | f == fromIntegral i = show i
             | otherwise           = show f
-  where i = floor f
+  where i = floor f :: Integer
 
 -- | String representation of a Payoff.
 showPayoff :: Payoff -> String

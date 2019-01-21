@@ -1,8 +1,8 @@
-{-# LANGUAGE ExistentialQuantification, 
-             FlexibleContexts, 
-             FlexibleInstances, 
-             FunctionalDependencies,
-             MultiParamTypeClasses #-}
+{-# LANGUAGE
+      ExistentialQuantification, 
+      FlexibleInstances, 
+      FunctionalDependencies
+  #-}
 
 -- | At a high level, this module defines the execution of games and
 --   strategies in Hagl.  The goal is that end-users should be able to write
@@ -24,7 +24,6 @@ import Control.Monad.State hiding (State)
 
 import Control.Monad (liftM,liftM2)
 import Data.Function (on)
-import Data.Maybe    (isJust)
 
 import Hagl.Lists
 import Hagl.Payoff
@@ -38,7 +37,8 @@ import Hagl.History
 
 -- | The game execution monad.  A state monad transformer that maintains the
 --   game execution state.
-data ExecM g a = ExecM  { unE :: StateT (Exec g) IO a }
+newtype ExecM g a = ExecM  { unE :: StateT (Exec g) IO a }
+  deriving (Applicative, Functor, Monad)
 
 -- | This type class captures all monads that wrap the game execution monad,
 --   providing uniform access to the game execution state.  It is similar to
@@ -68,7 +68,8 @@ execGame g ps f = execStateT (unE f) (initExec g ps)
 -- | The strategy monad.  A state monad transformer that maintains the personal
 --   state of the player who is playing this strategy, and wraps the game
 --   execution monad.  This gives strategies access to the game execution state.
-data StratM s g a = StratM { unS :: StateT s (ExecM g) a }
+newtype StratM s g a = StratM { unS :: StateT s (ExecM g) a }
+  deriving (Applicative, Functor, Monad)
 
 -- | A strategy is a computation in the strategy monad that produces a move.
 type Strategy s g = StratM s g (Move g)
@@ -314,13 +315,6 @@ times n = numPlaying >>= go n . tie
 --
 -- Instances
 --
-
-instance Monad (ExecM g) where
-  return = ExecM . return
-  (ExecM x) >>= f = ExecM (x >>= unE . f)
-instance Monad (StratM s g) where
-  return = StratM . return
-  (StratM x) >>= f = StratM (x >>= unS . f)
 
 instance MonadState (Exec g) (ExecM g) where
   get = ExecM get

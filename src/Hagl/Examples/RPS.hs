@@ -1,4 +1,7 @@
-{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE
+      NoMonomorphismRestriction,
+      TypeFamilies
+  #-}
 
 {- |
 
@@ -13,7 +16,7 @@ From GHCi, try some of the following.
 
 module Hagl.Examples.RPS where
 
-import Prelude hiding (last)
+import Prelude hiding (last,pure)
 
 import Hagl
 

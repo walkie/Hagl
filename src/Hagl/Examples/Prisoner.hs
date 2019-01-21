@@ -18,7 +18,7 @@ From GHCi, try some of the following.
 module Hagl.Examples.Prisoner where
 
 import Control.Monad.State
-import Prelude hiding (last, print)
+import Prelude hiding (last,print,pure)
 
 import Hagl
 
@@ -98,7 +98,7 @@ alt' = Player "Stately Alternator" C $
 
 -- | Cooperates every third round, implemented using state.
 mod3 :: Player Dilemma
-mod3 = Player "Mod3 Cooperator" 0 $
+mod3 = Player "Mod3 Cooperator" (0 :: Int) $
   do i <- get
      put (i+1)
      return $ if i `mod` 3 == 0 then C else D

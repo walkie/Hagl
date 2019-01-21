@@ -26,7 +26,8 @@ type Transcript mv  = [MoveEvent mv]
 -- | Create a move event from an action and the move made.
 moveEvent :: Action mv -> mv -> MoveEvent mv
 moveEvent (Decision p) mv = (Just p,  mv)
-moveEvent (Chance   _) mv = (Nothing, mv)
+moveEvent (Chance _)   mv = (Nothing, mv)
+moveEvent (Payoff _)   _  = error "moveEvent: payoff is not a move"
 
 
 --
