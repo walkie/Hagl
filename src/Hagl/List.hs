@@ -13,17 +13,18 @@ import System.Random (randomRIO)
 -- * Probability distributions
 --
 
--- | A probability distribution.  The integer coefficients indicate the
---   relative likelihood of each element of type 'a'.  For example,
---   given distribution @[(3,True),(1,False)]@, @True@ is three times as
---   likely as @False@.
+-- | A probability distribution. The integer coefficients indicate the
+--   relative likelihood of each element of type 'a'. For example, given
+--   distribution @[(3,True),(1,False)]@, the value @True@ is three times
+--   as likely as @False@.
 type Dist a = [(Int,a)]
 
--- | Expand a distribution into a list of values according to their
---   relative likelihoods.
+-- | Expand a distribution into a list of values according to their relative
+--   likelihoods.
 --
 --   >>> expandDist [(3,True),(1,False)]
 --   [True,True,True,False]
+--
 expandDist :: Dist a -> [a]
 expandDist d = concat [replicate i a | (i, a) <- d]
 
@@ -36,8 +37,8 @@ fromDist = randomlyFrom . expandDist
 -- * Dimensioned lists
 --
 
--- | A class for finite integer-indexed lists where each integer
---   corresponds to an element in a set X.
+-- | A class for finite integer-indexed lists where each integer corresponds
+--   to an element in a set X.
 --   Minimum definition is @toList@, @fromList@, @indexes@.
 --   Others can be overridden for efficiency.
 class Functor d => ByX d where
@@ -72,7 +73,6 @@ dnull = null . toAssocList
 
 
 -- ** ByPlayer lists
---
 
 -- | A player ID is used to index a `ByPlayer` list.
 type PlayerID = Int
@@ -107,7 +107,6 @@ instance ByX ByPlayer where
 
 
 -- ** ByTurn lists
---
 
 -- | A list where each element corresponds to a played turn in a game.
 newtype ByTurn a = ByTurn [a] deriving (Eq,Show,Functor)
@@ -147,7 +146,6 @@ instance ByX ByTurn where
 
 
 -- ** ByGame lists
---
 
 -- | A list where each element corresponds to one played iteration of
 --   an iterated game.
@@ -203,17 +201,19 @@ instance ByX ByGame where
   maxX = thisGame
 
 
+--
 -- * List utility functions
 --
 
 -- | Produce a list of all ordered combinations of elements drawn from each
---   sublist of the argument.  Probably best demonstrated by example.
+--   sublist of the argument.
 --
 --   >>> cross [[1,2],[3,4],[5,6]]
 --   [[1,3,5],[1,3,6],[1,4,5],[1,4,6],[2,3,5],[2,3,6],[2,4,5],[2,4,6]] 
 -- 
 --   >>> cross [[1,2],[2,2,1]]
 --   [[1,2],[1,2],[1,1],[2,2],[2,2],[2,1]]
+--   
 cross :: [[a]] -> [[a]]
 cross (xs:xss) = [y:ys | y <- xs, ys <- cross xss]
 cross [] = [[]]
@@ -223,6 +223,7 @@ cross [] = [[]]
 --
 --   >>> ucross [[1,2],[2,2,1]]
 --   [[1,2],[1,1],[2,2]]
+--
 ucross :: (Ord a) => [[a]] -> [[a]]
 ucross = nub . map sort . cross
 
@@ -230,6 +231,7 @@ ucross = nub . map sort . cross
 --
 --   >>> chunk 4 [1..9]
 --   [[1,2,3,4],[5,6,7,8],[9]]
+--
 chunk :: Int -> [a] -> [[a]]
 chunk _ [] = []
 chunk n l = take n l : chunk n (drop n l)

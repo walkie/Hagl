@@ -5,14 +5,14 @@
   #-}
 
 -- | At a high level, this module defines the execution of games and
---   strategies in Hagl.  The goal is that end-users should be able to write
+--   strategies in Hagl. The goal is that end-users should be able to write
 --   strategies and execute games without understanding the gory monadic
---   details.  For many examples, see "Hagl.Examples".
+--   details. For many examples, see @Hagl.Example@.
 --
---   Now, about the gory details...  This module defines two monad
---   transformers, `ExecM` and `StratM`.  `ExecM` maintains the current
+--   Now, about the gory details... This module defines two monad
+--   transformers, `ExecM` and `StratM`. `ExecM` maintains the current
 --   execution state of the game, while `StratM` adds an additional state
---   that is local to each strategy.  Each strategy may define it's own
+--   that is local to each strategy. Each strategy may define it's own
 --   type of state, and strategies cannot affect the state of other strategies.
 --
 --   At the center of the monad onion is the `IO` monad, allowing both game
@@ -35,13 +35,13 @@ import Hagl.History
 -- * Game execution monad
 --
 
--- | The game execution monad.  A state monad transformer that maintains the
+-- | The game execution monad. A state monad transformer that maintains the
 --   game execution state.
 newtype ExecM g a = ExecM  { unE :: StateT (Exec g) IO a }
   deriving (Applicative, Functor, Monad)
 
 -- | This type class captures all monads that wrap the game execution monad,
---   providing uniform access to the game execution state.  It is similar to
+--   providing uniform access to the game execution state. It is similar to
 --   `MonadIO` for the `IO` monad.
 class (Game g, Monad m, MonadIO m) => GameM m g | m -> g where
   getExec :: m (Exec g)
