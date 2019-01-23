@@ -76,6 +76,7 @@ library
     , Hagl.Exec
     , Hagl.Extensive
     , Hagl.Game
+    , Hagl.GameTree
     , Hagl.List
     , Hagl.Normal
     , Hagl.Payoff

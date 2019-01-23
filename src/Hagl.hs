@@ -16,6 +16,7 @@ module Hagl (
 import Hagl.Exec
 import Hagl.Extensive
 import Hagl.Game
+import Hagl.GameTree
 import Hagl.List
 import Hagl.Normal
 import Hagl.Payoff
