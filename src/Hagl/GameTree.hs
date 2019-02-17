@@ -54,7 +54,7 @@ class Edges e where
 -- | The edges in a finite game tree associate a finite set of discrete moves
 --   with subtrees using an association list.
 newtype Finite s mv = Finite [(mv, GameTree Finite s mv)]
-  deriving Show
+  deriving (Show,Semigroup,Monoid)
 
 instance Edges Finite where
   followEdge (Finite es) _ mv = lookup mv es

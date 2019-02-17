@@ -1,7 +1,7 @@
 -- | This module provides data structures for tracking the execution of
---   games in Hagl, and simple functions for manipulating this data.  Note
---   that underscore-prefixed functions have monadic versions in "Hagl.Exec"
---   without the underscore.  Usually you want the monadic versions from
+--   games in Hagl, and simple functions for manipulating this data. Note
+--   that underscore-prefixed functions have monadic versions in @Hagl.Exec@
+--   without the underscore. Usually you want the monadic versions from
 --   within strategies.
 module Hagl.History where
 
@@ -10,7 +10,6 @@ import Data.Maybe (fromMaybe)
 
 import Hagl.List
 import Hagl.Payoff
-import Hagl.Game
 
 
 --
@@ -21,13 +20,7 @@ import Hagl.Game
 type MoveEvent mv = (Maybe PlayerID, mv)
 
 -- | A transcript is a list of move events.
-type Transcript mv  = [MoveEvent mv]
-
--- | Create a move event from an action and the move made.
-moveEvent :: Action mv -> mv -> MoveEvent mv
-moveEvent (Decision p) mv = (Just p,  mv)
-moveEvent (Chance _)   mv = (Nothing, mv)
-moveEvent (Payoff _)   _  = error "moveEvent: payoff is not a move"
+type Transcript mv = [MoveEvent mv]
 
 
 --
@@ -76,5 +69,3 @@ _score :: History mv -> Payoff
 _score = ByPlayer . map sum . transpose .   -- calculate score
          map everyPlayer . completedGames . -- convert to plain lists
          fmap _payoff . _summaries          -- get payoffs for each completed game
-
-

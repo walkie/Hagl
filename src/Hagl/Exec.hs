@@ -7,15 +7,15 @@
 -- | At a high level, this module defines the execution of games and
 --   strategies in Hagl. The goal is that end-users should be able to write
 --   strategies and execute games without understanding the gory monadic
---   details. For many examples, see @Hagl.Example@.
+--   details. For many examples, see @Hagl.Examples@.
 --
 --   Now, about the gory details... This module defines two monad
---   transformers, `ExecM` and `StratM`. `ExecM` maintains the current
---   execution state of the game, while `StratM` adds an additional state
---   that is local to each strategy. Each strategy may define it's own
---   type of state, and strategies cannot affect the state of other strategies.
+--   transformers, @ExecM@ and @StratM@. @ExecM@ maintains the current
+--   execution state of the game, while @StratM@ adds an additional state
+--   that is local to each strategy. Each strategy may define its own
+--   type of state and strategies cannot affect the state of other strategies.
 --
---   At the center of the monad onion is the `IO` monad, allowing both game
+--   At the center of the monad onion is the @IO@ monad, allowing both game
 --   execution and strategies to do things like print output, get random
 --   numbers, and look up the price of tea in Shanghai.
 module Hagl.Exec where
@@ -25,10 +25,11 @@ import Control.Monad.State hiding (State)
 import Control.Monad (liftM,liftM2)
 import Data.Function (on)
 
+import Hagl.Game
+import Hagl.GameTree
+import Hagl.History
 import Hagl.List
 import Hagl.Payoff
-import Hagl.Game
-import Hagl.History
 
 
 --
@@ -37,13 +38,14 @@ import Hagl.History
 
 -- | The game execution monad. A state monad transformer that maintains the
 --   game execution state.
-newtype ExecM g a = ExecM  { unE :: StateT (Exec g) IO a }
+newtype ExecM g a = ExecM { unE :: StateT (Exec g) IO a }
   deriving (Applicative, Functor, Monad)
 
 -- | This type class captures all monads that wrap the game execution monad,
 --   providing uniform access to the game execution state. It is similar to
---   `MonadIO` for the `IO` monad.
-class (Game g, Monad m, MonadIO m) => GameM m g | m -> g where
+--   @MonadIO@ for the @IO@ monad.
+class (Game g, Edges (Edge g), Eq (Move g), Monad m, MonadIO m)
+    => GameM m g | m -> g where
   getExec :: m (Exec g)
 
 -- | Execute a game with some given players, returning the payoff.
@@ -122,13 +124,13 @@ instance Ord (Player g) where
 
 -- | The state of a game execution.
 data Exec g = Exec {
-  _game        :: g,                               -- ^ Game definition.
-  _players     :: ByPlayer (Player g),             -- ^ Players active in the game.
-  _location    :: (TreeType g) (State g) (Move g), -- ^ The current location in the game tree.
-  _transcript  :: Transcript (Move g),             -- ^ Transcript of the current iteration.
-  _history     :: History (Move g),                -- ^ History of all completed iterations.
-  _numMoves    :: ByPlayer Int,                    -- ^ Total number of moves played by each player.
-  _gameNumber  :: Int                              -- ^ The current iteration number.
+  _game        :: g,                                    -- ^ Game definition.
+  _players     :: ByPlayer (Player g),                  -- ^ Players active in the game.
+  _location    :: GameTree (Edge g) (State g) (Move g), -- ^ The current location in the game tree.
+  _transcript  :: Transcript (Move g),                  -- ^ Transcript of the current iteration.
+  _history     :: History (Move g),                     -- ^ History of all completed iterations.
+  _numMoves    :: ByPlayer Int,                         -- ^ Total number of moves played by each player.
+  _gameNumber  :: Int                                   -- ^ The current iteration number.
 }
 
 -- | Initial game execution state.
@@ -137,16 +139,14 @@ initExec g ps = Exec g (ByPlayer ps) (gameTree g) [] (ByGame []) ms 1
   where ms = ByPlayer (replicate (length ps) 0)
 
 
---
 -- ** Execution state accessors
---
 
 -- | The game being played.
 game :: GameM m g => m g
 game = liftM _game getExec
 
 
--- *** About players
+-- *** Players
 
 -- | The players playing.
 players :: GameM m g => m (ByPlayer (Player g))
@@ -159,20 +159,20 @@ numPlaying = liftM dlength players
 -- | The index of the currently active player.
 myPlayerID :: GameM m g => m PlayerID
 myPlayerID = do
-  a <- liftM treeAction location
-  case a of
-    Decision p -> return p
-    _ -> error "Internal error: myPlayerID on non-decision node!"
+    a <- liftM treeAction location
+    case a of
+      Decision p _ -> return p
+      _ -> error "Internal error: myPlayerID on non-decision node!"
 
 -- | The currently active player.
 me :: GameM m g => m (Player g)
 me = liftM2 forPlayer myPlayerID players
 
 
--- *** About current iteration
+-- *** Current iteration
 
 -- | Current location in the game graph.
-location :: GameM m g => m ((TreeType g) (State g) (Move g))
+location :: GameM m g => m (GameTree (Edge g) (State g) (Move g))
 location = liftM _location getExec
 
 -- | The current game state.
@@ -180,8 +180,8 @@ gameState :: GameM m g => m (State g)
 gameState = liftM treeState location
 
 -- | Currently available moves.
-availMoves :: (DiscreteGame g, GameM m g) => m [Move g]
-availMoves = liftM movesFrom location
+availMoves :: (FiniteGame g, GameM m g) => m [Move g]
+availMoves = liftM treeMoves location
 
 -- | The current iteration number (i.e. completed iterations +1).
 gameNumber :: GameM m g => m Int
@@ -200,7 +200,7 @@ isNewGame :: GameM m g => m Bool
 isNewGame = liftM null transcript
 
 
--- *** About all iterations
+-- *** All iterations
 
 -- | The number of completed game iterations.
 numCompleted :: GameM m g => m Int
@@ -208,10 +208,11 @@ numCompleted = liftM (subtract 1) gameNumber
 
 -- | Historical record of all game iterations.
 history :: GameM m g => m (History (Move g))
-history = do t  <- transcript
-             ms <- liftM (`summarize` t) numPlaying
-             h  <- liftM _history getExec
-             return (addForNewGame (t,(ms,Nothing)) h)
+history = do
+    t  <- transcript
+    ms <- liftM (`summarize` t) numPlaying
+    h  <- liftM _history getExec
+    return (addForNewGame (t,(ms,Nothing)) h)
 
 -- | Transcript of each iteration, including the current one.
 transcripts :: GameM m g => m (ByGame (Transcript (Move g)))
@@ -241,16 +242,18 @@ moves = liftM (fmap _moveSummary) summaries
 --   (which may be undefined for some players).
 firstMove :: GameM m g => m (ByGame (ByPlayer (Move g)))
 firstMove = liftM ((fmap . fmap) (first . everyTurn)) moves
-  where first (a:_) = a
-        first _     = error "firstMove: No moves played."
+  where
+    first (a:_) = a
+    first _     = error "firstMove: No moves played."
 
 -- | The only move of every iteration, including the current one 
 --   (which may be undefined for some players).
 onlyMove :: GameM m g => m (ByGame (ByPlayer (Move g)))
 onlyMove = liftM ((fmap . fmap) (only . everyTurn)) moves
-  where only [a] = a
-        only []  = error "onlyMove: No moves played."
-        only _   = error "onlyMove: Multiple moves played."
+  where
+    only [a] = a
+    only []  = error "onlyMove: No moves played."
+    only _   = error "onlyMove: Multiple moves played."
 
 
 --
@@ -258,55 +261,73 @@ onlyMove = liftM ((fmap . fmap) (only . everyTurn)) moves
 --
 
 -- | Process one node in the game tree.
-step :: (Game g, Eq (Move g)) => ExecM g (Maybe Payoff)
-step = location >>= processLocation
-  where
-    processLocation l = case treeAction l of
-      Decision i -> decide i   >>= performMove l
-      Chance d   -> fromDist d >>= performMove l
-      Payoff p   -> givePayoff p
-    
-    performMove l m = do
-      e <- getExec
-      let a = treeAction l
-      case treeMove l m of
-        Just l' -> put e { _location   = l',
-                           _transcript = moveEvent a m : _transcript e,
-                           _numMoves   = inc a (_numMoves e) }
-        Nothing -> fail "step: illegal move!"
-      return Nothing
-    
-    inc (Decision p) ns = setForPlayer p (forPlayer p ns + 1) ns
-    inc _            ns = ns
+-- step :: (Game g, Eq (Move g), Edges (Edge g)) => ExecM g (Maybe Payoff)
+step :: GameM m g => m (Maybe Payoff)
+step = do
+    t <- location
+    case treeAction t of
+      Decision i out -> do
+        mv <- decide i
+        performMove out (Just i) mv
+        return Nothing
+      Chance d out -> do
+        mv <- fromDist d
+        performMove out Nothing mv
+        return Nothing
+      Payoff p -> do
+        givePayoff p
+        return (Just p)
 
-    decide i = do
-      p <- liftM (forPlayer i) players
-      (m,p') <- runStrategy p
-      e <- getExec
-      put e { _players = setForPlayer i p (_players e) }
-      return m
-    
-    givePayoff p = do
-      e <- getExec
-      let t = _transcript e
-      put e { _location   = gameTree (_game e),
-              _transcript = [],
-              _history    = addForNewGame (t, (summarize (dlength p) t, Just p)) (_history e),
-              _gameNumber = _gameNumber e + 1 }
-      return (Just p)
+performMove
+  :: GameM m g
+  => Edge g (State g) (Move g)
+  -> Maybe PlayerID
+  -> Move g
+  -> m ()
+performMove out p mv = do
+    e <- getExec
+    s <- gameState
+    case followEdge out s mv of
+      Just t' -> put e { _location   = t',
+                         _transcript = (p,mv) : _transcript e,
+                         _numMoves   = inc p (_numMoves e) }
+      Nothing -> fail "step: illegal move!"
+  where
+    inc (Just i) ns = setForPlayer i (forPlayer i ns + 1) ns
+    inc _        ns = ns
+
+decide :: GameM m g => PlayerID -> m (Move g)
+decide i = do
+    p <- liftM (forPlayer i) players
+    (mv,p') <- runStrategy p
+    e <- getExec
+    put e { _players = setForPlayer i p (_players e) }
+    return mv
+
+givePayoff :: GameM m g => Payoff -> m ()
+givePayoff p = do
+  e <- getExec
+  let t = _transcript e
+  put e { _location   = gameTree (_game e),
+          _transcript = [],
+          _history    = addForNewGame (t, (summarize (dlength p) t, Just p)) (_history e),
+          _gameNumber = _gameNumber e + 1 }
 
 
 -- | Run the current game iteration to completion, returning the payoff.
-finish :: (Game g, Eq (Move g)) => ExecM g Payoff
+-- finish :: (Game g, Eq (Move g), Edges (Edge g)) => ExecM g Payoff
+finish :: GameM m g => m Payoff
 finish = step >>= maybe finish return
 
--- | Execute a single game iteration, returning the payoff.  (This is the same
+-- | Execute a single game iteration, returning the payoff. (This is the same
 --   as finish.)
-once :: (Game g, Eq (Move g)) => ExecM g Payoff
+-- once :: (Game g, Eq (Move g)) => ExecM g Payoff
+once :: GameM m g => m Payoff
 once = finish
 
 -- | Execute n game iterations, returning the cumulative score.
-times :: (Game g, Eq (Move g)) => Int -> ExecM g Payoff
+-- times :: (Game g, Eq (Move g)) => Int -> ExecM g Payoff
+times :: GameM m g => Int -> m Payoff
 times n = numPlaying >>= go n . tie
   where go n p | n <= 0    = return p
                | otherwise = once >>= go (n-1) . addPayoffs p
