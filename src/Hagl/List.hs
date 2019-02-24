@@ -94,13 +94,17 @@ everyPlayer (ByPlayer as) = as
 
 -- | The next player ID out of @n@ players.
 nextPlayer :: Int -> PlayerID -> PlayerID
-nextPlayer n p | p >= n    = 1
-               | otherwise = p + 1
+nextPlayer n i | i >= n    = 1
+               | otherwise = i + 1
+
+-- | Modify the element corresponding to a given player ID.
+modifyForPlayer :: PlayerID -> (a -> a) -> ByPlayer a -> ByPlayer a
+modifyForPlayer i f (ByPlayer l) = ByPlayer (pre ++ f a : post)
+  where (pre,a:post) = splitAt (i-1) l
 
 -- | Set the element corresponding to a the given player ID.
 setForPlayer :: PlayerID -> a -> ByPlayer a -> ByPlayer a
-setForPlayer p a (ByPlayer l) = ByPlayer (h ++ a:t)
-  where (h,_:t) = splitAt (p-1) l
+setForPlayer i a = modifyForPlayer i (const a)
 
 instance ByX ByPlayer where
   toAssocList (ByPlayer l) = zip [1 ..] l

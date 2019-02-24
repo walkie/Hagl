@@ -3,7 +3,7 @@
 -- | This module provides impelemntations of some common strategies and
 --   data selectors for writing custom strategies in a nice way.
 --   Also essential for writing custom strategies are the execution state
---   accessor functions in "Hagl.Exec" and "Hagl.Iterated".
+--   accessor functions in @Hagl.Game@.
 module Hagl.Strategy where
 
 import Control.Exception   (catch)
@@ -17,7 +17,6 @@ import Prelude hiding (catch)
 
 import Hagl.List
 import Hagl.Game
-import Hagl.Exec
 
 
 --

@@ -9,7 +9,7 @@ import Data.List     (nub,sortBy)
 import Hagl.List
 import Hagl.Payoff
 import Hagl.Game
-import Hagl.Exec
+
 
 --
 -- * Tournament execution

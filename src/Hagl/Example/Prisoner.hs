@@ -123,7 +123,7 @@ grim' :: Player Dilemma
 grim' = Player "Stately Grim" False $ 
   play C `atFirstThen`
   do m <- her (lastGame's onlyMove)
-     triggered <- update (|| m == D)
+     triggered <- modify (|| m == D) >> get
      play (if triggered then D else C)
 
 -- | If last move resulted in a "big" payoff, do it again, otherwise switch.

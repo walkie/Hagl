@@ -1,6 +1,6 @@
 -- | This module provides data structures for tracking the execution of
 --   games in Hagl, and simple functions for manipulating this data. Note
---   that underscore-prefixed functions have monadic versions in @Hagl.Exec@
+--   that underscore-prefixed functions have monadic versions in @Hagl.Game@
 --   without the underscore. Usually you want the monadic versions from
 --   within strategies.
 module Hagl.History where

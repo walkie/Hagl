@@ -1,6 +1,5 @@
 -- | This module provides a convenient way to import all of Hagl at once.
 module Hagl (
-  module Hagl.Exec,
   module Hagl.Extensive,
   module Hagl.Game,
   module Hagl.List,
@@ -13,7 +12,6 @@ module Hagl (
   module Hagl.Tournament
 ) where
 
-import Hagl.Exec
 import Hagl.Extensive
 import Hagl.Game
 import Hagl.GameTree

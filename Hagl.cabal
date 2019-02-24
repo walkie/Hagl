@@ -73,7 +73,6 @@ library
     , Hagl.Example.RPS
     , Hagl.Example.TicTacToe
     , Hagl.Examples
-    , Hagl.Exec
     , Hagl.Extensive
     , Hagl.Game
     , Hagl.GameTree

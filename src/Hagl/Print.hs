@@ -13,7 +13,6 @@ import Hagl.List
 import Hagl.Payoff
 import Hagl.Game
 import Hagl.History
-import Hagl.Exec
 
 --
 -- * Generic printing functions
