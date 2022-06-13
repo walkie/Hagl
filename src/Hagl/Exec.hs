@@ -38,12 +38,12 @@ import Hagl.History
 -- | The game execution monad.  A state monad transformer that maintains the
 --   game execution state.
 newtype ExecM g a = ExecM  { unE :: StateT (Exec g) IO a }
-  deriving (Applicative, Functor, Monad)
+  deriving (Applicative, Functor, Monad, MonadFail)
 
 -- | This type class captures all monads that wrap the game execution monad,
 --   providing uniform access to the game execution state.  It is similar to
 --   `MonadIO` for the `IO` monad.
-class (Game g, Monad m, MonadIO m) => GameM m g | m -> g where
+class (Game g, Monad m, MonadIO m, MonadFail m) => GameM m g | m -> g where
   getExec :: m (Exec g)
 
 -- | Execute a game with some given players, returning the payoff.
@@ -69,7 +69,7 @@ execGame g ps f = execStateT (unE f) (initExec g ps)
 --   state of the player who is playing this strategy, and wraps the game
 --   execution monad.  This gives strategies access to the game execution state.
 newtype StratM s g a = StratM { unS :: StateT s (ExecM g) a }
-  deriving (Applicative, Functor, Monad)
+  deriving (Applicative, Functor, Monad, MonadFail)
 
 -- | A strategy is a computation in the strategy monad that produces a move.
 type Strategy s g = StratM s g (Move g)
