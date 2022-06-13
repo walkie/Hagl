@@ -50,6 +50,7 @@ library
   default-extensions:
       DeriveDataTypeable
     , DeriveGeneric
+    , DeriveTraversable
     , FlexibleContexts
     , GeneralizedNewtypeDeriving
     , MultiParamTypeClasses
@@ -58,6 +59,7 @@ library
   build-depends:
       base
     , containers
+    , exceptions
     , mtl
     , random
     , transformers

@@ -1,8 +1,3 @@
-{-# LANGUAGE FlexibleInstances,
-             FunctionalDependencies,
-             MultiParamTypeClasses,
-             TypeFamilies #-}
-
 -- | This module provides different representations of normal form games, smart
 --   constructors for creating them, and functions for analyzing them.
 module Hagl.Normal where
@@ -14,7 +9,6 @@ import Data.List     (elemIndex,intercalate,intersect,isPrefixOf,transpose)
 import Hagl.List
 import Hagl.Payoff
 import Hagl.Game
-import Hagl.Extensive
 import Hagl.Simultaneous
 
 
@@ -26,8 +20,8 @@ import Hagl.Simultaneous
 --   Technically this includes all finite, discrete games, but such a generic
 --   instance is not provided.  Rather this is used to provide a common
 --   interface for grid-structured games.
-class IsNormal g mv | g -> mv where
-  toNormal :: g -> Normal mv
+class Game g => IsNormal g where
+  toNormal :: g -> Normal (Move g)
   
 -- | A general normal form game.  Arguments are the number of players,
 --   a list of moves available to each player, and the payoff corresponding

@@ -65,7 +65,12 @@ _summaries :: History mv -> ByGame (Summary mv)
 _summaries = fmap snd
 
 -- | Compute the current score from a history.
-_score :: History mv -> Payoff
-_score = ByPlayer . map sum . transpose .   -- calculate score
+_score :: MonadThrow m => History mv -> m Payoff
+_score h = do
+    ByPlayer ps <- completedGames (fmap _payoff (_summaries h))  -- get all the payoffs
+    map every
+
+    ByPlayer . map sum . transpose .   -- calculate score
+
          map everyPlayer . completedGames . -- convert to plain lists
          fmap _payoff . _summaries          -- get payoffs for each completed game

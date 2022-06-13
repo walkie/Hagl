@@ -3,10 +3,12 @@
 module Hagl.List where
 
 import Control.Monad.IO.Class
+import Control.Monad.Catch (MonadThrow,throwM)
 
-import Data.List     (intercalate,nub,sort)
-import Data.Maybe    (fromJust)
+import Data.List (intercalate,nub,sort)
 import System.Random (randomRIO)
+
+import Hagl.Exception
 
 
 --
@@ -37,55 +39,26 @@ fromDist = randomlyFrom . expandDist
 -- * Dimensioned lists
 --
 
--- | A class for finite integer-indexed lists where each integer corresponds
---   to an element in a set X.
---   Minimum definition is @toList@, @fromList@, @indexes@.
---   Others can be overridden for efficiency.
-class Functor d => ByX d where
-
-  -- | Convert the dimensioned list into an association list from
-  --   indexes to values.
-  toAssocList :: d a -> [(Int, a)]
-
-  -- | Get the element corresponding to the given index.
-  forX :: Int -> d a -> Maybe a
-  forX i = lookup i . toAssocList
-
-  -- | Get the element corresponding to the smallest index in the list.
-  minX :: d a -> a
-  minX l | null ixs  = error "minX: empty list"
-         | otherwise = fromJust $ forX (minimum ixs) l
-    where ixs = map fst (toAssocList l)
-  
-  -- | Get the element corresponding to the largest index in the list.
-  maxX :: d a -> a
-  maxX l | null ixs  = error "maxX: empty list"
-         | otherwise = fromJust $ forX (maximum ixs) l
-    where ixs = map fst (toAssocList l)
-
--- | Length of a dimensioned list.
-dlength :: ByX d => d a -> Int
-dlength = length . toAssocList
-
--- | Is this dimensioned list empty?
-dnull :: ByX d => d a -> Bool
-dnull = null . toAssocList
-
-
 -- ** ByPlayer lists
 
 -- | A player ID is used to index a `ByPlayer` list.
 type PlayerID = Int
 
 -- | A list where each element corresponds to a particular player.
-newtype ByPlayer a = ByPlayer [a] deriving (Eq,Show,Functor)
+newtype ByPlayer a = ByPlayer [a]
+  deriving (Eq,Show,Foldable,Functor,Traversable)
+
+-- | Throw an exception for a bad PlayerID argument.
+throwBadPlayerID :: MonadThrow m => Int -> PlayerID -> m a
+throwBadPlayerID np i = throwM (NoSuchElement msg)
+  where msg = "Bad PlayerID: " ++ show i ++ ", number of players: " ++ show np
 
 -- | Return the element corresponding to the given `PlayerID`.
-forPlayer :: PlayerID -> ByPlayer a -> a
-forPlayer i (ByPlayer as) | i <= n    = as !! (i-1)
-                          | otherwise = error e
+forPlayer :: MonadThrow m => PlayerID -> ByPlayer a -> m a
+forPlayer i (ByPlayer as)
+    | i > 0 && i <= n = return (as !! (i-1))
+    | otherwise       = throwBadPlayerID n i
   where n = length as
-        e = "forPlayer: PlayerID=" ++ show i ++ " numPlayers=" ++ show n
 
 -- | Return the elements corresponding to every player (all elements as
 --   a plain list).
@@ -94,30 +67,37 @@ everyPlayer (ByPlayer as) = as
 
 -- | The next player ID out of @n@ players.
 nextPlayer :: Int -> PlayerID -> PlayerID
-nextPlayer n i | i >= n    = 1
-               | otherwise = i + 1
+nextPlayer n i | i < 0 || i >= n = 1
+               | otherwise       = i + 1
 
 -- | Modify the element corresponding to a given player ID.
-modifyForPlayer :: PlayerID -> (a -> a) -> ByPlayer a -> ByPlayer a
-modifyForPlayer i f (ByPlayer l) = ByPlayer (pre ++ f a : post)
-  where (pre,a:post) = splitAt (i-1) l
+modifyForPlayer :: MonadThrow m => PlayerID -> (a -> a) -> ByPlayer a -> m (ByPlayer a)
+modifyForPlayer i f (ByPlayer as)
+    | i > 0 && i <= np = return (ByPlayer (pre ++ f a : post))
+    | otherwise        = throwBadPlayerID np i
+  where
+    np = length as
+    (pre,a:post) = splitAt (i-1) as
 
 -- | Set the element corresponding to a the given player ID.
-setForPlayer :: PlayerID -> a -> ByPlayer a -> ByPlayer a
+setForPlayer :: MonadThrow m => PlayerID -> a -> ByPlayer a -> m (ByPlayer a)
 setForPlayer i a = modifyForPlayer i (const a)
-
-instance ByX ByPlayer where
-  toAssocList (ByPlayer l) = zip [1 ..] l
 
 
 -- ** ByTurn lists
 
 -- | A list where each element corresponds to a played turn in a game.
-newtype ByTurn a = ByTurn [a] deriving (Eq,Show,Functor)
+newtype ByTurn a = ByTurn [a]
+  deriving (Eq,Show,Foldable,Functor,Traversable)
 
 -- | Return the element corresponding to the given turn number.
-forTurn :: Int -> ByTurn a -> a
-forTurn i (ByTurn as) = as !! (length as - i)
+forTurn :: MonadThrow m => Int -> ByTurn a -> m a
+forTurn i (ByTurn as)
+    | i > 0 && i <= n = return (as !! (n-i))
+    | otherwise       = throwM (NoSuchElement msg)
+  where
+    n = length as
+    msg = "forTurn: " ++ show i ++ ", number of turns: " ++ show n
 
 -- | Return the elements corresponding to every turn (all elements as
 --   a plain list).
@@ -125,39 +105,41 @@ everyTurn :: ByTurn a -> [a]
 everyTurn (ByTurn as) = as
 
 -- | Return the element corresponding to the first turn of the game.
-firstTurn :: ByTurn a -> a
-firstTurn (ByTurn []) = error "firstTurn: Empty turn list."
-firstTurn (ByTurn as) = last as
+firstTurn :: MonadThrow m => ByTurn a -> m a
+firstTurn (ByTurn []) = throwM (NoSuchElement "firstTurn: empty turn list")
+firstTurn (ByTurn as) = return (last as)
 
 -- | Return the element corresponding to the most recently played turn.
-lastTurn :: ByTurn a -> a
-lastTurn (ByTurn []) = error "lastTurn: Empty turn list."
-lastTurn (ByTurn as) = head as
+lastTurn :: MonadThrow m => ByTurn a -> m a
+lastTurn (ByTurn []) = throwM (NoSuchElement "lastTurn: empty turn list")
+lastTurn (ByTurn as) = return (head as)
 
 -- | Return the elements corresponding to the most recently played n
 --   turns of the game.
-lastNTurns :: Int -> ByTurn a -> [a]
+lastNTurns :: MonadThrow m => Int -> ByTurn a -> m [a]
 lastNTurns n (ByTurn as)
-    | length as' == n = as'
-    | otherwise       = error $ "lastNTurns: Not enough turns: " ++ show n
-  where as' = take n as
-
-
-instance ByX ByTurn where
-  toAssocList (ByTurn l) = zip [length l ..] l
-  minX = firstTurn
-  maxX = lastTurn
+    | length as' == n = return as'
+    | otherwise       = throwM (NoSuchElement msg)
+  where
+    as' = take n as
+    msg = "lastNTurns: not enough turns: " ++ show n
 
 
 -- ** ByGame lists
 
 -- | A list where each element corresponds to one played iteration of
 --   an iterated game.
-newtype ByGame a = ByGame [a] deriving (Eq,Show,Functor)
+newtype ByGame a = ByGame [a]
+  deriving (Eq,Show,Foldable,Functor,Traversable)
 
 -- | Return the element corresponding to the given iteration number.
-forGame :: Int -> ByGame a -> a
-forGame i (ByGame as) = as !! (length as - i)
+forGame :: MonadThrow m => Int -> ByGame a -> m a
+forGame i (ByGame as)
+    | i > 0 && i <= n = return (as !! (n-i))
+    | otherwise       = throwM (NoSuchElement msg)
+  where
+    n = length as
+    msg = "forGame: " ++ show i ++ ", number of games: " ++ show n
 
 -- | Add an element corresponding to a new game iteration.
 addForNewGame :: a -> ByGame a -> ByGame a
@@ -169,40 +151,34 @@ everyGame :: ByGame a -> [a]
 everyGame (ByGame as) = as
 
 -- | Return the elements corresponding to all completed iterations.
-completedGames :: ByGame a -> [a]
-completedGames (ByGame []) = error "completedGames: Empty game list."
-completedGames (ByGame as) = tail as
+completedGames :: MonadThrow m => ByGame a -> m [a]
+completedGames (ByGame []) = throwM (NoSuchElement "completedGames: empty game list")
+completedGames (ByGame as) = return (tail as)
 
 -- | Return the element corresponding to the first iteration.
-firstGame :: ByGame a -> a
-firstGame (ByGame []) = error "firstGame: Empty game list."
-firstGame (ByGame as) = last as
+firstGame :: MonadThrow m => ByGame a -> m a
+firstGame (ByGame []) = throwM (NoSuchElement "firstGame: empty game list")
+firstGame (ByGame as) = return (last as)
 
 -- | Return the element corresponding to the current iteration.
-thisGame :: ByGame a -> a
-thisGame (ByGame []) = error "thisGame: Empty game list."
-thisGame (ByGame as) = head as
+thisGame :: MonadThrow m => ByGame a -> m a
+thisGame (ByGame []) = throwM (NoSuchElement "thisGame: empty game list")
+thisGame (ByGame as) = return (head as)
 
 -- | Return the element corresponding to the most recently completed iteration.
-lastGame :: ByGame a -> a
-lastGame (ByGame [])      = error "lastGame: Empty game list."
-lastGame (ByGame [_])     = error "lastGame: No completed games."
-lastGame (ByGame (_:a:_)) = a
+lastGame :: MonadThrow m => ByGame a -> m a
+lastGame (ByGame [])      = throwM (NoSuchElement "lastGame: empty game list")
+lastGame (ByGame [_])     = throwM (NoSuchElement "lastGame: no completed games")
+lastGame (ByGame (_:a:_)) = return a
 
 -- | Return the elements corresponding to the most recently completed n
 --   iterations of the game.
-lastNGames :: Int -> ByGame a -> [a]
-lastNGames _ (ByGame []) = error "lastNGames: Empty game list."
+lastNGames :: MonadThrow m => Int -> ByGame a -> m [a]
+lastNGames _ (ByGame []) = throwM (NoSuchElement "lastNGames: empty game list")
 lastNGames i (ByGame (_:as))
-    | length as' == i = as'
-    | otherwise       = error "lastNGames: Not enough games."
+    | length as' == i = return as'
+    | otherwise       = throwM (NoSuchElement "lastNGames: not enough games")
   where as' = take i as
-
-
-instance ByX ByGame where
-  toAssocList (ByGame l) = zip [length l ..] l
-  minX = firstGame
-  maxX = thisGame
 
 
 --
@@ -243,8 +219,8 @@ chunk n l = take n l : chunk n (drop n l)
 -- | Pick an element randomly from a list.
 randomlyFrom :: MonadIO m => [a] -> m a
 randomlyFrom as = do
-  i <- liftIO $ randomRIO (0, length as -1) 
-  return (as !! i)
+    i <- liftIO $ randomRIO (0, length as -1) 
+    return (as !! i)
 
 -- | Concatenate a sequence of elements, separated by commas.
 showSeq :: [String] -> String

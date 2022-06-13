@@ -7,22 +7,23 @@
 -- | This module defines a generic interface for the execution of games and
 --   strategies in Hagl.
 --
---   This module defines two monads:
---   in @GameM@ and @StrategyMonad@. @ExecM@ maintains the current
---   execution state of the game, while @StratM@ adds an additional state
---   that is local to each strategy. Each strategy may define its own
---   type of state and strategies cannot affect the state of other strategies.
+--   This module defines two monads: @GameM@ and @StratM@. @GameM@ maintains
+--   the current execution state of the game, while @StratM@ adds an
+--   additional state that is local to each strategy. Each strategy may
+--   define its own type of state and strategies cannot affect the state of
+--   other strategies.
 --
 --   At the center of the monad onion is the @IO@ monad, allowing both game
---   execution and strategies to do things like print output, get random
---   numbers, and look up the price of tea in Shanghai.
+--   execution and strategies to print output, get random numbers, and lookup
+--   the price of tea in Shanghai.
 module Hagl.Game where
 
 import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.Except (MonadError,ExceptT,throwError,runExceptT)
 import Control.Monad.Reader (MonadReader,ReaderT,ask,runReaderT)
 import Control.Monad.State (MonadState,StateT,get,put,runStateT)
 import Control.Monad.Trans.Class (lift)
-import Control.Monad (liftM,liftM2)
+import Control.Monad (liftM2)
 import Data.Function (on)
 
 import Hagl.History
@@ -34,11 +35,10 @@ import Hagl.Payoff
 -- * Games
 --
 
--- | All games can be reduced to a game tree. This type class's associated
---   types capture the relevant type parameters of that tree.
-class Game g where
+-- | A game is defined by its execution in the @GameM@ monad.
+class (Eq (Move g), Show (Move g)) => Game g where
 
-  -- | The type of state maintained throughout the game
+  -- | The type of state maintained during the game's execution
   --   (use @()@ for stateless games).
   type State g
 
@@ -46,10 +46,17 @@ class Game g where
   type Move g
 
   -- | The initial state of the game.
-  initState :: g -> State g
+  initialState :: g -> State g
 
-  -- | Run this game.
+  -- | Run the game in the @GameM@ monad.
   runGame :: g -> GameM g Payoff
+
+
+-- | A finite game has a list of moves available from each state.
+class Game g => FiniteGame g where
+
+  -- | The moves available from this state in the game.
+  availableMoves :: g -> State g -> [Move g]
 
 
 --
@@ -87,7 +94,7 @@ name (n ::: _)      = n
 -- | A type class for the game execution monad in the MTL style. This includes
 --   both the concrete game execution monad @GameM@ and the strategy execution
 --   monad @StratM@.
-class Monad m => MonadGame g m | m -> g where
+class (MonadError (GameExcept g) m, Monad m) => MonadGame g m | m -> g where
 
   -- | Get the game that is currently being played.
   game :: m g
@@ -103,11 +110,12 @@ class Monad m => MonadGame g m | m -> g where
 
 -- | The game execution monad.
 newtype GameM g a = GameM
-  { unGameM :: ReaderT g (StateT (Exec g) IO) a }
+  { unGameM :: ReaderT g (StateT (Exec g) (ExceptT (GameExcept g) IO)) a }
   deriving
     ( Applicative
     , Functor
     , Monad
+    , MonadError (GameExcept g)
     , MonadIO
     , MonadReader g
     , MonadState (Exec g)
@@ -121,7 +129,11 @@ instance MonadGame g (GameM g) where
 -- | Execute a game execution action with the given game and players,
 --   returning the result and the final execution state.
 runGameM :: Game g => g -> [Player g] -> GameM g a -> IO (a, Exec g)
-runGameM g ps (GameM m) = runStateT (runReaderT m g) (initExec g ps)
+runGameM g ps (GameM m) = do
+    res <- runExceptT (runStateT (runReaderT m g) (initExec g ps))
+    case res of
+      Left err -> error (show err)
+      Right ok -> return ok
 
 -- | Execute a game execution action with the given game and players,
 --   returning the resulting value.
@@ -144,6 +156,7 @@ newtype StratM s g a = StratM
     ( Applicative
     , Functor
     , Monad
+    , MonadError (GameExcept g)
     , MonadIO
     , MonadReader g
     , MonadState s
@@ -185,7 +198,7 @@ data Exec g = Exec
 
 -- | Initial game execution state.
 initExec :: Game g => g -> [Player g] -> Exec g
-initExec g ps = Exec (ByPlayer ps) (initState g) Nothing [] (ByGame []) ms 1
+initExec g ps = Exec (ByPlayer ps) (initialState g) Nothing [] (ByGame []) ms 1
   where
     ms = ByPlayer (replicate (length ps) 0)
 
@@ -194,19 +207,19 @@ initExec g ps = Exec (ByPlayer ps) (initState g) Nothing [] (ByGame []) ms 1
 
 -- | The players playing.
 allPlayers :: MonadGame g m => m (ByPlayer (Player g))
-allPlayers = liftM _players getExec
+allPlayers = fmap _players getExec
 
 -- | The number of players playing the game.
 numPlaying :: MonadGame g m => m Int
-numPlaying = liftM dlength allPlayers
+numPlaying = fmap dlength allPlayers
 
 -- | The index of the currently active player.
 playerID :: MonadGame g m => m PlayerID
 playerID = do
-    mi <- liftM _playerID getExec
+    mi <- fmap _playerID getExec
     case mi of
       Just i -> return i
-      _ -> error "playerID: no active player"
+      _ -> throwError (OtherError "playerID: no active player")
 
 -- | The currently active player.
 me :: MonadGame g m => m (Player g)
@@ -214,47 +227,47 @@ me = liftM2 forPlayer playerID allPlayers
 
 -- | The current game state.
 gameState :: MonadGame g m => m (State g)
-gameState = liftM _gameState getExec
+gameState = fmap _gameState getExec
 
 -- | Currently available moves.
--- availMoves :: (FiniteGame g, GameM m g) => m [Move g]
--- availMoves = liftM treeMoves location
+available :: (FiniteGame g, MonadGame g m) => m [Move g]
+available = liftM2 availableMoves game gameState
 
 -- | Transcript of moves so far this iteration.
 transcript :: MonadGame g m => m (Transcript (Move g))
-transcript = liftM _transcript getExec
+transcript = fmap _transcript getExec
 
 -- | Are we at the start of a new game iteration?
 isNewGame :: MonadGame g m => m Bool
-isNewGame = liftM null transcript
+isNewGame = fmap null transcript
 
 -- | Historical record of all game iterations.
 history :: MonadGame g m => m (History (Move g))
 history = do
     t  <- transcript
-    ms <- liftM (`summarize` t) numPlaying
-    h  <- liftM _history getExec
+    ms <- fmap (`summarize` t) numPlaying
+    h  <- fmap _history getExec
     return (addForNewGame (t,(ms,Nothing)) h)
 
 -- | Transcript of each iteration, including the current one.
 transcripts :: MonadGame g m => m (ByGame (Transcript (Move g)))
-transcripts = liftM _transcripts history
+transcripts = fmap _transcripts history
 
 -- | Summary of each iteration, including the current one.
 summaries :: MonadGame g m => m (ByGame (Summary (Move g)))
-summaries = liftM _summaries history
+summaries = fmap _summaries history
 
 -- | Payoff of each iteration.  The payoff of the current game is undefined.
 payoffs :: MonadGame g m => m (ByGame Payoff)
-payoffs = liftM (fmap _payoff) summaries
+payoffs = fmap (fmap _payoff) summaries
 
 -- | Current score.  The sum of previous iterations' payoffs.
 score :: MonadGame g m => m Payoff
-score = liftM _score history
+score = fmap _score history
 
 -- | Summary of the moves of each iteration, including the current one.
 moves :: MonadGame g m => m (ByGame (MoveSummary (Move g)))
-moves = liftM (fmap _moveSummary) summaries
+moves = fmap (fmap _moveSummary) summaries
 
 -- | Summary of moves so far this iteration, by player.
 movesThisGame :: MonadGame g m => m (MoveSummary (Move g))
@@ -263,15 +276,15 @@ movesThisGame = liftM2 summarize numPlaying transcript
 -- | The first move of every iteration, including the current one
 --   (which may be undefined for some players).
 firstMove :: MonadGame g m => m (ByGame (ByPlayer (Move g)))
-firstMove = liftM ((fmap . fmap) (first . everyTurn)) moves
+firstMove = fmap ((mapM . mapM) (first . everyTurn)) moves
   where
-    first (a:_) = a
-    first _     = error "firstMove: No moves played."
+    first (a:_) = return a
+    first _     = throwError (OtherError "firstMove: no moves played")
 
 -- | The only move of every iteration, including the current one
 --   (which may be undefined for some players).
 onlyMove :: MonadGame g m => m (ByGame (ByPlayer (Move g)))
-onlyMove = liftM ((fmap . fmap) (only . everyTurn)) moves
+onlyMove = fmap ((fmap . fmap) (only . everyTurn)) moves
   where
     only [a] = a
     only []  = error "onlyMove: No moves played."
@@ -279,15 +292,15 @@ onlyMove = liftM ((fmap . fmap) (only . everyTurn)) moves
 
 -- | The total number of moves each player has played.
 numMoves :: MonadGame g m => m (ByPlayer Int)
-numMoves = liftM _numMoves getExec
+numMoves = fmap _numMoves getExec
 
 -- | The current iteration number (i.e. completed iterations +1).
 gameNumber :: MonadGame g m => m Int
-gameNumber = liftM _gameNumber getExec
+gameNumber = fmap _gameNumber getExec
 
 -- | The number of completed game iterations.
 numCompleted :: MonadGame g m => m Int
-numCompleted = liftM (subtract 1) gameNumber
+numCompleted = fmap (subtract 1) gameNumber
 
 
 --
@@ -324,7 +337,7 @@ once = do
     p <- runGame g
     e <- getExec
     let t = _transcript e
-    put e { _gameState  = initState g
+    put e { _gameState  = initialState g
           , _transcript = []
           , _history    = addForNewGame (t, (summarize (dlength p) t, Just p)) (_history e)
           , _gameNumber = _gameNumber e + 1 }
