@@ -18,6 +18,14 @@ While Hagl provides some basic game analyses, its primary focus is simulation
 and experimentation.  Games can be executed and strategies can be pitted
 against each other for repeated play and in various kinds of tournaments.
 
+[High level description](https://www.cambridge.org/core/journals/journal-of-functional-programming/article/domainspecific-language-for-experimental-game-theory/7D23DA54801AFA0FD239DEF3B0C05E26)
+
+## Installation ##
+
+The suggested approach it to use [stack](https://docs.haskellstack.org/en/stable/README/)
+This requires `ghc 9.0.2`
+
+Alternatively, one can run `cabal repl` which works with `ghc 8.10.7`. 
 
 ## Examples ##
 
